@@ -54,6 +54,8 @@ CKEDITOR.define( [
 			 * @type {PluginCollection}
 			 */
 			this.plugins = new PluginCollection( this );
+
+			this._creators = {};
 		},
 
 		/**
@@ -67,18 +69,39 @@ CKEDITOR.define( [
 		 * This method should be rarely used as `CKEDITOR.create` calls it one should never use the `Editor` constructor
 		 * directly.
 		 *
-		 * @returns {Promise} A promise which resolves once the initialization is completed.
+		 * @returns {Promise} A promise that resolves once the initialization is completed.
 		 */
 		init: function() {
 			var that = this;
 			var config = this.config;
 
 			// Create and cache a promise that resolves when all initialization procedures get resolved.
-			this._initPromise = this._initPromise || Promise.all( [
-				loadPlugins().then( initPlugins )
-			] );
+			this._initPromise = this._initPromise || Promise.resolve()
+				.then( loadData )
+				.then( loadPlugins )
+				.then( initPlugins )
+				.then( fireCreator );
 
 			return this._initPromise;
+
+			function loadData() {
+				// Do nothing if data has already been set (by calling setData() before init()).
+				if ( that.hasOwnProperty( '_data' ) ) {
+					return 0;
+				}
+
+				// Load "data" from the element.
+				var data;
+
+				if ( that.element.nodeName == 'TEXTAREA' ) {
+					data = that.element.value;
+				} else {
+					data = that.element.innerHTML;
+				}
+
+				// Set the editor data.
+				return that.setData( data );
+			}
 
 			function loadPlugins() {
 				return that.plugins.load( config.plugins );
@@ -104,6 +127,28 @@ CKEDITOR.define( [
 					};
 				}
 			}
+
+			function fireCreator() {
+				// Take the name of the creator to use (config or any of the registered ones).
+				var creatorName = config.creator || Object.keys( that._creators )[ 0 ];
+
+				if ( creatorName ) {
+					// Take the registered class for the given creator name.
+					var Creator = that._creators[creatorName];
+
+					if ( !Creator ) {
+						throw( new Error( 'The "' + creatorName + '" creator was not found. Check `config.creator`.' ) );
+					}
+
+					// Create an instance of the creator.
+					that._creator = new Creator( that );
+
+					// Finally fire the creator. It may be asynchronous, returning a promise.
+					return that._creator.create();
+				}
+
+				return 0;
+			}
 		},
 
 		/**
@@ -111,11 +156,31 @@ CKEDITOR.define( [
 		 * element will be recovered.
 		 *
 		 * @fires destroy
+		 * @returns {Promise} A promise that resolves once the editor instance is fully destroyed.
 		 */
 		destroy: function() {
+			var that = this;
+
 			this.fire( 'destroy' );
 
-			delete this.element;
+			return Promise.resolve( that._creator && that._creator.destroy() )
+				.then( function() {
+					that.element = undefined;
+				} );
+		},
+
+		setData: function( data ) {
+			this._data = data;
+
+			return Promise.resolve();
+		},
+
+		getData: function() {
+			return this._data || '';
+		},
+
+		addCreator: function( name, creatorClass ) {
+			this._creators[ name ] = creatorClass;
 		}
 	} );
 
