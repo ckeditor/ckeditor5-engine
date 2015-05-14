@@ -69,7 +69,7 @@ CKEDITOR.define( [ 'model', 'promise' ], function( Model, Promise ) {
 		 */
 		isEditable: {
 			get: function() {
-				return this.element.contentEditable;
+				return ( this.element.contentEditable.toString() == 'true' );
 			},
 
 			set: function( value ) {

@@ -7,7 +7,7 @@
 
 'use strict';
 
-var modules = bender.amd.require( 'editor', 'editorconfig', 'promise' );
+var modules = bender.amd.require( 'editor', 'editorconfig', 'editable', 'promise' );
 
 var editor;
 var element;
@@ -52,38 +52,6 @@ describe( 'init', function() {
 		var promise = editor.init();
 
 		expect( editor.init() ).to.equal( promise );
-	} );
-
-	it( 'should set the element data into the editor', function() {
-		return editor.init().then( function() {
-			expect( editor.getData() ).to.equal( elementInnerHTML );
-		} );
-	} );
-
-	it( 'should set the element data into the editor (textarea)', function() {
-		var Editor = modules.editor;
-
-		var data = '<p>Textarea test</p>';
-
-		element = document.createElement( 'textarea' );
-		element.value = data;
-		document.body.appendChild( element );
-
-		editor = new Editor( element );
-
-		return editor.init().then( function() {
-			expect( editor.getData() ).to.equal( data );
-		} );
-	} );
-
-	it( 'should not set the element data into the editor if data is already set', function() {
-		var data = '<p>Another test</p>';
-
-		return editor.setData( data ).then( function() {
-			return editor.init().then( function() {
-				expect( editor.getData() ).to.equal( data );
-			} );
-		} );
 	} );
 } );
 
@@ -143,6 +111,39 @@ describe( 'setData', function() {
 			expect( editor.getData() ).to.equal( data );
 		} );
 	} );
+
+	it( 'should set the element.data by default', function() {
+		var data = '<p>Another test</p>';
+
+		return editor.setData( data ).then( function() {
+			expect( element.innerHTML ).to.equal( data );
+		} );
+	} );
+
+	it( 'should set the element.data by default (textarea)', function() {
+		var Editor = modules.editor;
+
+		var data = '<p>Textarea test</p>';
+
+		element = document.createElement( 'textarea' );
+		document.body.appendChild( element );
+
+		editor = new Editor( element );
+
+		return editor.setData( data ).then( function() {
+			expect( element.value ).to.equal( data );
+		} );
+	} );
+
+	it( 'should set the editor data even before init', function() {
+		var data = '<p>Another test</p>';
+
+		return editor.setData( data ).then( function() {
+			return editor.init().then( function() {
+				expect( editor.getData() ).to.equal( data );
+			} );
+		} );
+	} );
 } );
 
 describe( 'getData', function() {
@@ -152,5 +153,115 @@ describe( 'getData', function() {
 		return editor.init().then( function() {
 			expect( editor.getData() ).to.equal( elementInnerHTML );
 		} );
+	} );
+
+	it( 'should get the element data by default', function() {
+		return editor.init().then( function() {
+			expect( editor.getData() ).to.equal( elementInnerHTML );
+		} );
+	} );
+
+	it( 'should get the element data by default (textarea)', function() {
+		var Editor = modules.editor;
+
+		var data = '<p>Textarea test</p>';
+
+		element = document.createElement( 'textarea' );
+		element.value = data;
+		document.body.appendChild( element );
+
+		editor = new Editor( element );
+
+		return editor.init().then( function() {
+			expect( editor.getData() ).to.equal( data );
+		} );
+	} );
+} );
+
+describe( 'editable', function() {
+	it( 'should be strictly readonly', function() {
+		function test() {
+			editor.editable = 'x';
+		}
+
+		expect( test ).to.throw( TypeError );
+	} );
+
+	it( 'should be kept strictly readonly after setEditable', function() {
+		editor.setEditable( element );
+
+		function test() {
+			editor.editable = 'x';
+		}
+
+		expect( test ).to.throw( TypeError );
+	} );
+} );
+
+describe( 'setEditable', function() {
+	it( 'should accept DOM node', function() {
+		var Editable = modules.editable;
+
+		var el = document.createElement( 'div' );
+
+		return editor.setEditable( el ).then( function() {
+			expect( editor.editable ).to.be.an.instanceof( Editable );
+			expect( editor.editable.element ).to.equal( el );
+		} );
+	} );
+
+	it( 'should accept Editable instances', function() {
+		var Editable = modules.editable;
+
+		var el = document.createElement( 'div' );
+		var editable = new Editable( el );
+
+		return editor.setEditable( editable ).then( function() {
+			expect( editor.editable ).to.equal( editable );
+			expect( editor.editable.element ).to.equal( el );
+		} );
+	} );
+
+	it( 'should do nothing if the same Editable instance is passed twice', function() {
+		var Editable = modules.editable;
+
+		var el = document.createElement( 'div' );
+		var editable = new Editable( el );
+
+		return editor.setEditable( editable ).then( function() {
+			editor.getData = sinon.spy();
+
+			editor.setEditable( editable ).then( function() {
+				sinon.assert.notCalled( editor.getData );
+			} );
+		} );
+	} );
+
+	it( 'should update the editable with the editior data', function() {
+		var el = document.createElement( 'div' );
+
+		editor.setEditable( el );
+
+		expect( editor.editable.getData() ).to.equal( elementInnerHTML );
+	} );
+
+	it( 'should proxy editor.getData() to editable.getData()', function() {
+		editor.setEditable( element );
+
+		editor.editable.getData = function() {
+			return 'TEST';
+		};
+
+		expect( editor.getData() ).to.equal( 'TEST' );
+	} );
+
+	it( 'should proxy editor.setData() to editable.setData()', function() {
+		editor.setEditable( element );
+
+		editor.editable.setData = sinon.spy();
+
+		editor.setData( 'TEST' );
+
+		sinon.assert.calledWithExactly( editor.editable.setData, 'TEST' );
 	} );
 } );
