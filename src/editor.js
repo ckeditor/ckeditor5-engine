@@ -15,8 +15,9 @@ CKEDITOR.define( [
 	'model',
 	'editorconfig',
 	'plugincollection',
+	'editable',
 	'promise'
-], function( Model, EditorConfig, PluginCollection, Promise ) {
+], function( Model, EditorConfig, PluginCollection, Editable, Promise ) {
 	var Editor = Model.extend( {
 		/**
 		 * Creates a new instance of the Editor class.
@@ -56,6 +57,10 @@ CKEDITOR.define( [
 			this.plugins = new PluginCollection( this );
 
 			this._creators = {};
+
+			Object.defineProperty( this, 'editable', {
+				configurable: true
+			} );
 		},
 
 		/**
@@ -77,31 +82,11 @@ CKEDITOR.define( [
 
 			// Create and cache a promise that resolves when all initialization procedures get resolved.
 			this._initPromise = this._initPromise || Promise.resolve()
-				.then( loadData )
 				.then( loadPlugins )
 				.then( initPlugins )
 				.then( fireCreator );
 
 			return this._initPromise;
-
-			function loadData() {
-				// Do nothing if data has already been set (by calling setData() before init()).
-				if ( that.hasOwnProperty( '_data' ) ) {
-					return 0;
-				}
-
-				// Load "data" from the element.
-				var data;
-
-				if ( that.element.nodeName == 'TEXTAREA' ) {
-					data = that.element.value;
-				} else {
-					data = that.element.innerHTML;
-				}
-
-				// Set the editor data.
-				return that.setData( data );
-			}
 
 			function loadPlugins() {
 				return that.plugins.load( config.plugins );
@@ -163,20 +148,75 @@ CKEDITOR.define( [
 
 			this.fire( 'destroy' );
 
-			return Promise.resolve( that._creator && that._creator.destroy() )
+			this._destroyPromise = this._destroyPromise || Promise.resolve()
+				.then( function() {
+					return that._creator && that._creator.destroy();
+				} )
 				.then( function() {
 					that.element = undefined;
 				} );
+
+			return this._destroyPromise;
 		},
 
 		setData: function( data ) {
-			this._data = data;
+			if ( this._dataTunnel ) {
+				return this._dataTunnel.setData( data );
+			}
+
+			var element = this.element;
+
+			if ( 'value' in element ) {
+				element.value = data;
+			} else {
+				element.innerHTML = data;
+			}
 
 			return Promise.resolve();
 		},
 
 		getData: function() {
-			return this._data || '';
+			if ( this._dataTunnel ) {
+				return this._dataTunnel.getData();
+			}
+
+			var element = this.element;
+
+			if ( 'value' in element ) {
+				return element.value;
+			} else {
+				return element.innerHTML;
+			}
+		},
+
+		setEditable: function( newEditable ) {
+			// Ensure that we have an instance of Editable (it may be an element).
+			newEditable = newEditable && new Editable( newEditable );
+
+			// Do nothing if there is no change on editable.
+			if ( this.editable === newEditable ) {
+				return Promise.resolve();
+			}
+
+			// Save the current data.
+			var data = this.getData();
+
+			// Set the new editable as the "data tunnel" for future getData() and setData() calls.
+			this._dataTunnel = newEditable;
+
+			// this.editable is a readonly (configurable) property, so defineProperty() must be used to set it.
+			Object.defineProperty( this, 'editable', {
+				writable: true,		// Needed by PhantomJS.
+				value: newEditable
+			} );
+
+			// Make the property readonly again.	// Needed by PhantomJS (see above).
+			Object.defineProperty( this, 'editable', {
+				writable: false
+			} );
+
+			// Set the current data into the new editable.
+			return this.setData( data );
 		},
 
 		addCreator: function( name, creatorClass ) {

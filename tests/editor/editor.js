@@ -153,8 +153,4 @@ describe( 'getData', function() {
 			expect( editor.getData() ).to.equal( elementInnerHTML );
 		} );
 	} );
-
-	it( 'should return an emtpy string if no data is available', function() {
-		expect( editor.getData() ).to.equal( '' );
-	} );
 } );
