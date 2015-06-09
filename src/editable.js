@@ -11,10 +11,18 @@
  * Represents an editable inside the editor.
  *
  * @class Editable
+ * @extends Model
  */
 
 CKEDITOR.define( [ 'model', 'config', 'editablecollection', 'promise' ], function( Model, Config, EditableCollection, Promise ) {
 	var Editable = Model.extend( {
+		/**
+		 * Creates an instance of the Editable class.
+		 *
+		 * @constructor
+		 * @param {HTMLElement|Editable} element The DOM element that will be linked to this editable. If an editable is
+		 * provided, that same editable is returned by the constructor.
+		 */
 		constructor: function Editable( element ) {
 			// We need to renew the module request because of cross-reference with Editable<->EditableCollection.
 			EditableCollection = CKEDITOR.require( 'editablecollection' );
@@ -31,19 +39,50 @@ CKEDITOR.define( [ 'model', 'config', 'editablecollection', 'promise' ], functio
 			 * The DOM element managed by this editable.
 			 *
 			 * @readonly
-			 * @property {HTMLElement}
+			 * @property {HTMLElement} element
 			 */
 			this.set( 'element', element );
 
+			/**
+			 * The DOM element that represents the editable view.
+			 *
+			 * @readonly
+			 * @property {HTMLElement} view
+			 */
 			this.set( 'view' );
 
+			/**
+			 * Configurations specific to this editable. It inherits configurations from parent editables.
+			 *
+			 * @readonly
+			 * @property {Config} config
+			 */
 			this.set( 'config', new Config() );
 
+			/**
+			 * The child editables of this editable.
+			 *
+			 * @readonly
+			 * @property {EditableCollection} editables
+			 */
 			this.set( 'editables', new EditableCollection( this ) );
 
 			return this;
 		},
 
+		/**
+		 * Initializes the editable.
+		 *
+		 * The initialization consists of the following procedures:
+		 *
+		 *  * Setup the editable view.
+		 *  * Initialize children.
+		 *  * Enable editing in the editable.
+		 *
+		 * This method should be rarely used as `editor.init` calls it during editor initialization.
+		 *
+		 * @returns {Promise} A promise that resolves once the initialization is completed.
+		 */
 		init: function() {
 			var that = this;
 
@@ -114,6 +153,11 @@ CKEDITOR.define( [ 'model', 'config', 'editablecollection', 'promise' ], functio
 	 * @member Editable
 	 */
 	Object.defineProperties( Editable.prototype, {
+		/**
+		 * The parent editable of this editable.
+		 *
+		 * @property {Boolean}
+		 */
 		parent: {
 			set: function( parent ) {
 				this.config.parent = parent.config;

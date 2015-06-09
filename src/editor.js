@@ -38,6 +38,7 @@ CKEDITOR.define( [
 			 * global configurations available in {@link CKEDITOR.config} if configurations are not found in the
 			 * instance itself.
 			 *
+			 * @readonly
 			 * @type {Config} config
 			 */
 			this.set( 'config', new EditorConfig() );
@@ -45,10 +46,17 @@ CKEDITOR.define( [
 			/**
 			 * The plugins loaded and in use by this editor instance.
 			 *
+			 * @readonly
 			 * @type {PluginCollection} plugins
 			 */
 			this.set( 'plugins', new PluginCollection( this ) );
 
+			/**
+			 * The editables attached to this editor instance.
+			 *
+			 * @readonly
+			 * @type {EditableCollection} editables
+			 */
 			this.set( 'editables', new EditableCollection() );
 
 			this._creators = {};
@@ -59,11 +67,12 @@ CKEDITOR.define( [
 		 *
 		 * The initialization consists of the following procedures:
 		 *
-		 *  * Load and initialize the configured plugins.
-		 *  * TODO: Add other procedures here.
+		 *  * Loads and initializes the configured plugins.
+		 *  * Fires the editor creator.
+		 *  * Initializes all editables.
 		 *
-		 * This method should be rarely used as `CKEDITOR.create` calls it one should never use the `Editor` constructor
-		 * directly.
+		 * This method should be rarely used as `CKEDITOR.create` calls it. One should never use the `Editor`
+		 * constructor directly.
 		 *
 		 * @returns {Promise} A promise that resolves once the initialization is completed.
 		 */
@@ -183,6 +192,14 @@ CKEDITOR.define( [
 			return this._destroyPromise;
 		},
 
+		/**
+		 * Sets the editor data.
+		 *
+		 * **Attention**: setting the editor data may be an asynchronous operation.
+		 *
+		 * @param {String} data The data to be set.
+		 * @returns {Promise} A promise that resolves once the data is fully loaded in the editor.
+		 */
 		setData: function( data ) {
 			if ( this.editables.current ) {
 				this._data = undefined;
@@ -195,6 +212,11 @@ CKEDITOR.define( [
 			return Promise.resolve();
 		},
 
+		/**
+		 * Gets the editor data.
+		 *
+		 * @returns {String} The current data.
+		 */
 		getData: function() {
 			if ( this.editables.current ) {
 				return this.editables.current.getData();
@@ -203,6 +225,18 @@ CKEDITOR.define( [
 			return this._data || '';
 		},
 
+		/**
+		 * Registers a creator into the editor.
+		 *
+		 * Creators are usually plugins that take the responsibility of bootstrapping the UI of the editor instance.
+		 * Therefore this method has little use out of such plugins scope.
+		 *
+		 * Usually just one creator will be registered but it is possible to have multiple creators available. In such
+		 * case, the `creator` configuration must be used to specify which one to use.
+		 *
+		 * @param {String} name The name of the creator. This is the name used in the `creator` configuration.
+		 * @param {Function} creatorClass The JavaScript class (constructor function) that
+		 */
 		addCreator: function( name, creatorClass ) {
 			this._creators[ name ] = creatorClass;
 		}

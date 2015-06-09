@@ -10,21 +10,28 @@
 /**
  * Manages a list of CKEditor plugins, including loading, initialization and destruction.
  *
- * @class PluginCollection
+ * @class EditableCollection
  * @extends Collection
  */
 
 CKEDITOR.define( [ 'collection', 'editable' ], function( Collection, Editable ) {
 	var EditableCollection = Collection.extend( {
 		/**
-		 * Creates an instance of the PluginCollection class, initializing it with a set of plugins.
+		 * Creates an instance of the EditableCollection class.
 		 *
 		 * @constructor
+		 * @param {Editable} editable The parent editable of all editables included in this collection.
 		 */
 		constructor: function EditableCollection( parent ) {
 			// Call the base constructor.
 			Collection.apply( this );
 
+			/**
+			 * The parent editable of all editables included in this collection.
+			 *
+			 * @readonly
+			 * @property {Editable} parent
+			 */
 			this.parent = parent;
 
 			var current;
