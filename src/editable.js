@@ -3,6 +3,8 @@
  * For licensing, see LICENSE.md.
  */
 
+/* globals HTMLTextAreaElement */
+
 'use strict';
 
 /**
@@ -11,9 +13,12 @@
  * @class Editable
  */
 
-CKEDITOR.define( [ 'model', 'promise' ], function( Model, Promise ) {
+CKEDITOR.define( [ 'model', 'config', 'editablecollection', 'promise' ], function( Model, Config, EditableCollection, Promise ) {
 	var Editable = Model.extend( {
 		constructor: function Editable( element ) {
+			// We need to renew the module request because of cross-reference with Editable<->EditableCollection.
+			EditableCollection = CKEDITOR.require( 'editablecollection' );
+
 			// Accept and Editable instance as parameter as well, for simplification in other parts of the code.
 			if ( element instanceof Editable ) {
 				return element;
@@ -28,11 +33,48 @@ CKEDITOR.define( [ 'model', 'promise' ], function( Model, Promise ) {
 			 * @readonly
 			 * @property {HTMLElement}
 			 */
-			this.element = element;
+			this.set( 'element', element );
 
-			this.isEditable = true;
+			this.set( 'view' );
+
+			this.set( 'config', new Config() );
+
+			this.set( 'editables', new EditableCollection( this ) );
 
 			return this;
+		},
+
+		init: function() {
+			var that = this;
+
+			this._initPromise = this._initPromise || Promise.resolve()
+				.then( setupView )
+				.then( initChildren )
+				.then( enableEditing );
+
+			return this._initPromise;
+
+			function setupView() {
+				if ( !that.view ) {
+					// TODO: For now we're simply pointing to the element. Once the Document Model (dm) will be implemented,
+					// this will point to a real View object.
+					that.view = that.element;
+				}
+			}
+
+			function initChildren() {
+				var promises = [];
+
+				for ( var i = 0; i < that.editables.length; i++ ) {
+					promises.push( that.editables.get( i ).init() );
+				}
+
+				return Promise.all( promises );
+			}
+
+			function enableEditing() {
+				that.isEditable = true;
+			}
 		},
 
 		/**
@@ -43,7 +85,11 @@ CKEDITOR.define( [ 'model', 'promise' ], function( Model, Promise ) {
 		 * editable.
 		 */
 		setData: function( data ) {
-			this.element.innerHTML = data;
+			if ( this.view ) {
+				this.view.innerHTML = data;
+			} else {
+				this.element.innerHTML = data;
+			}
 
 			return Promise.resolve();
 		},
@@ -54,7 +100,13 @@ CKEDITOR.define( [ 'model', 'promise' ], function( Model, Promise ) {
 		 * @returns {String} The data.
 		 */
 		getData: function() {
-			return this.element.innerHTML;
+			var el = this.view || this.element;
+
+			if ( el instanceof HTMLTextAreaElement ) {
+				return el.value;
+			}
+
+			return el.innerHTML;
 		}
 	} );
 
@@ -62,6 +114,17 @@ CKEDITOR.define( [ 'model', 'promise' ], function( Model, Promise ) {
 	 * @member Editable
 	 */
 	Object.defineProperties( Editable.prototype, {
+		parent: {
+			set: function( parent ) {
+				this.config.parent = parent.config;
+				this._parent = parent;
+			},
+
+			get: function() {
+				return this._parent;
+			}
+		},
+
 		/**
 		 * Indicates whether or not the editable has editing enabled.
 		 *
@@ -69,11 +132,13 @@ CKEDITOR.define( [ 'model', 'promise' ], function( Model, Promise ) {
 		 */
 		isEditable: {
 			get: function() {
-				return ( this.element.contentEditable.toString() == 'true' );
+				return ( this.view && this.view.contentEditable.toString() == 'true' || false );
 			},
 
 			set: function( value ) {
-				this.element.contentEditable = value;
+				if ( this.view ) {
+					this.view.contentEditable = value;
+				}
 			}
 		}
 	} );

@@ -34,7 +34,9 @@ function initEditor( config ) {
 	element = document.createElement( 'div' );
 	document.body.appendChild( element );
 
-	editor = new Editor( element, config );
+	editor = new Editor();
+
+	editor.config.set( config );
 
 	return editor.init();
 }

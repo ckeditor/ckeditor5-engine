@@ -22,7 +22,11 @@ function getEditor( config ) {
 
 	var Editor = modules.editor;
 
-	var editor = new Editor( element, config );
+	var editor = new Editor();
+
+	if ( config ) {
+		editor.config.set( config );
+	}
 
 	return editor;
 }

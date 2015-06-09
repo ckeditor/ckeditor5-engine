@@ -158,6 +158,17 @@ CKEDITOR.define( [ 'model', 'utils' ], function( Model, utils ) {
 				return source[ name ];
 			}
 
+			// Retrieve it from the parent, if it has been set.
+			if ( this.parent ) {
+				var value = this.parent[ name ];
+
+				// Retrieve from parent only if it is available in it, otherwise give a chance to take it from the
+				// definition later in the code.
+				if ( value !== undefined ) {
+					return value;
+				}
+			}
+
 			// If not found, take it from the definition.
 			if ( this.definition ) {
 				return this.definition[ name ];

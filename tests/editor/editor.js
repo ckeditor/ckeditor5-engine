@@ -7,7 +7,8 @@
 
 'use strict';
 
-var modules = bender.amd.require( 'editor', 'editorconfig', 'editable', 'promise' );
+var modules = bender.amd.require( 'editor', 'editorconfig', 'plugincollection', 'editable', 'editablecollection',
+	'promise' );
 
 var editor;
 var element;
@@ -20,12 +21,14 @@ beforeEach( function() {
 	element.innerHTML = elementInnerHTML;
 	document.body.appendChild( element );
 
-	editor = new Editor( element );
+	editor = new Editor();
+	editor.editables.add( element );
 } );
 
 describe( 'constructor', function() {
 	it( 'should create a new editor instance', function() {
-		expect( editor ).to.have.property( 'element' ).to.equal( element );
+		var Editor = modules.editor;
+		expect( editor ).to.be.an.instanceof( Editor );
 	} );
 } );
 
@@ -34,6 +37,26 @@ describe( 'config', function() {
 		var EditorConfig = modules.editorconfig;
 
 		expect( editor.config ).to.be.an.instanceof( EditorConfig );
+	} );
+} );
+
+describe( 'plugins', function() {
+	it( 'should be an instance of PluginCollection', function() {
+		var PluginCollection = modules.plugincollection;
+
+		expect( editor.plugins ).to.be.an.instanceof( PluginCollection );
+	} );
+
+	it( 'should be empty', function() {
+		expect( editor.plugins.length ).to.be.empty();
+	} );
+} );
+
+describe( 'editables', function() {
+	it( 'should be an instance of EditableCollection', function() {
+		var EditableCollection = modules.editablecollection;
+
+		expect( editor ).to.have.property( 'editables' ).to.be.an.instanceof( EditableCollection );
 	} );
 } );
 
@@ -52,6 +75,14 @@ describe( 'init', function() {
 		var promise = editor.init();
 
 		expect( editor.init() ).to.equal( promise );
+	} );
+
+	it( 'should call init() on editables', function() {
+		var spy = sinon.spy( editor.editables.get( 0 ), 'init' );
+
+		return editor.init( function() {
+			sinon.assert.called( spy );
+		} );
 	} );
 } );
 
@@ -115,9 +146,10 @@ describe( 'setData', function() {
 	it( 'should set the element.data by default', function() {
 		var data = '<p>Another test</p>';
 
-		return editor.setData( data ).then( function() {
-			expect( element.innerHTML ).to.equal( data );
-		} );
+		return editor.setData( data )
+			.then( function() {
+				expect( element.innerHTML ).to.equal( data );
+			} );
 	} );
 
 	it( 'should set the element.data by default (textarea)', function() {
@@ -128,21 +160,25 @@ describe( 'setData', function() {
 		element = document.createElement( 'textarea' );
 		document.body.appendChild( element );
 
-		editor = new Editor( element );
+		editor = new Editor();
+		editor.editables.add( element );
 
-		return editor.setData( data ).then( function() {
-			expect( element.value ).to.equal( data );
-		} );
+		return editor.setData( data )
+			.then( function() {
+				expect( element.value ).to.equal( data );
+			} );
 	} );
 
-	it( 'should set the editor data even before init', function() {
+	it( 'should set the editor data even after init', function() {
 		var data = '<p>Another test</p>';
 
-		return editor.setData( data ).then( function() {
-			return editor.init().then( function() {
+		return editor.setData( data )
+			.then( function() {
+				return editor.init();
+			} )
+			.then( function() {
 				expect( editor.getData() ).to.equal( data );
 			} );
-		} );
 	} );
 } );
 
@@ -150,18 +186,17 @@ describe( 'getData', function() {
 	// This is mostly a dup for one of the `init` tests, but it is here for completness as there are no other useful
 	// tests for getData().
 	it( 'should get the editor data', function() {
-		return editor.init().then( function() {
-			expect( editor.getData() ).to.equal( elementInnerHTML );
-		} );
+		expect( editor.getData() ).to.equal( elementInnerHTML );
 	} );
 
-	it( 'should get the element data by default', function() {
-		return editor.init().then( function() {
-			expect( editor.getData() ).to.equal( elementInnerHTML );
-		} );
+	it( 'should get the editable element data by default', function() {
+		return editor.init()
+			.then( function() {
+				expect( editor.getData() ).to.equal( elementInnerHTML );
+			} );
 	} );
 
-	it( 'should get the element data by default (textarea)', function() {
+	it( 'should get the editable element data by default (textarea)', function() {
 		var Editor = modules.editor;
 
 		var data = '<p>Textarea test</p>';
@@ -170,85 +205,19 @@ describe( 'getData', function() {
 		element.value = data;
 		document.body.appendChild( element );
 
-		editor = new Editor( element );
+		editor = new Editor();
+		editor.editables.add( element );
 
-		return editor.init().then( function() {
-			expect( editor.getData() ).to.equal( data );
-		} );
-	} );
-} );
-
-describe( 'editable', function() {
-	it( 'should be strictly readonly', function() {
-		function test() {
-			editor.editable = 'x';
-		}
-
-		expect( test ).to.throw( TypeError );
-	} );
-
-	it( 'should be kept strictly readonly after setEditable', function() {
-		editor.setEditable( element );
-
-		function test() {
-			editor.editable = 'x';
-		}
-
-		expect( test ).to.throw( TypeError );
-	} );
-} );
-
-describe( 'setEditable', function() {
-	it( 'should accept DOM node', function() {
-		var Editable = modules.editable;
-
-		var el = document.createElement( 'div' );
-
-		return editor.setEditable( el ).then( function() {
-			expect( editor.editable ).to.be.an.instanceof( Editable );
-			expect( editor.editable.element ).to.equal( el );
-		} );
-	} );
-
-	it( 'should accept Editable instances', function() {
-		var Editable = modules.editable;
-
-		var el = document.createElement( 'div' );
-		var editable = new Editable( el );
-
-		return editor.setEditable( editable ).then( function() {
-			expect( editor.editable ).to.equal( editable );
-			expect( editor.editable.element ).to.equal( el );
-		} );
-	} );
-
-	it( 'should do nothing if the same Editable instance is passed twice', function() {
-		var Editable = modules.editable;
-
-		var el = document.createElement( 'div' );
-		var editable = new Editable( el );
-
-		return editor.setEditable( editable ).then( function() {
-			editor.getData = sinon.spy();
-
-			editor.setEditable( editable ).then( function() {
-				sinon.assert.notCalled( editor.getData );
+		return editor.init()
+			.then( function() {
+				expect( editor.getData() ).to.equal( data );
 			} );
-		} );
 	} );
+} );
 
-	it( 'should update the editable with the editior data', function() {
-		var el = document.createElement( 'div' );
-
-		editor.setEditable( el );
-
-		expect( editor.editable.getData() ).to.equal( elementInnerHTML );
-	} );
-
+describe( 'editables.current', function() {
 	it( 'should proxy editor.getData() to editable.getData()', function() {
-		editor.setEditable( element );
-
-		editor.editable.getData = function() {
+		editor.editables.current.getData = function() {
 			return 'TEST';
 		};
 
@@ -256,12 +225,10 @@ describe( 'setEditable', function() {
 	} );
 
 	it( 'should proxy editor.setData() to editable.setData()', function() {
-		editor.setEditable( element );
-
-		editor.editable.setData = sinon.spy();
+		editor.editables.current.setData = sinon.spy();
 
 		editor.setData( 'TEST' );
 
-		sinon.assert.calledWithExactly( editor.editable.setData, 'TEST' );
+		sinon.assert.calledWithExactly( editor.editables.current.setData, 'TEST' );
 	} );
 } );

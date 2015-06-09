@@ -15,9 +15,9 @@ CKEDITOR.define( [
 	'model',
 	'editorconfig',
 	'plugincollection',
-	'editable',
+	'editablecollection',
 	'promise'
-], function( Model, EditorConfig, PluginCollection, Editable, Promise ) {
+], function( Model, EditorConfig, PluginCollection, EditableCollection, Promise ) {
 	var Editor = Model.extend( {
 		/**
 		 * Creates a new instance of the Editor class.
@@ -25,18 +25,11 @@ CKEDITOR.define( [
 		 * This constructor should be rarely used. When creating new editor instance use instead the
 		 * {@link CKEDITOR#create CKEDITOR.create() method}.
 		 *
-		 * @param {HTMLElement} element The DOM element that will be the source for the created editor.
 		 * @constructor
 		 */
-		constructor: function Editor( element, config ) {
-			/**
-			 * The original host page element upon which the editor is created. It is only supposed to be provided on
-			 * editor creation and is not subject to be modified.
-			 *
-			 * @readonly
-			 * @property {HTMLElement}
-			 */
-			this.element = element;
+		constructor: function Editor() {
+			// Call the base constructor.
+			Model.apply( this );
 
 			/**
 			 * Holds all configurations specific to this editor instance.
@@ -45,22 +38,20 @@ CKEDITOR.define( [
 			 * global configurations available in {@link CKEDITOR.config} if configurations are not found in the
 			 * instance itself.
 			 *
-			 * @type {Config}
+			 * @type {Config} config
 			 */
-			this.config = new EditorConfig( config );
+			this.set( 'config', new EditorConfig() );
 
 			/**
 			 * The plugins loaded and in use by this editor instance.
 			 *
-			 * @type {PluginCollection}
+			 * @type {PluginCollection} plugins
 			 */
-			this.plugins = new PluginCollection( this );
+			this.set( 'plugins', new PluginCollection( this ) );
+
+			this.set( 'editables', new EditableCollection() );
 
 			this._creators = {};
-
-			Object.defineProperty( this, 'editable', {
-				configurable: true
-			} );
 		},
 
 		/**
@@ -84,7 +75,10 @@ CKEDITOR.define( [
 			this._initPromise = this._initPromise || Promise.resolve()
 				.then( loadPlugins )
 				.then( initPlugins )
-				.then( fireCreator );
+				.then( prepareData )
+				.then( fireCreator )
+				.then( initEditables )
+				.then( loadData );
 
 			return this._initPromise;
 
@@ -113,13 +107,28 @@ CKEDITOR.define( [
 				}
 			}
 
+			function prepareData() {
+				// At this stage we have the editor initial data at its "pure" form. There are two possibilities:
+				//
+				//   1. editor.setData() has been called before editor.init() - editor._data has been set. In this case
+				//      we don't want to change it because we assume that this is the data the end-developer wants to
+				//      have, no matter what.
+				//
+				//   2. An editable is available. In this case we take the initial data from editable.element. This must
+				//      be done at this stage because both fireCreator() and initEditables() will drive the data to
+				//      editable.view instead.
+				if ( typeof that._data != 'string' ) {
+					that._data = that.getData();
+				}
+			}
+
 			function fireCreator() {
 				// Take the name of the creator to use (config or any of the registered ones).
 				var creatorName = config.creator || Object.keys( that._creators )[ 0 ];
 
 				if ( creatorName ) {
 					// Take the registered class for the given creator name.
-					var Creator = that._creators[creatorName];
+					var Creator = that._creators[ creatorName ];
 
 					if ( !Creator ) {
 						throw( new Error( 'The "' + creatorName + '" creator was not found. Check `config.creator`.' ) );
@@ -133,6 +142,21 @@ CKEDITOR.define( [
 				}
 
 				return 0;
+			}
+
+			function initEditables() {
+				var promises = [];
+
+				for ( var i = 0; i < that.editables.length; i++ ) {
+					promises.push( that.editables.get( i ).init() );
+				}
+
+				return Promise.all( promises );
+			}
+
+			function loadData() {
+				// Finally we can set the data into the editor. This will endup into editable.view at this stage.
+				return that.setData( that._data );
 			}
 		},
 
@@ -160,63 +184,23 @@ CKEDITOR.define( [
 		},
 
 		setData: function( data ) {
-			if ( this._dataTunnel ) {
-				return this._dataTunnel.setData( data );
+			if ( this.editables.current ) {
+				this._data = undefined;
+
+				return this.editables.current.setData( data );
 			}
 
-			var element = this.element;
-
-			if ( 'value' in element ) {
-				element.value = data;
-			} else {
-				element.innerHTML = data;
-			}
+			this._data = data;
 
 			return Promise.resolve();
 		},
 
 		getData: function() {
-			if ( this._dataTunnel ) {
-				return this._dataTunnel.getData();
+			if ( this.editables.current ) {
+				return this.editables.current.getData();
 			}
 
-			var element = this.element;
-
-			if ( 'value' in element ) {
-				return element.value;
-			} else {
-				return element.innerHTML;
-			}
-		},
-
-		setEditable: function( newEditable ) {
-			// Ensure that we have an instance of Editable (it may be an element).
-			newEditable = newEditable && new Editable( newEditable );
-
-			// Do nothing if there is no change on editable.
-			if ( this.editable === newEditable ) {
-				return Promise.resolve();
-			}
-
-			// Save the current data.
-			var data = this.getData();
-
-			// Set the new editable as the "data tunnel" for future getData() and setData() calls.
-			this._dataTunnel = newEditable;
-
-			// this.editable is a readonly (configurable) property, so defineProperty() must be used to set it.
-			Object.defineProperty( this, 'editable', {
-				writable: true,		// Needed by PhantomJS.
-				value: newEditable
-			} );
-
-			// Make the property readonly again.	// Needed by PhantomJS (see above).
-			Object.defineProperty( this, 'editable', {
-				writable: false
-			} );
-
-			// Set the current data into the new editable.
-			return this.setData( data );
+			return this._data || '';
 		},
 
 		addCreator: function( name, creatorClass ) {
