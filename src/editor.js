@@ -184,9 +184,6 @@ CKEDITOR.define( [
 			this._destroyPromise = this._destroyPromise || Promise.resolve()
 				.then( function() {
 					return that._creator && that._creator.destroy();
-				} )
-				.then( function() {
-					that.element = undefined;
 				} );
 
 			return this._destroyPromise;

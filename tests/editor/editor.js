@@ -96,12 +96,6 @@ describe( 'destroy', function() {
 			sinon.assert.called( spy );
 		} );
 	} );
-
-	it( 'should undefine the "element" property', function() {
-		return editor.destroy().then( function() {
-			expect( editor ).to.not.have.property( 'element' );
-		} );
-	} );
 } );
 
 describe( 'setData', function() {
