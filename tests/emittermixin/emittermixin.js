@@ -7,7 +7,7 @@
 
 'use strict';
 
-var modules = bender.amd.require( 'emittermixin', 'eventinfo', 'utils' );
+var modules = bender.amd.require( 'emittermixin', 'eventinfo', 'promise', 'utils' );
 
 var emitter, listener;
 
@@ -119,6 +119,44 @@ describe( 'fire', function() {
 		emitter.fire( 'test' );
 
 		sinon.assert.calledThrice( spy );
+	} );
+
+	it( 'should do return a promise (when no listeners)', function() {
+		var Promise = modules.promise;
+
+		expect( emitter.fire( 'test' ) ).to.be.an.instanceof( Promise );
+	} );
+
+	it( 'should do return a promise (when listeners)', function() {
+		var Promise = modules.promise;
+
+		emitter.on( 'test', function() {} );
+
+		expect( emitter.fire( 'test' ) ).to.be.an.instanceof( Promise );
+	} );
+
+	it( 'should wait for promise on listeners', function() {
+		var Promise = modules.promise;
+
+		var spy1 = sinon.spy().named( 1 );
+		var spy2 = sinon.spy( function() {
+			return Promise.resolve();
+		} ).named( 2 );
+		var spy3 = sinon.spy().named( 3 );
+		var spy4 = sinon.spy( function() {
+			return Promise.resolve();
+		} ).named( 4 );
+		var spy5 = sinon.spy().named( 5 );
+
+		emitter.on( 'test', spy1 );
+		emitter.on( 'test', spy2 );
+		emitter.on( 'test', spy3 );
+		emitter.on( 'test', spy4 );
+		emitter.on( 'test', spy5 );
+
+		return emitter.fire( 'test' ).then( function() {
+			sinon.assert.callOrder( spy1, spy2, spy3, spy4, spy5 );
+		} );
 	} );
 } );
 
