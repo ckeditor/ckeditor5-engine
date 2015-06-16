@@ -17,6 +17,24 @@ before( function() {
 	Editable = modules.editable;
 } );
 
+describe( 'constructor', function() {
+	it( 'should have `parent` empty by default', function() {
+		var editables = new EditableCollection();
+
+		expect( editables.parent ).to.be.undefined();
+	} );
+
+	it( 'should set the `parent` property', function() {
+		var parentEl = document.createElement( 'div' );
+
+		var parentEditable = new Editable( parentEl );
+
+		var editables = new EditableCollection( parentEditable );
+
+		expect( editables.parent ).to.equal( parentEditable );
+	} );
+} );
+
 describe( 'current', function() {
 	it( 'should point to the first available editable by default', function() {
 		var el = document.createElement( 'div' );
@@ -80,5 +98,19 @@ describe( 'add', function() {
 
 		expect( editables.get( 0 ) ).to.equal( editable );
 		expect( editables.get( 0 ).element ).to.equal( el );
+	} );
+
+	it( 'should set the parent editable into items', function() {
+		var parentEl = document.createElement( 'div' );
+		var el = document.createElement( 'div' );
+
+		var parentEditable = new Editable( parentEl );
+
+		var editables = new EditableCollection( parentEditable );
+
+		var editable = new Editable( el );
+		editables.add( editable );
+
+		expect( editable.parent ).to.equal( parentEditable );
 	} );
 } );
