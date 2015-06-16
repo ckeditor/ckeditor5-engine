@@ -83,6 +83,12 @@ describe( 'init', function() {
 			expect( element.contentEditable.toString() ).to.equal( 'true' );
 		} );
 	} );
+
+	it( 'should return the same promise for successive calls', function() {
+		var promise = editable.init();
+
+		expect( editable.init() ).to.equal( promise );
+	} );
 } );
 
 describe( 'setData', function() {
