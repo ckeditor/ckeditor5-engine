@@ -96,6 +96,12 @@ describe( 'destroy', function() {
 			sinon.assert.called( spy );
 		} );
 	} );
+
+	it( 'should return the same promise for successive calls', function() {
+		var promise = editor.destroy();
+
+		expect( editor.destroy() ).to.equal( promise );
+	} );
 } );
 
 describe( 'setData', function() {
