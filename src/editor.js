@@ -68,8 +68,8 @@ CKEDITOR.define( [
 		 * The initialization consists of the following procedures:
 		 *
 		 *  * Loads and initializes the configured plugins.
-		 *  * Fires the editor creator.
 		 *  * Initializes all editables.
+		 *  * Fires the editor creator.
 		 *
 		 * This method should be rarely used as `CKEDITOR.create` calls it. One should never use the `Editor`
 		 * constructor directly.
@@ -85,8 +85,8 @@ CKEDITOR.define( [
 				.then( loadPlugins )
 				.then( initPlugins )
 				.then( prepareData )
-				.then( fireCreator )
 				.then( initEditables )
+				.then( fireCreator )
 				.then( loadData );
 
 			return this._initPromise;
@@ -131,6 +131,16 @@ CKEDITOR.define( [
 				}
 			}
 
+			function initEditables() {
+				var promises = [];
+
+				for ( var i = 0; i < that.editables.length; i++ ) {
+					promises.push( that.editables.get( i ).init() );
+				}
+
+				return Promise.all( promises );
+			}
+
 			function fireCreator() {
 				// Take the name of the creator to use (config or any of the registered ones).
 				var creatorName = config.creator || Object.keys( that._creators )[ 0 ];
@@ -151,16 +161,6 @@ CKEDITOR.define( [
 				}
 
 				// For now, we're assuming that at least one creator will be available, so no error check is done.
-			}
-
-			function initEditables() {
-				var promises = [];
-
-				for ( var i = 0; i < that.editables.length; i++ ) {
-					promises.push( that.editables.get( i ).init() );
-				}
-
-				return Promise.all( promises );
 			}
 
 			function loadData() {
