@@ -150,7 +150,7 @@ CKEDITOR.define( [
 					return that._creator.create();
 				}
 
-				return 0;
+				// For now, we're assuming that at least one creator will be available, so no error check is done.
 			}
 
 			function initEditables() {
