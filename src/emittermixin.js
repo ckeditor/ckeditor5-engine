@@ -12,8 +12,8 @@
  * @singleton
  */
 
-CKEDITOR.define( [ 'eventinfo', 'utils' ], function( EventInfo, utils ) {
-	var EmitterMixin = {
+CKEDITOR.define( [ 'mixin', 'eventinfo', 'utils' ], function( Mixin, EventInfo, utils ) {
+	var EmitterMixin = new Mixin( {
 		/**
 		 * Registers a callback function to be executed when an event is fired.
 		 *
@@ -245,7 +245,7 @@ CKEDITOR.define( [ 'eventinfo', 'utils' ], function( EventInfo, utils ) {
 				}
 			}
 		}
-	};
+	} );
 
 	return EmitterMixin;
 

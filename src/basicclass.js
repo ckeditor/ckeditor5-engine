@@ -17,7 +17,7 @@ CKEDITOR.define( [ 'emittermixin', 'utils' ], function( EmitterMixin, utils ) {
 	}
 
 	// Injects the events API.
-	utils.extend( BasicClass.prototype, EmitterMixin );
+	EmitterMixin.mixin( BasicClass.prototype );
 
 	/**
 	 * Creates a subclass constructor based on this class.
