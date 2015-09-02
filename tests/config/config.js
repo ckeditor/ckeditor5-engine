@@ -206,6 +206,28 @@ describe( 'get', function() {
 	it( 'should return undefined for non existing deep configuration', function() {
 		expect( config.get( 'resize.invalid.value' ) ).to.be.undefined();
 	} );
+
+	it( 'should retrieve from the parent', function() {
+		var Config = modules.config;
+
+		config.parent = new Config( {
+			parentTest: 1
+		} );
+
+		expect( config.get( 'parentTest' ) ).to.equal( 1 );
+	} );
+
+	it( 'should retrieve from definition if not in the parent', function() {
+		var Config = modules.config;
+
+		config.parent = new Config( {
+			parentTest: 1
+		} );
+
+		config.define( 'defineTest', 2 );
+
+		expect( config.get( 'defineTest' ) ).to.equal( 2 );
+	} );
 } );
 
 describe( 'define', function() {

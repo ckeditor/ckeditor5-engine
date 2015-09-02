@@ -3,7 +3,7 @@
  * For licensing, see LICENSE.md.
  */
 
-/* globals document */
+/* globals document, HTMLElement */
 
 'use strict';
 
@@ -36,24 +36,41 @@ CKEDITOR.define( [ 'editor', 'collection', 'promise', 'config' ], function( Edit
 		 *			// Manipulate "editor" here.
 		 *		} );
 		 *
-		 * @param {String|HTMLElement} element An element selector or a DOM element, which will be the source for the
-		 * created instance.
+		 * @param {String|HTMLElement|NodeList|HTMLCollection|Array} elements An element selector, an element or a list
+		 * of elements, which will be the editables of the created instance.
 		 * @returns {Promise} A promise, which will be fulfilled with the created editor.
 		 */
-		create: function( element, config ) {
+		create: function( elements, config ) {
 			var that = this;
 
 			return new Promise( function( resolve, reject ) {
 				// If a query selector has been passed, transform it into a real element.
-				if ( typeof element == 'string' ) {
-					element = document.querySelector( element );
+				if ( typeof elements == 'string' ) {
+					var query = elements;
+					elements = document.querySelectorAll( query );
 
-					if ( !element ) {
-						reject( new Error( 'Element not found' ) );
+					if ( !elements.length ) {
+						reject( new Error( 'No elements found for the query "' + query + '"' ) );
 					}
+				} else if ( elements instanceof HTMLElement ) {
+					// Transform a single element into an array.
+					elements = [ elements ];
 				}
 
-				var editor = new Editor( element, config );
+				if ( !Array.isArray( elements ) ) {
+					// Transform "array-like" to pure array.
+					elements = Array.prototype.slice.call( elements );
+				}
+
+				var editor = new Editor();
+
+				if ( config ) {
+					editor.config.set( config );
+				}
+
+				elements.forEach( function( element ) {
+					editor.editables.add( element );
+				} );
 
 				that.instances.add( editor );
 
