@@ -172,15 +172,15 @@ CKEDITOR.define( [
 		 * @returns {Promise} A promise that resolves once the editor instance is fully destroyed.
 		 */
 		destroy() {
-			var that = this;
-
 			this.fire( 'destroy' );
 
-			delete this.element;
-
-			return Promise.resolve().then( function() {
-				return that._creator && that._creator.destroy();
-			} );
+			return Promise.resolve()
+				.then( () => {
+					return this._creator && this._creator.destroy();
+				} )
+				.then( () => {
+					delete this.element;
+				} );
 		}
 	}
 
