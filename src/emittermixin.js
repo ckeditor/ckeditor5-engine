@@ -12,7 +12,7 @@
  * @singleton
  */
 
-CKEDITOR.define( [ 'eventinfo', 'utils' ], function( EventInfo, utils ) {
+CKEDITOR.define( [ 'eventinfo', 'promise', 'utils' ], function( EventInfo, Promise, utils ) {
 	var EmitterMixin = {
 		/**
 		 * Registers a callback function to be executed when an event is fired.
@@ -217,7 +217,7 @@ CKEDITOR.define( [ 'eventinfo', 'utils' ], function( EventInfo, utils ) {
 			var callbacks = getCallbacksIfAny( this, event );
 
 			if ( !callbacks ) {
-				return;
+				return Promise.resolve();
 			}
 
 			var eventInfo = new EventInfo( this, event );
@@ -226,22 +226,54 @@ CKEDITOR.define( [ 'eventinfo', 'utils' ], function( EventInfo, utils ) {
 			args = Array.prototype.slice.call( arguments, 1 );
 			args.unshift( eventInfo );
 
-			for ( var i = 0; i < callbacks.length; i++ ) {
-				callbacks[ i ].callback.apply( callbacks[ i ].ctx, args );
+			// Current listener index.
+			var index = -1;
 
+			return Promise.resolve( callNext() );
+
+			function callNext() {
+				// Stop if event.stop() has been called by the last called listener.
+				if ( index >= 0 && isEventStopped() ) {
+					return;
+				}
+
+				index++;
+
+				var callbackEntry = callbacks[ index ];
+
+				// The end of the list has been reached.
+				if ( !callbackEntry ) {
+					return;
+				}
+
+				// Execute the callback and save the returned value.
+				var ret = callbackEntry.callback.apply( callbackEntry.ctx, args );
+
+				// If it is a promise, go with the asynchronous way.
+				if ( ret instanceof Promise ) {
+					return ret.then( function() {
+						return callNext();
+					} );
+				}
+
+				// Otherwise go with the synchronous way.
+				return callNext();
+			}
+
+			function isEventStopped() {
 				// Remove the callback from future requests if off() has been called.
 				if ( eventInfo.off.called ) {
 					// Remove the called mark for the next calls.
-					delete eventInfo.off.called;
+					eventInfo.off.called = null;
 
-					// Remove the callback from the list (fixing the next index).
-					callbacks.splice( i, 1 );
-					i--;
+					// Remove the callback from the list (fixing the index).
+					callbacks.splice( index, 1 );
+					index--;
 				}
 
 				// Do not execute next callbacks if stop() was called.
 				if ( eventInfo.stop.called ) {
-					break;
+					return true;
 				}
 			}
 		}
