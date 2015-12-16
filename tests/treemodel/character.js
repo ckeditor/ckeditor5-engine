@@ -8,8 +8,6 @@
 
 'use strict';
 
-const getIteratorCount = bender.tools.core.getIteratorCount;
-
 const modules = bender.amd.require(
 	'core/treemodel/character',
 	'core/treemodel/node',
@@ -35,7 +33,7 @@ describe( 'Character', () => {
 			expect( character ).to.be.an.instanceof( Node );
 			expect( character ).to.have.property( 'character' ).that.equals( 'f' );
 			expect( character ).to.have.property( 'parent' ).that.equals( parent );
-			expect( getIteratorCount( character.getAttrs() ) ).to.equal( 0 );
+			expect( character.attrs.size ).to.equal( 0 );
 		} );
 
 		it( 'should create character with attributes', () => {
@@ -46,8 +44,8 @@ describe( 'Character', () => {
 			expect( character ).to.be.an.instanceof( Node );
 			expect( character ).to.have.property( 'character' ).that.equals( 'f' );
 			expect( character ).to.have.property( 'parent' ).that.equals( parent );
-			expect( getIteratorCount( character.getAttrs() ) ).to.equal( 1 );
-			expect( character.getAttr( attr.key ) ).to.equal( attr.value );
+			expect( character.attrs.size ).to.equal( 1 );
+			expect( character.attrs.get( attr.key ) ).to.equal( attr );
 		} );
 	} );
 } );

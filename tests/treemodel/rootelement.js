@@ -8,8 +8,6 @@
 
 'use strict';
 
-const getIteratorCount = bender.tools.core.getIteratorCount;
-
 const modules = bender.amd.require(
 	'core/treemodel/document',
 	'core/treemodel/element',
@@ -32,7 +30,7 @@ describe( 'Element', () => {
 
 			expect( root ).to.be.an.instanceof( Element );
 			expect( root ).to.have.property( 'document' ).that.equals( doc );
-			expect( getIteratorCount( root.getAttrs() ) ).to.equal( 0 );
+			expect( root.attrs.size ).to.equal( 0 );
 			expect( root.getChildCount() ).to.equal( 0 );
 		} );
 	} );
