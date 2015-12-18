@@ -65,7 +65,7 @@ CKEDITOR.define( [
 					// Child view is added to corresponding region in this controller's view
 					// when a new Controller joins the collection.
 					if ( this.ready && childController.view ) {
-						this.view.addChild( collection.name, childController.view, index );
+						this.view.regions.get( collection.name ).views.add( childController.view, index );
 					}
 				} );
 
@@ -73,7 +73,7 @@ CKEDITOR.define( [
 					// Child view is removed from corresponding region in this controller's view
 					// when a new Controller is removed from the the collection.
 					if ( this.ready && childController.view ) {
-						this.view.removeChild( collection.name, childController.view );
+						this.view.regions.get( collection.name ).views.remove( childController.view );
 					}
 				} );
 			} );
@@ -177,7 +177,7 @@ CKEDITOR.define( [
 			for ( collection of this.collections ) {
 				for ( childController of collection ) {
 					if ( this.view && childController.view ) {
-						this.view.addChild( collection.name, childController.view );
+						this.view.regions.get( collection.name ).views.add( childController.view );
 					}
 
 					promises.push( childController.init() );
