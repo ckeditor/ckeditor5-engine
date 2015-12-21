@@ -12,17 +12,19 @@ const modules = bender.amd.require(
 	'core/treemodel/position',
 	'core/treemodel/element',
 	'core/treemodel/character',
+	'core/treemodel/text',
 	'core/treemodel/document'
 );
 
 describe( 'Range', () => {
-	let Range, Position, Element, Character, Document;
+	let Range, Position, Element, Character, Text, Document;
 
 	before( () => {
 		Position = modules[ 'core/treemodel/position' ];
 		Range = modules[ 'core/treemodel/range' ];
 		Element = modules[ 'core/treemodel/element' ];
 		Character = modules[ 'core/treemodel/character' ];
+		Text = modules[ 'core/treemodel/text' ];
 		Document = modules[ 'core/treemodel/document' ];
 	} );
 
@@ -200,8 +202,6 @@ describe( 'Range', () => {
 
 	describe( 'getAllNodes', () => {
 		it( 'should iterate over all nodes which "starts" in the range', () => {
-			let nodes = [];
-
 			const a = new Character( 'a' );
 			const b = new Character( 'b' );
 			const x = new Character( 'x' );
@@ -219,11 +219,19 @@ describe( 'Range', () => {
 				new Position( root, [ 1, 1 ] )
 			);
 
-			for ( let node of range.getAllNodes() ) {
-				nodes.push( node );
-			}
+			let nodes = Array.from( range.getAllNodes() );
 
 			expect( nodes ).to.deep.equal( [ b, e2, x ] );
+		} );
+
+		it( 'should merge characters with same attributes', () => {
+			prepareRichRoot( root );
+
+			let range = new Range( new Position( root, [ 0, 0, 3 ] ), new Position( root, [ 3, 0, 2 ] ) );
+			let nodes = Array.from( range.getAllNodes( true ) );
+			let nodeNames = mapNodesToNames( nodes );
+
+			expect( nodeNames ).to.deep.equal( [ 'T:st', 'E:p', 'T:lorem ipsum', 'E:p', 'T:foo', 'E:p', 'T:bar', 'E:div', 'E:h', 'T:se' ] );
 		} );
 	} );
 
@@ -441,11 +449,57 @@ describe( 'Range', () => {
 		it( 'should iterate over all top-level nodes of this range', () => {
 			let range = new Range( new Position( root, [ 0, 0, 3 ] ), new Position( root, [ 3, 0, 2 ] ) );
 			let nodes = Array.from( range.getTopLevelNodes() );
-			let nodeNames = nodes.map( ( node ) => {
-				return ( node instanceof Element ) ? 'E:' + node.name : 'C:' + node.character;
-			} );
+			let nodeNames = mapNodesToNames( nodes );
 
 			expect( nodeNames ).to.deep.equal( [ 'C:s', 'C:t', 'E:p', 'E:p', 'E:p', 'C:s', 'C:e' ] );
+		} );
+
+		it( 'should merge characters with same attributes', () => {
+			let range = new Range( new Position( root, [ 0, 0, 3 ] ), new Position( root, [ 3, 0, 2 ] ) );
+			let nodes = Array.from( range.getTopLevelNodes( true ) );
+			let nodeNames = mapNodesToNames( nodes );
+
+			expect( nodeNames ).to.deep.equal( [ 'T:st', 'E:p', 'E:p', 'E:p', 'T:se' ] );
+		} );
+	} );
+
+	describe( 'getPositions', () => {
+		beforeEach( () => {
+			prepareRichRoot( root );
+		} );
+
+		it( 'should iterate over all positions in this range', () => {
+			let expectedPaths = [
+				[ 1, 2 ], [ 1, 3 ],
+				[ 2 ], [ 2, 0 ], [ 2, 1 ], [ 2, 2 ], [ 2, 3 ],
+				[ 3 ], [ 3, 0 ], [ 3, 0, 0 ], [ 3, 0, 1 ], [ 3, 0, 2 ]
+			];
+			let range = new Range( new Position( root, [ 1, 2 ] ), new Position( root, [ 3, 0, 2 ] ) );
+			let i = 0;
+
+			for ( let position of range.getPositions() ) {
+				expect( position.path ).to.deep.equal( expectedPaths[ i ] );
+				i++;
+			}
+
+			expect( i ).to.equal( expectedPaths.length );
+		} );
+
+		it( 'should merge characters with same attributes', () => {
+			let expectedPaths = [
+				[ 1, 2 ], [ 1, 3 ],
+				[ 2 ], [ 2, 0 ], [ 2, 3 ],
+				[ 3 ], [ 3, 0 ], [ 3, 0, 0 ], [ 3, 0, 2 ]
+			];
+			let range = new Range( new Position( root, [ 1, 2 ] ), new Position( root, [ 3, 0, 2 ] ) );
+			let i = 0;
+
+			for ( let position of range.getPositions( true ) ) {
+				expect( position.path ).to.deep.equal( expectedPaths[ i ] );
+				i++;
+			}
+
+			expect( i ).to.equal( expectedPaths.length );
 		} );
 	} );
 
@@ -464,6 +518,13 @@ describe( 'Range', () => {
 			expect( range.isFlat ).to.be.false;
 		} );
 	} );
+
+	function mapNodesToNames( nodes ) {
+		return nodes.map( ( node ) => {
+			return ( node instanceof Element ) ? 'E:' + node.name :
+				( node instanceof Text ) ? 'T:' + node.text : 'C:' + node.character;
+		} );
+	}
 
 	function prepareRichRoot() {
 		root.insertChildren( 0, [
