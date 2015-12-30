@@ -445,11 +445,9 @@ CKEDITOR.define( [ 'emittermixin', 'ckeditorerror', 'utils' ], ( EmitterMixin, C
 	 * @param {*} value The value of the attribute.
 	 */
 	function updateModelAttrs( chain, attrName, value ) {
-		const boundAttrs = getModelBindingsToCurrent( chain )[ attrName ];
+		let boundAttrs;
 
-		if ( !boundAttrs ) {
-			return;
-		} else if ( chain._callback ) {
+		if ( chain._callback ) {
 			// MODEL.bind( 'a' ).to( TOMODEL1, 'b1' )[ .to( TOMODELn, 'bn' ) ].as( callback )
 			//  \-> Collect specific attribute value in the boundTo.model (TOMODELn.bn).
 			//
@@ -464,7 +462,7 @@ CKEDITOR.define( [ 'emittermixin', 'ckeditorerror', 'utils' ], ( EmitterMixin, C
 				chain._bindAttrs[ 0 ],
 				chain._callback.apply( chain._bindModel, values )
 			);
-		} else {
+		} else if ( ( boundAttrs = getModelBindingsToCurrent( chain )[ attrName ] ) ) {
 			// MODEL.bind( 'a' ).to( TOMODEL1 )[ .to( TOMODELn ) ];
 			//  \-> If multiple .to() models but **no** .as( callback ), then the binding is invalid.
 			if ( !chain._callback && chain._boundTo.length > 1 ) {
