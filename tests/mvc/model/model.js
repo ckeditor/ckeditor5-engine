@@ -531,6 +531,26 @@ describe( 'Model', () => {
 						{ color: 'blackbrightyellow', year: undefined }
 					);
 				} );
+
+				it( 'should work for a single attribute #5', () => {
+					const vehicle = new Car();
+					const car1 = new Car( { hue: 'reds' } );
+					const car2 = new Car( { lightness: 'bright' } );
+
+					vehicle.bind( 'color' )
+						.to( car1, 'hue' )
+						.to( car2, 'lightness' )
+						.as( ( hue, lightness ) => hue + lightness );
+
+					assertBinding( vehicle,
+						{ color: car1.hue + car2.lightness, year: undefined },
+						[
+							[ car1, { hue: 'greens', year: 1930 } ],
+							[ car2, { lightness: 'dark', year: 1950 } ]
+						],
+						{ color: 'greensdark', year: undefined }
+					);
+				} );
 			} );
 		} );
 	} );
