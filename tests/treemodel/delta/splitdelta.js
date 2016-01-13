@@ -5,11 +5,7 @@
 
 /* bender-tags: treemodel, delta */
 
-/* bender-include: ../../_tools/tools.js */
-
 'use strict';
-
-const getIteratorCount = bender.tools.core.getIteratorCount;
 
 const modules = bender.amd.require(
 	'core/treemodel/document',
@@ -48,16 +44,16 @@ describe( 'Batch', () => {
 
 			expect( root.getChild( 0 ).name ).to.equal( 'p' );
 			expect( root.getChild( 0 ).getChildCount() ).to.equal( 3 );
-			expect( getIteratorCount( root.getChild( 0 ).getAttrs() ) ).to.equal( 1 );
-			expect( root.getChild( 0 ).getAttr( 'key' ) ).to.equal( 'value' );
+			expect( root.getChild( 0 ).attrs.size ).to.equal( 1 );
+			expect( root.getChild( 0 ).attrs.getValue( 'key' ) ).to.equal( 'value' );
 			expect( root.getChild( 0 ).getChild( 0 ).character ).to.equal( 'f' );
 			expect( root.getChild( 0 ).getChild( 1 ).character ).to.equal( 'o' );
 			expect( root.getChild( 0 ).getChild( 2 ).character ).to.equal( 'o' );
 
 			expect( root.getChild( 1 ).name ).to.equal( 'p' );
 			expect( root.getChild( 1 ).getChildCount() ).to.equal( 3 );
-			expect( getIteratorCount( root.getChild( 1 ).getAttrs() ) ).to.equal( 1 );
-			expect( root.getChild( 1 ).getAttr( 'key' ) ).to.equal( 'value' );
+			expect( root.getChild( 1 ).attrs.size ).to.equal( 1 );
+			expect( root.getChild( 1 ).attrs.getValue( 'key' ) ).to.equal( 'value' );
 			expect( root.getChild( 1 ).getChild( 0 ).character ).to.equal( 'b' );
 			expect( root.getChild( 1 ).getChild( 1 ).character ).to.equal( 'a' );
 			expect( root.getChild( 1 ).getChild( 2 ).character ).to.equal( 'r' );
@@ -70,8 +66,8 @@ describe( 'Batch', () => {
 
 			expect( root.getChild( 0 ).name ).to.equal( 'p' );
 			expect( root.getChild( 0 ).getChildCount() ).to.equal( 6 );
-			expect( getIteratorCount( root.getChild( 0 ).getAttrs() ) ).to.equal( 1 );
-			expect( root.getChild( 0 ).getAttr( 'key' ) ).to.equal( 'value' );
+			expect( root.getChild( 0 ).attrs.size ).to.equal( 1 );
+			expect( root.getChild( 0 ).attrs.getValue( 'key' ) ).to.equal( 'value' );
 			expect( root.getChild( 0 ).getChild( 0 ).character ).to.equal( 'f' );
 			expect( root.getChild( 0 ).getChild( 1 ).character ).to.equal( 'o' );
 			expect( root.getChild( 0 ).getChild( 2 ).character ).to.equal( 'o' );
@@ -81,8 +77,8 @@ describe( 'Batch', () => {
 
 			expect( root.getChild( 1 ).name ).to.equal( 'p' );
 			expect( root.getChild( 1 ).getChildCount() ).to.equal( 0 );
-			expect( getIteratorCount( root.getChild( 1 ).getAttrs() ) ).to.equal( 1 );
-			expect( root.getChild( 1 ).getAttr( 'key' ) ).to.equal( 'value' );
+			expect( root.getChild( 1 ).attrs.size ).to.equal( 1 );
+			expect( root.getChild( 1 ).attrs.getValue( 'key' ) ).to.equal( 'value' );
 		} );
 
 		it( 'should throw if we try to split a root', () => {

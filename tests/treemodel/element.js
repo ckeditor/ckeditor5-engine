@@ -8,8 +8,6 @@
 
 'use strict';
 
-const getIteratorCount = bender.tools.core.getIteratorCount;
-
 const modules = bender.amd.require(
 	'core/treemodel/node',
 	'core/treemodel/nodelist',
@@ -35,7 +33,7 @@ describe( 'Element', () => {
 			expect( element ).to.be.an.instanceof( Node );
 			expect( element ).to.have.property( 'name' ).that.equals( 'elem' );
 			expect( element ).to.have.property( 'parent' ).that.equals( parent );
-			expect( getIteratorCount( element.getAttrs() ) ).to.equal( 0 );
+			expect( element.attrs.size ).to.equal( 0 );
 		} );
 
 		it( 'should create element with attributes', () => {
@@ -47,8 +45,8 @@ describe( 'Element', () => {
 			expect( element ).to.be.an.instanceof( Node );
 			expect( element ).to.have.property( 'name' ).that.equals( 'elem' );
 			expect( element ).to.have.property( 'parent' ).that.equals( parent );
-			expect( getIteratorCount( element.getAttrs() ) ).to.equal( 1 );
-			expect( element.getAttr( attr.key ) ).to.equal( attr.value );
+			expect( element.attrs.size ).to.equal( 1 );
+			expect( element.attrs.getValue( attr.key ) ).to.equal( attr.value );
 		} );
 
 		it( 'should create element with children', () => {
