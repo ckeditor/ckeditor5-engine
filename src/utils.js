@@ -5,6 +5,8 @@
 
 'use strict';
 
+import objectUtils from './lib/lodash/object.js';
+
 const utils = {
 	/**
 	 * Creates a spy function (ala Sinon.js) that can be used to inspect call to it.
@@ -102,6 +104,32 @@ const utils = {
 		}
 
 		return null;
+	},
+
+	/**
+	 * Returns a new class with properties of the 2nd+ objects mixed into its prototype.
+	 *
+	 *		class SpecificEditor extends utils.mix( Editor, SomeMixin1, SomeMixin2 ) {
+	 *			...
+	 *		}
+	 *
+	 * @param {Function} [baseClass] Class from which the new class will inherit. If `null` then a new class
+	 * will be created.
+	 * @param {Object} [...mixins] Objects from which to get properties.
+	 * @returns {Function} New class.
+	 */
+	mix( baseClass, ...mixins ) {
+		if ( baseClass ) {
+			baseClass = class extends baseClass {};
+		} else {
+			baseClass = class {};
+		}
+
+		mixins.forEach( ( mixin ) => {
+			objectUtils.extend( baseClass.prototype, mixin );
+		} );
+
+		return baseClass;
 	}
 };
 

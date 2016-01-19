@@ -143,4 +143,57 @@ describe( 'utils', () => {
 			yield 33;
 		}
 	} );
+
+	describe( 'mix', () => {
+		class Base {}
+		const MixinA = {
+			a() {
+				return 'a';
+			}
+		};
+		const MixinB = {
+			b() {
+				return 'b';
+			}
+		};
+
+		it( 'mixes 2nd+ param\'s properties into the first class', () => {
+			class Foo extends utils.mix( Base, MixinA, MixinB ) {}
+
+			expect( Foo ).to.not.have.property( 'a' );
+			expect( Foo ).to.not.have.property( 'b' );
+
+			const foo = new Foo();
+
+			expect( foo.a() ).to.equal( 'a' );
+			expect( foo.b() ).to.equal( 'b' );
+		} );
+
+		it( 'does not change the base class', () => {
+			utils.mix( Base, MixinA );
+
+			const base = new Base();
+
+			expect( Base ).to.not.have.property( 'a' );
+			expect( base.a ).to.be.undefined;
+		} );
+
+		it( 'does not break the instanceof operator', () => {
+			class Foo extends utils.mix( Base, MixinA ) {}
+
+			let foo = new Foo();
+
+			expect( foo ).to.be.instanceof( Base );
+			expect( foo ).to.be.instanceof( Foo );
+		} );
+
+		it( 'works without a base class', () => {
+			class Foo extends utils.mix( null, MixinA, MixinB ) {}
+
+			const foo = new Foo();
+
+			expect( foo.a() ).to.equal( 'a' );
+			expect( foo.b() ).to.equal( 'b' );
+		} );
+	} );
 } );
