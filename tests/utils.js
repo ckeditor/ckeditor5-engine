@@ -195,5 +195,18 @@ describe( 'utils', () => {
 			expect( foo.a() ).to.equal( 'a' );
 			expect( foo.b() ).to.equal( 'b' );
 		} );
+
+		it( 'defines properties with the same descriptors as native classes', () => {
+			class Foo extends utils.mix( Base, MixinA ) {
+				foo() {}
+			}
+
+			const actualDescriptor = Object.getOwnPropertyDescriptor( Object.getPrototypeOf( Foo.prototype ), 'a' );
+			const expectedDescriptor = Object.getOwnPropertyDescriptor( Foo.prototype, 'foo' );
+
+			expect( actualDescriptor ).to.have.property( 'writable', expectedDescriptor.writable );
+			expect( actualDescriptor ).to.have.property( 'enumerable', expectedDescriptor.enumerable );
+			expect( actualDescriptor ).to.have.property( 'configurable', expectedDescriptor.configurable );
+		} );
 	} );
 } );

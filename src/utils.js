@@ -5,8 +5,6 @@
 
 'use strict';
 
-import objectUtils from './lib/lodash/object.js';
-
 const utils = {
 	/**
 	 * Creates a spy function (ala Sinon.js) that can be used to inspect call to it.
@@ -126,7 +124,14 @@ const utils = {
 		}
 
 		mixins.forEach( ( mixin ) => {
-			objectUtils.extend( baseClass.prototype, mixin );
+			Object.keys( mixin ).forEach( ( key ) => {
+				Object.defineProperty( baseClass.prototype, key, {
+					enumerable: false,
+					configurable: true,
+					writable: true,
+					value: mixin[ key ]
+				} );
+			} );
 		} );
 
 		return baseClass;
