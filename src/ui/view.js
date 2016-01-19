@@ -11,7 +11,7 @@ import Region from './region.js';
 import Template from './template.js';
 import CKEditorError from '../ckeditorerror.js';
 import DOMEmitterMixin from './domemittermixin.js';
-import objectUtils from '../lib/lodash/object.js';
+import utils from '../utils.js';
 
 /**
  * Basic View class.
@@ -21,7 +21,7 @@ import objectUtils from '../lib/lodash/object.js';
  * @mixins DOMEmitterMixin
  */
 
-export default class View extends Model {
+export default class View extends utils.mix( Model, DOMEmitterMixin ) {
 	/**
 	 * Creates an instance of the {@link View} class.
 	 *
@@ -385,8 +385,6 @@ export default class View extends Model {
 		}
 	}
 }
-
-objectUtils.extend( View.prototype, DOMEmitterMixin );
 
 const validSelectorTypes = new Set( [ 'string', 'boolean', 'function' ] );
 

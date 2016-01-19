@@ -8,7 +8,7 @@
 import Position from './position.js';
 import Range from './range.js';
 import EmitterMixin from '../emittermixin.js';
-import objectUtils from '../lib/lodash/object.js';
+import utils from '../utils.js';
 
 const STICKS_TO_NEXT = 0;
 const STICKS_TO_PREVIOUS = 1;
@@ -21,7 +21,7 @@ const STICKS_TO_PREVIOUS = 1;
  * @class treeModel.LivePosition
  */
 
-export default class LivePosition extends Position {
+export default class LivePosition extends utils.mix( Position, EmitterMixin ) {
 	/**
 	 * Creates a live position.
 	 *
@@ -180,5 +180,3 @@ LivePosition.STICKS_TO_PREVIOUS = STICKS_TO_PREVIOUS;
  * @type {number}
  */
 LivePosition.STICKS_TO_NEXT = STICKS_TO_NEXT;
-
-objectUtils.extend( LivePosition.prototype, EmitterMixin );

@@ -8,7 +8,7 @@
 import Range from './range.js';
 import LivePosition from './liveposition.js';
 import EmitterMixin from '../emittermixin.js';
-import objectUtils from '../lib/lodash/object.js';
+import utils from '../utils.js';
 
 /**
  * LiveRange is a Range in the Tree Model that updates itself as the tree changes. It may be used as a bookmark.
@@ -18,7 +18,7 @@ import objectUtils from '../lib/lodash/object.js';
  *
  * @class treeModel.LiveRange
  */
-export default class LiveRange extends Range {
+export default class LiveRange extends utils.mix( Range, EmitterMixin ) {
 	/**
 	 * Creates a live range.
 	 *
@@ -133,5 +133,3 @@ function fixBoundaries( type, range, position ) {
 		}
 	}
 }
-
-objectUtils.extend( LiveRange.prototype, EmitterMixin );

@@ -7,7 +7,6 @@
 
 import EmitterMixin from './emittermixin.js';
 import CKEditorError from './ckeditorerror.js';
-import utilsObject from './lib/lodash/object.js';
 import utils from './utils.js';
 
 /**
@@ -24,7 +23,7 @@ import utils from './utils.js';
  * @mixins EventEmitter
  */
 
-export default class Collection {
+export default class Collection extends utils.mix( null, EmitterMixin ) {
 	/**
 	 * Creates a new Collection instance.
 	 *
@@ -34,6 +33,8 @@ export default class Collection {
 	 * @param {String} [options.idProperty='id'] The name of the property which is considered to identify an item.
 	 */
 	constructor( options ) {
+		super();
+
 		/**
 		 * The internal list of items in the collection.
 		 *
@@ -265,8 +266,6 @@ export default class Collection {
 		return id;
 	}
 }
-
-utilsObject.extend( Collection.prototype, EmitterMixin );
 
 /**
  * Fired when an item is added to the collection.
