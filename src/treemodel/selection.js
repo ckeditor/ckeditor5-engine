@@ -9,7 +9,7 @@ import LiveRange from './liverange.js';
 import AttributeList from './attributelist.js';
 import EmitterMixin from '../emittermixin.js';
 import CKEditorError from '../ckeditorerror.js';
-import objectUtils from '../lib/lodash/object.js';
+import utils from '../utils.js';
 
 /**
  * Represents a selection that is made on nodes in {@link treeModel.Document}. Selection instance is
@@ -17,13 +17,15 @@ import objectUtils from '../lib/lodash/object.js';
  *
  * @class treeModel.Selection
  */
-export default class Selection {
+export default class Selection extends utils.mix( null, EmitterMixin ) {
 	/**
 	 * Creates an empty selection.
 	 *
 	 * @constructor
 	 */
 	constructor() {
+		super();
+
 		/**
 		 * List of attributes set on current selection.
 		 *
@@ -240,5 +242,3 @@ function pushRange( range ) {
 
 	this._ranges.push( LiveRange.createFromRange( range ) );
 }
-
-objectUtils.extend( Selection.prototype, EmitterMixin );

@@ -10,7 +10,7 @@ import Batch from './batch.js';
 import Selection from './selection.js';
 import EmitterMixin from '../emittermixin.js';
 import CKEditorError from '../ckeditorerror.js';
-import objectUtils from '../lib/lodash/object.js';
+import utils from '../utils.js';
 
 const graveyardSymbol = Symbol( 'graveyard' );
 
@@ -27,13 +27,15 @@ const graveyardSymbol = Symbol( 'graveyard' );
  *
  * @class treeModel.Document
  */
-export default class Document {
+export default class Document extends utils.mix( null, EmitterMixin ) {
 	/**
 	 * Creates an empty document instance with no {@link #roots}.
 	 *
 	 * @constructor
 	 */
 	constructor() {
+		super();
+
 		/**
 		 * List of roots that are owned and managed by this document.
 		 *
@@ -228,5 +230,3 @@ export default class Document {
 	 * @event changesDone
 	 */
 }
-
-objectUtils.extend( Document.prototype, EmitterMixin );

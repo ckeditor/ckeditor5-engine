@@ -7,6 +7,7 @@
 
 import EmitterMixin from './emittermixin.js';
 import CKEditorError from './ckeditorerror.js';
+import utils from './utils.js';
 import utilsObject from './lib/lodash/object.js';
 import utilsLang from './lib/lodash/lang.js';
 
@@ -17,7 +18,7 @@ import utilsLang from './lib/lodash/lang.js';
  * @mixins EventEmitter
  */
 
-export default class Model {
+export default class Model extends utils.mix( null, EmitterMixin ) {
 	/**
 	 * Creates a new Model instance.
 	 *
@@ -26,6 +27,8 @@ export default class Model {
 	 * @method constructor
 	 */
 	constructor( attributes, properties ) {
+		super();
+
 		/**
 		 * The internal hash containing the model's state.
 		 *
@@ -624,8 +627,6 @@ function attachBindToListeners( model, toBindings ) {
 		}
 	} );
 }
-
-utilsObject.extend( Model.prototype, EmitterMixin );
 
 /**
  * Fired when an attribute changed value.
