@@ -5,7 +5,9 @@
   "keywords": [
     "CKEditor"
   ],
-  "dependencies": {},
+  "dependencies": {
+    "ckeditor5": "ckeditor/ckeditor5#jenkins"
+  },
   "devDependencies": {
     "git-guppy": "^1.0.1",
     "gulp": "^3.9.0",
