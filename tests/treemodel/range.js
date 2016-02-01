@@ -273,9 +273,19 @@ describe( 'Range', () => {
 			expect( transformed[ 0 ].end.path[ 0 ] ).to.equal( 6 );
 		} );
 
-		it( 'should return array with two ranges and updated positions if insertion was in the middle of range', () => {
+		it( 'should expand range if insertion was in the middle of range', () => {
 			const range = new Range( new Position( root, [ 3, 2 ] ), new Position( root, [ 5, 4 ] ) );
-			const transformed = range.getTransformedByInsertion( new Position( root, [ 4, 1, 6 ] ), 4 );
+			const transformed = range.getTransformedByInsertion( new Position( root, [ 5, 0 ] ), 4 );
+
+			expect( transformed.length ).to.equal( 1 );
+
+			expect( transformed[ 0 ].start.path ).to.deep.equal( [ 3, 2 ] );
+			expect( transformed[ 0 ].end.path ).to.deep.equal( [ 5, 8 ] );
+		} );
+
+		it( 'should return array with two ranges if insertion was in the middle of range and spread flag was set', () => {
+			const range = new Range( new Position( root, [ 3, 2 ] ), new Position( root, [ 5, 4 ] ) );
+			const transformed = range.getTransformedByInsertion( new Position( root, [ 4, 1, 6 ] ), 4, true );
 
 			expect( transformed.length ).to.equal( 2 );
 
