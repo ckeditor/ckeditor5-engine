@@ -15,7 +15,15 @@ import InsertOperation from '../operation/insertoperation.js';
  *
  * @class treeModel.delta.InsertDelta
  */
-export default class InsertDelta extends Delta {}
+export default class InsertDelta extends Delta {
+	get insertOperation() {
+		return this.operations[ 0 ] || null;
+	}
+
+	get position() {
+		return this.insertOperation ? this.insertOperation.position : null;
+	}
+}
 
 /**
  * Inserts a node or nodes at the given position.
@@ -29,10 +37,10 @@ export default class InsertDelta extends Delta {}
  */
 register( 'insert', function( position, nodes ) {
 	const delta = new InsertDelta();
+	const insert = new InsertOperation( position, nodes, this.doc.version );
 
-	const operation = new InsertOperation( position, nodes, this.doc.version );
-	this.doc.applyOperation( operation );
-	delta.addOperation( operation );
+	delta.addOperation( insert );
+	this.doc.applyOperation( insert );
 
 	this.addDelta( delta );
 
