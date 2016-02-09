@@ -191,4 +191,63 @@ describe( 'Template', () => {
 			} );
 		} );
 	} );
+
+	describe( 'apply', () => {
+		it( 'applies template to existing DOM structure', () => {
+			const parent = document.createElement( 'p' );
+			const childA = document.createElement( 'b' );
+			const childB = document.createElement( 'i' );
+			const childBA = document.createElement( 'b' );
+
+			const spy1 = testUtils.sinon.spy();
+			const spy2 = testUtils.sinon.spy();
+			const spy3 = testUtils.sinon.spy();
+			const spy4 = testUtils.sinon.spy();
+
+			parent.appendChild( childA );
+			parent.appendChild( childB );
+			childB.appendChild( childBA );
+
+			new Template( {
+				tag: 'p',
+				attrs: {
+					a: 'A',
+					b: spy1
+				},
+				children: [
+					{
+						tag: 'b',
+						attrs: {
+							c: spy3
+						},
+						text: 'B'
+					},
+					{
+						tag: 'i',
+						children: [
+							{
+								tag: 'b',
+								text: 'D'
+							}
+						],
+						on: {
+							mouseover: spy4
+						},
+						text: 'C'
+					}
+				],
+				on: {
+					click: spy2
+				},
+				text: 'root'
+			} ).apply( parent );
+
+			expect( parent.outerHTML ).to.be.equal( '<p><b></b><i><b></b></i></p>' );
+
+			sinon.assert.calledWithExactly( spy1, parent, sinon.match.func );
+			sinon.assert.calledWithExactly( spy2, parent, 'click', null );
+			sinon.assert.calledWithExactly( spy3, childA, sinon.match.func );
+			sinon.assert.calledWithExactly( spy4, childB, 'mouseover', null );
+		} );
+	} );
 } );

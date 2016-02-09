@@ -621,6 +621,120 @@ describe( 'View', () => {
 			} ).to.not.throw();
 		} );
 	} );
+
+	describe( 'applyTemplateToElement', () => {
+		beforeEach( () => {
+			setTestViewClass();
+			setTestViewInstance( { a: 'foo', b: 42 } );
+		} );
+
+		it( 'should initialize attributes', () => {
+			const el = document.createElement( 'div' );
+
+			view.applyTemplateToElement( el, {
+				attrs: {
+					class: view.bindToAttribute( 'b' )
+				}
+			} );
+
+			expect( el.outerHTML ).to.be.equal( '<div class="42"></div>' );
+
+			view.model.b = 64;
+
+			expect( el.outerHTML ).to.be.equal( '<div class="64"></div>' );
+		} );
+
+		it( 'should initialize listeners', () => {
+			const el = document.createElement( 'div' );
+			const spy = testUtils.sinon.spy();
+
+			view.applyTemplateToElement( el, {
+				on: {
+					click: spy
+				}
+			} );
+
+			document.body.appendChild( el );
+
+			dispatchEvent( el, 'click' );
+
+			sinon.assert.calledOnce( spy );
+
+			view.stopListening( el, 'click' );
+			dispatchEvent( el, 'click' );
+
+			sinon.assert.calledOnce( spy );
+		} );
+
+		it( 'should work for element children', () => {
+			const el = document.createElement( 'div' );
+			const childA = document.createElement( 'a' );
+			const childB = document.createElement( 'b' );
+
+			childA.textContent = 'anchor';
+			childB.textContent = 'bold';
+
+			el.appendChild( childA );
+			el.appendChild( childB );
+
+			const spy1 = testUtils.sinon.spy();
+			const spy2 = testUtils.sinon.spy();
+			const spy3 = testUtils.sinon.spy();
+
+			view.applyTemplateToElement( el, {
+				children: [
+					{
+						on: {
+							keyup: spy2
+						},
+						attrs: {
+							class: view.bindToAttribute( 'b', ( el, b ) => 'childA-' + b ),
+							'should-not': 'be set'
+						},
+						text: 'should not be set'
+					},
+					{
+						on: {
+							keydown: spy3
+						},
+						attrs: {
+							class: view.bindToAttribute( 'b', ( el, b ) => 'childB-' + b )
+						},
+						text: 'should not be set'
+					}
+				],
+				on: {
+					'mouseover@a': spy1
+				},
+				attrs: {
+					id: view.bindToAttribute( 'a', ( el, a ) => a.toUpperCase() ),
+					class: view.bindToAttribute( 'b', ( el, b ) => 'parent-' + b ),
+					'should-not': 'be set'
+				},
+				text: 'should not be set'
+			} );
+
+			expect( el.outerHTML ).to.be.equal( '<div id="FOO" class="parent-42">' +
+				'<a class="childA-42">anchor</a><b class="childB-42">bold</b>' +
+			'</div>' );
+
+			document.body.appendChild( el );
+
+			// Test "mouseover@a".
+			dispatchEvent( el, 'mouseover' );
+			dispatchEvent( childA, 'mouseover' );
+
+			// Test "keyup".
+			dispatchEvent( childA, 'keyup' );
+
+			// Test "keydown".
+			dispatchEvent( childB, 'keydown' );
+
+			sinon.assert.calledOnce( spy1 );
+			sinon.assert.calledOnce( spy2 );
+			sinon.assert.calledOnce( spy3 );
+		} );
+	} );
 } );
 
 function createViewInstanceWithTemplate() {

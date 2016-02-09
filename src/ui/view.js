@@ -97,7 +97,7 @@ export default class View {
 		}
 
 		// Prepare pre–defined listeners.
-		this._prepareElementListeners( this.template );
+		this._prepareTemplateListeners( this.template );
 
 		this._template = new Template( this.template );
 
@@ -235,6 +235,34 @@ export default class View {
 	}
 
 	/**
+	 * Applies template to existing DOM element in the context of View.
+	 * This method activates all {@link TemplateDefinition#on} listeners
+	 * and {@link TemplateDefinition#attrs} model bindings for the element.
+	 *
+ 	 *		const element = document.createElement( 'div' );
+ 	 *		const view = new View( new Model( { foo: true } ) );
+	 *
+	 *		view.applyTemplateToElement( element, {
+	 *			attrs: {
+	 *				class: view.bindToAttribute( 'foo' )
+	 *			},
+	 *			on: {
+	 *				click: 'elementClicked'
+	 * 			}
+	 *		} );
+	 *
+	 * See: {@link Template#apply}.
+	 *
+	 * @param {DOMElement} element DOM Element to initialize.
+	 * @param {TemplateDefinition} def Template definition to be applied.
+	 */
+	applyTemplateToElement( element, def ) {
+		this._prepareTemplateListeners( def );
+
+		new Template( def ).apply( element );
+	}
+
+	/**
 	 * Destroys the view instance. The process includes:
 	 *  1. Removal of child views from {@link #regions}.
 	 *  2. Destruction of the {@link #regions}.
@@ -343,7 +371,7 @@ export default class View {
 	 * @protected
 	 * @param {TemplateDefinition} def Template definition.
 	 */
-	_prepareElementListeners( def ) {
+	_prepareTemplateListeners( def ) {
 		let on = def.on;
 
 		if ( on ) {
@@ -377,7 +405,7 @@ export default class View {
 
 		// Repeat recursively for the children.
 		if ( def.children ) {
-			def.children.map( this._prepareElementListeners, this );
+			def.children.map( this._prepareTemplateListeners, this );
 		}
 	}
 }
