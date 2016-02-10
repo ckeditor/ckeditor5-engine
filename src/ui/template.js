@@ -32,10 +32,26 @@ export default class Template {
 	/**
 	 * Renders HTMLElement using {@link #def}.
 	 *
+	 * See: {@link #apply}.
+	 *
 	 * @returns {HTMLElement}
 	 */
 	render() {
-		return this._renderElement( this.def, true );
+		return this._renderElement( this.def, null, true );
+	}
+
+	/**
+	 * Applies template {@link #def} to existing DOM element (tree).
+	 *
+	 * **Note:** No DOM nodes (elements, text nodes) will be created.
+	 * Also no new element attributes will be set unless they're bound to model.
+	 *
+	 * See: {@link #render}.
+	 *
+	 * @param {HTMLElement} element Root element for template to apply.
+	 */
+	apply( element ) {
+		return this._renderElement( this.def, element );
 	}
 
 	/**
@@ -43,21 +59,24 @@ export default class Template {
 	 *
 	 * @protected
 	 * @param {TemplateDefinition} def Definition of an element.
+	 * @param {HTMLElement} softRenderElement If specified, template `def` will be applied to existing element.
 	 * @param {Boolean} intoFragment If set, children are rendered into DocumentFragment.
 	 * @returns {HTMLElement} A rendered element.
 	 */
-	_renderElement( def, intoFragment ) {
+	_renderElement( def, softRenderElement, intoFragment ) {
 		if ( !def ) {
 			return null;
 		}
 
-		const el = document.createElement( def.tag );
+		const el = softRenderElement || document.createElement( def.tag );
 
 		// Set the text first.
-		this._renderElementText( def, el );
+		if ( !softRenderElement ) {
+			this._renderElementText( def, el );
+		}
 
 		// Set attributes.
-		this._renderElementAttributes( def, el );
+		this._renderElementAttributes( def, el, !!softRenderElement );
 
 		// Invoke children recursively.
 		if ( intoFragment ) {
@@ -67,7 +86,7 @@ export default class Template {
 
 			el.appendChild( docFragment );
 		} else {
-			this._renderElementChildren( def, el );
+			this._renderElementChildren( def, el, !!softRenderElement );
 		}
 
 		// Activate DOM binding for event listeners.
@@ -99,8 +118,9 @@ export default class Template {
 	 * @protected
 	 * @param {TemplateDefinition} def Definition of an element.
 	 * @param {HTMLElement} el Element which is rendered.
+	 * @param {Boolean} softRender Initialize model bindings only, don't touch attributes not bound.
 	 */
-	_renderElementAttributes( def, el ) {
+	_renderElementAttributes( def, el, softRender ) {
 		let attr, value;
 
 		for ( attr in def.attrs ) {
@@ -112,7 +132,7 @@ export default class Template {
 			}
 
 			// Explicit attribute definition (string).
-			else {
+			else if ( !softRender ) {
 				// Attribute can be an array, i.e. classes.
 				if ( Array.isArray( value ) ) {
 					value = value.join( ' ' );
@@ -130,14 +150,17 @@ export default class Template {
 	 * @protected
 	 * @param {TemplateDefinition} def Definition of an element.
 	 * @param {HTMLElement} el Element which is rendered.
+	 * @param {Boolean} softRender Traverse existing DOM structure only, don't modify DOM.
 	 */
-	_renderElementChildren( def, el ) {
-		let child;
-
+	_renderElementChildren( def, el, softRender ) {
 		if ( def.children ) {
-			for ( child of def.children ) {
-				el.appendChild( this._renderElement( child ) );
-			}
+			def.children.map( ( childDef, index ) => {
+				if ( softRender ) {
+					this._renderElement( childDef, el.childNodes[ index ] );
+				} else {
+					el.appendChild( this._renderElement( childDef ) );
+				}
+			} );
 		}
 	}
 
