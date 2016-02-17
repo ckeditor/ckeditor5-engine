@@ -3,6 +3,8 @@
  * For licensing, see LICENSE.md.
  */
 
+/* bender-tags: browser-only */
+
 'use strict';
 
 import CKEditorError from '/ckeditor5/core/ckeditorerror.js';

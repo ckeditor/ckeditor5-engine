@@ -5,7 +5,7 @@
 
 'use strict';
 
-/* bender-tags: editor, creator */
+/* bender-tags: editor, creator, browser-only */
 
 import moduleUtils from '/tests/_utils/module.js';
 import testUtils from '/tests/_utils/utils.js';
