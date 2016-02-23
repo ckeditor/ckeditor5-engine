@@ -43,7 +43,7 @@ export default class InlineCreator extends Creator {
 	_setupEditable() {
 		this.editor.editable = this._createEditable();
 
-		this.editor.ui.collections.get( 'editable' ).add( this.editor.editable );
+		this.editor.ui.add( 'editable', this.editor.editable );
 	}
 
 	_setupToolbar() {
