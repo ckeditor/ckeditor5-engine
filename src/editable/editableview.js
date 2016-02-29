@@ -8,15 +8,26 @@
 import View from '../ui/view.js';
 import CKEditorError from '../ckeditorerror.js';
 
+/**
+ * @memberOf core.editable
+ * @extends core.ui.View
+ */
 export default class EditableView extends View {
 	/**
 	 * The element which is the main editable element (usually the one with `contentEditable="true"`).
 	 *
 	 * @readonly
-	 * @property {HTMLElement} editableElement
+	 * @member {HTMLElement} core.editable.EditableView#editableElement
 	 */
 
+	/**
+	 * Sets the {@link #editableElement} property and applies necessary bindings to it.
+	 *
+	 * @param {HTMLElement} editableElement
+	 */
 	setEditableElement( editableElement ) {
+		const bind = this.attributeBinder;
+
 		if ( this.editableElement ) {
 			throw new CKEditorError(
 				'editableview-cannot-override-editableelement: The editableElement cannot be overriden.'
@@ -36,7 +47,7 @@ export default class EditableView extends View {
 			},
 
 			attributes: {
-				contentEditable: this.bindToAttribute( 'isEditable' )
+				contentEditable: bind.to( 'isEditable' )
 			}
 		} );
 	}

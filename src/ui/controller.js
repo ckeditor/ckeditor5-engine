@@ -13,37 +13,36 @@ import utils from '../utils.js';
 /**
  * Basic Controller class.
  *
- * @class Controller
- * @mixins EmitterMixin
+ * @memberOf core.ui
+ * @mixes core.EmitterMixin
  */
 
 export default class Controller {
 	/**
-	 * Creates an instance of the {@link Controller} class.
+	 * Creates an instance of the {@link core.ui.Controller} class.
 	 *
-	 * @param {Model} [model] Model of this Controller.
-	 * @param {View} [view] View instance of this Controller.
-	 * @constructor
+	 * @param {core.ui.Model} [model] Model of this Controller.
+	 * @param {core.ui.View} [view] View instance of this Controller.
 	 */
 	constructor( model, view ) {
 		/**
 		 * Model of this controller.
 		 *
-		 * @property {Model}
+		 * @member {core.ui.Model} core.ui.Controller#model
 		 */
 		this.model = model || null;
 
 		/**
 		 * Set `true` after {@link #init}.
 		 *
-		 * @property {Boolean}
+		 * @member {Boolean} core.ui.Controller#ready
 		 */
 		this.ready = false;
 
 		/**
 		 * View of this controller.
 		 *
-		 * @property {View}
+		 * @member {core.ui.View} core.ui.Controller#view
 		 */
 		this.view = view || null;
 
@@ -51,7 +50,7 @@ export default class Controller {
 		 * A collection of {@link ControllerCollection} instances containing
 		 * child controllers.
 		 *
-		 * @property {Collection}
+		 * @member {core.Collection} core.ui.Controller#collections
 		 */
 		this.collections = new Collection( {
 			idProperty: 'name'
@@ -151,6 +150,27 @@ export default class Controller {
 		} ) );
 
 		return Promise.all( promises );
+	}
+
+	/**
+	 * Adds a child {@link Controller} instance to {@link #collections} at given index.
+	 *
+	 * @param {String} collectionName Name of the Controller Collection.
+	 * @param {core.ui.Controller} controller A controller instance to be added.
+	 * @param {Number} [index] An index in the collection.
+	 */
+	add( collectionName, controller, index ) {
+		this.collections.get( collectionName ).add( controller, index );
+	}
+
+	/**
+	 * Removes a child {@link Controller} instance from one of {@link #collections}.
+	 *
+	 * @param {String} collectionName Name of the Controller Collection.
+	 * @param {core.ui.Controller|Number} toRemove A Controller instance or index to be removed.
+	 */
+	remove( collectionName, toRemove ) {
+		return this.collections.get( collectionName ).remove( toRemove );
 	}
 
 	/**
