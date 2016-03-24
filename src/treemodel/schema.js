@@ -8,6 +8,20 @@
 import clone from '../../utils/lib/lodash/clone.js';
 import CKEditorError from '../../utils/ckeditorerror.js';
 
+function arrayMatches( toMatch, matchIn ) {
+	if ( !( toMatch instanceof Array && matchIn instanceof Array ) ) {
+		return false;
+	}
+
+	for ( let i = 0; i < toMatch.length; i++ ) {
+		if ( matchIn.indexOf( toMatch[ i ] ) == -1 ) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
 /**
  * SchemaItem is a singular registry item in {@link engine.treeModel.Schema} that groups and holds allow/disallow rules for
  * one entity. This class is used internally in {@link engine.treeModel.Schema} and should not be used outside it.
@@ -52,20 +66,20 @@ export class SchemaItem {
 	 * Allows entity, represented by this item, to be in given path.
 	 *
 	 * @param {Array.<String>|String} path Path in which entity is allowed. String with item names separated by spaces may be passed.
-	 * @param {String} [attribute] If set, this path will be used only for entities that have an attribute with this key.
+	 * @param {Array.<String>|String} [attributes] If set, this path will be used only for entities that have attribute(s) with this key.
 	 */
-	allow( path, attribute ) {
-		this._addPath( '_allowed', path, attribute );
+	allow( path, attributes ) {
+		this._addPath( '_allowed', path, attributes );
 	}
 
 	/**
 	 * Disallows entity, represented by this item, to be in given path.
 	 *
 	 * @param {Array.<String>|String} path Path in which entity is disallowed. String with item names separated by spaces may be passed.
-	 * @param {String} [attribute] If set, this path will be used only for entities that have an attribute with this key.
+	 * @param {Array.<String>|String} [attributes] If set, this path will be used only for entities that have an attribute(s) with this key.
 	 */
-	disallow( path, attribute ) {
-		this._addPath( '_disallowed', path, attribute );
+	disallow( path, attributes ) {
+		this._addPath( '_disallowed', path, attributes );
 	}
 
 	/**
@@ -74,16 +88,20 @@ export class SchemaItem {
 	 * @private
 	 * @param {String} member Name of the array member into which the path will be added. Possible values are `_allowed` or `_disallowed`.
 	 * @param {Array.<String>|String} path Path to be added. String with item names separated by spaces may be passed.
-	 * @param {String} [attribute] If set, this path will be used only for entities that have an attribute with this key.
+	 * @param {Array.<String>|String} [attributes] If set, this path will be used only for entities that have attribute(s) with this key.
 	 */
-	_addPath( member, path, attribute ) {
+	_addPath( member, path, attributes ) {
 		if ( typeof path === 'string' ) {
 			path = path.split( ' ' );
 		} else {
 			path = path.slice();
 		}
 
-		this[ member ].push( { path, attribute } );
+		if ( typeof attributes == 'string' || attributes instanceof String ) {
+			attributes = [ attributes ];
+		}
+
+		this[ member ].push( { path, attributes } );
 	}
 
 	/**
@@ -91,15 +109,19 @@ export class SchemaItem {
 	 *
 	 * @private
 	 * @param {String} type Paths' type. Possible values are `ALLOW` or `DISALLOW`.
-	 * @param {String} [attribute] If set, only paths registered for given attribute will be returned.
+	 * @param {Array.<String>|String} [attributes] If set, only paths registered for given attribute(s) will be returned.
 	 * @returns {Array} Paths registered in the item.
 	 */
-	_getPaths( type, attribute ) {
+	_getPaths( type, attributes ) {
 		const source = type === 'ALLOW' ? this._allowed : this._disallowed;
 		const paths = [];
 
+		if ( typeof attributes == 'string' || attributes instanceof String ) {
+			attributes = [ attributes ];
+		}
+
 		for ( let item of source ) {
-			if ( item.attribute === attribute ) {
+			if ( attributes == item.attributes || arrayMatches( attributes, item.attributes ) ) {
 				paths.push( item.path.slice() );
 			}
 		}
@@ -113,11 +135,11 @@ export class SchemaItem {
 	 * @private
 	 * @param {String} type Paths' type. Possible values are `ALLOW` or `DISALLOW`.
 	 * @param {Array.<String>} checkPath Path to check.
-	 * @param {String} [attribute] If set, only paths registered for given attribute will be returned.
+	 * @param {Array.<String>|String} [attributes] If set, only paths registered for given attribute(s) will be checked.
 	 * @returns {Boolean} `true` if item has any registered matching path, `false` otherwise.
 	 */
-	_hasMatchingPath( type, checkPath, attribute ) {
-		const itemPaths = this._getPaths( type, attribute );
+	_hasMatchingPath( type, checkPath, attributes ) {
+		const itemPaths = this._getPaths( type, attributes );
 
 		// We check every path registered (possibly with given attribute) in the item.
 		for ( let itemPath of itemPaths ) {
@@ -221,7 +243,7 @@ export default class Schema {
 	 *
 	 *		// Allow text with bold attribute in all P elements.
 	 *		schema.registerItem( 'p', '$block' );
-	 *		schema.allow( { name: '$text', attribute: 'bold', inside: 'p' } );
+	 *		schema.allow( { name: '$text', attributes: 'bold', inside: 'p' } );
 	 *
 	 *		// Allow header in Ps that are in DIVs
 	 *		schema.registerItem( 'header', '$block' );
@@ -231,7 +253,7 @@ export default class Schema {
 	 * @param {engine.treeModel.SchemaQuery} query Allowed query.
 	 */
 	allow( query ) {
-		this._getItem( query.name ).allow( query.inside, query.attribute );
+		this._getItem( query.name ).allow( query.inside, query.attributes );
 	}
 
 	/**
@@ -241,11 +263,11 @@ export default class Schema {
 	 * @param {engine.treeModel.SchemaQuery} query Disallowed query.
 	 */
 	disallow( query ) {
-		this._getItem( query.name ).disallow( query.inside, query.attribute );
+		this._getItem( query.name ).disallow( query.inside, query.attributes );
 	}
 
 	/**
-	 * Checks whether entity with given name (and optionally, with given attribute) is allowed at given position.
+	 * Checks whether entity with given name (and optionally, with given attribute(s)) is allowed at given position.
 	 *
 	 *		// Check whether bold text can be placed at caret position.
 	 *		let caretPos = editor.document.selection.getFirstPosition();
@@ -253,10 +275,10 @@ export default class Schema {
 	 *
 	 * @param {engine.treeModel.Position} position Position to check at.
 	 * @param {String} name Entity name to check.
-	 * @param {String} [attribute] If set, schema will check for entity with given attribute.
+	 * @param {Array.<String>|String} [attributes] If set, schema will check for entity with given attribute(s).
 	 * @returns {Boolean} `true` if entity is allowed, `false` otherwise
 	 */
-	checkAtPosition( position, name, attribute ) {
+	checkAtPosition( position, name, attributes ) {
 		if ( !this.hasItem( name ) ) {
 			return false;
 		}
@@ -264,7 +286,7 @@ export default class Schema {
 		return this.checkQuery( {
 			name: name,
 			inside: Schema._makeItemsPathFromPosition( position ),
-			attribute: attribute
+			attributes: attributes
 		} );
 	}
 
@@ -274,7 +296,7 @@ export default class Schema {
 	 *		// Check whether bold text is allowed in header element.
 	 *		let query = {
 	 *			name: '$text',
-	 *			attribute: 'bold',
+	 *			attributes: 'bold',
 	 *			inside: 'header'
 	 *		};
 	 *		if ( schema.checkQuery( query ) ) { ... }
@@ -287,6 +309,10 @@ export default class Schema {
 			return false;
 		}
 
+		if ( typeof query.attributes == 'string' || query.attributes instanceof String ) {
+			query.attributes = [ query.attributes ];
+		}
+
 		const path = ( typeof query.inside === 'string' ) ? query.inside.split( ' ' ) : query.inside;
 
 		// Get extension chain of given item and retrieve all schema items that are extended by given item.
@@ -296,7 +322,7 @@ export default class Schema {
 
 		// If there is matching disallow path, this query is not valid with schema.
 		for ( let schemaItem of schemaItems ) {
-			if ( schemaItem._hasMatchingPath( 'DISALLOW', path, query.attribute ) ) {
+			if ( schemaItem._hasMatchingPath( 'DISALLOW', path, query.attributes ) ) {
 				return false;
 			}
 		}
@@ -304,7 +330,7 @@ export default class Schema {
 		// At this point, the query is not disallowed.
 		// If there is any allow path that matches query, this query is valid with schema.
 		for ( let schemaItem of schemaItems ) {
-			if ( schemaItem._hasMatchingPath( 'ALLOW', path, query.attribute ) ) {
+			if ( schemaItem._hasMatchingPath( 'ALLOW', path, query.attributes ) ) {
 				return true;
 			}
 		}
@@ -412,5 +438,5 @@ export default class Schema {
  * @typedef {Object} engine.treeModel.SchemaQuery
  * @property {String} name Entity name.
  * @property {Array.<String>|String} inside Path inside which the entity is placed.
- * @property {String} [attribute] If set, the query applies only to entities that has attribute with given key.
+ * @property {Array.<String>|String} [attributes] If set, the query applies only to entities that has attribute(s) with given key.
  */

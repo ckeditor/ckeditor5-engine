@@ -121,13 +121,13 @@ describe( 'disallow', () => {
 		schema.registerItem( 'p', '$block' );
 		schema.registerItem( 'div', '$block' );
 
-		schema.allow( { name: '$block', attribute: 'bold', inside: 'div' } );
+		schema.allow( { name: '$block', attributes: 'bold', inside: 'div' } );
 
-		expect( schema.checkQuery( { name: 'p', attribute: 'bold', inside: [ 'div' ] } ) ).to.be.true;
+		expect( schema.checkQuery( { name: 'p', attributes: 'bold', inside: [ 'div' ] } ) ).to.be.true;
 
-		schema.disallow( { name: 'p', attribute: 'bold', inside: 'div' } );
+		schema.disallow( { name: 'p', attributes: 'bold', inside: 'div' } );
 
-		expect( schema.checkQuery( { name: 'p', attribute: 'bold', inside: [ 'div' ] } ) ).to.be.false;
+		expect( schema.checkQuery( { name: 'p', attributes: 'bold', inside: [ 'div' ] } ) ).to.be.false;
 	} );
 } );
 
@@ -149,9 +149,9 @@ describe( 'checkAtPosition', () => {
 		schema.registerItem( 'p', '$block' );
 
 		schema.allow( { name: '$block', inside: 'div' } );
-		schema.allow( { name: '$inline', attribute: 'bold', inside: '$block' } );
+		schema.allow( { name: '$inline', attributes: 'bold', inside: '$block' } );
 
-		schema.disallow( { name: '$inline', attribute: 'bold', inside: 'header' } );
+		schema.disallow( { name: '$inline', attributes: 'bold', inside: 'header' } );
 	} );
 
 	it( 'should return true if given element is allowed by schema at given position', () => {
@@ -206,6 +206,6 @@ describe( 'checkQuery', () => {
 		schema.allow( { name: 'p', inside: '$block' } );
 
 		expect( schema.checkQuery( { name: 'p', inside: '$block' } ) ).to.be.true;
-		expect( schema.checkQuery( { name: 'p', attribute: 'bold', inside: '$block' } ) ).to.be.false;
+		expect( schema.checkQuery( { name: 'p', attributes: 'bold', inside: '$block' } ) ).to.be.false;
 	} );
 } );
