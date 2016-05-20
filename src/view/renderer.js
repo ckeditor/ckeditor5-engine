@@ -175,7 +175,7 @@ export default class Renderer {
 		}
 
 		for ( let node of this.markedTexts ) {
-			if ( !this.markedChildren.has( node.parent ) && this.domConverter.getCorrespondingDom( node.parent ) ) {
+			if ( node.parent && !this.markedChildren.has( node.parent ) && this.domConverter.getCorrespondingDom( node.parent ) ) {
 				this._updateText( node );
 			}
 		}

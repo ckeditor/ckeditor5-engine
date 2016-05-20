@@ -7,6 +7,7 @@
 
 import ViewText from './text.js';
 import ViewElement from './element.js';
+import ViewContainerElement from './containerelement.js';
 import ViewPosition from './position.js';
 import ViewRange from './range.js';
 import ViewSelection from './selection.js';
@@ -283,7 +284,7 @@ export default class DomConverter {
 				}
 			} else {
 				// Create view element.
-				viewElement = new ViewElement( domNode.tagName.toLowerCase() );
+				viewElement = new ViewContainerElement( domNode.tagName.toLowerCase() );
 
 				if ( options.bind ) {
 					this.bindElements( domNode, viewElement );

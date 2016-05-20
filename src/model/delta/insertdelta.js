@@ -12,7 +12,6 @@ import { register } from '../batch.js';
 import InsertOperation from '../operation/insertoperation.js';
 
 /**
- * @classdesc
  * To provide specific OT behavior and better collisions solving, the {@link engine.model.Batch#insert Batch#insert} method
  * uses the `InsertDelta` class which inherits from the `Delta` class and may overwrite some methods.
  *
