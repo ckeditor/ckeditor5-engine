@@ -5,11 +5,9 @@
 
 'use strict';
 
-// Load all basic deltas and transformations, they register themselves, but they need to be imported somewhere.
-import deltas from './delta/basic-deltas.js'; // jshint ignore:line
-import transformations from './delta/basic-transformations.js'; // jshint ignore:line
+import Delta from './delta/delta.js';
+import NoOperation from './operation/nooperation.js';
 
-import transform from './delta/transform.js';
 import CKEditorError from '../../utils/ckeditorerror.js';
 
 /**
@@ -40,18 +38,34 @@ export default class History {
 		 * @member {Map} engine.model.History#_historyPoints
 		 */
 		this._historyPoints = new Map();
-	}
 
-	/**
-	 * Gets the number of base version which an up-to-date operation should have.
-	 *
-	 * @private
-	 * @type {Number}
-	 */
-	get _nextHistoryPoint() {
-		const lastDelta = this._deltas[ this._deltas.length - 1 ];
+		/**
+		 * Stores key => value pairings for deltas that has been marked as inactive. Key is the marked delta,
+		 * while value is its "no-operation" counterpart - an instance of plain {@link engine.model.delta.Delta Delta}
+		 * class with all operations changed to {@link engine.model.operation.NoOperation no-operations}.
+		 *
+		 * @private
+		 * @member {WeakSet} engine.model.History#_inactiveDeltas
+		 */
+		this._inactiveDeltas = new WeakMap();
 
-		return lastDelta.baseVersion + lastDelta.operations.length;
+		/**
+		 * Stores updated versions of history deltas.
+		 *
+		 * @private
+		 * @type {WeakMap}
+		 */
+		this._updatedDeltas = new WeakMap();
+
+		/**
+		 * Stores earliest (lowest) {@link engine.model.delta.Delta#baseVersion baseVersion} of the deltas
+		 * that has been marked inactive. In other words, all deltas with baseVersion lower than this has not been
+		 * marked as inactive.
+		 *
+		 * @private
+		 * @type {Number}
+		 */
+		this._earliestInactivePoint = Number.POSITIVE_INFINITY;
 	}
 
 	/**
@@ -72,73 +86,112 @@ export default class History {
 
 			this._deltas[ index ] = delta;
 			this._historyPoints.set( delta.baseVersion, index );
+			this._updatedDeltas.set( delta, [ delta ] );
 		}
 	}
 
 	/**
-	 * Transforms out-dated delta by all deltas that were added to the history since the given delta's base version. In other
-	 * words, it makes the delta up-to-date with the history. The transformed delta(s) is (are) ready to be applied
-	 * to the {@link engine.model.Document document}.
+	 * Returns history items, containing all deltas with baseVersion lower or equal to given history point (if passed).
+	 * **Note:** some deltas might have different from than deltas originally added to history.
 	 *
-	 * @param {engine.model.delta.Delta} delta Delta to update.
-	 * @returns {Array.<engine.model.delta.Delta>} Result of transformation which is an array containing one or more deltas.
-	 */
-	getTransformedDelta( delta ) {
-		if ( delta.baseVersion === this._nextHistoryPoint ) {
-			return [ delta ];
-		}
-
-		let transformed = [ delta ];
-
-		for ( let historyDelta of this.getDeltas( delta.baseVersion ) ) {
-			let allResults = [];
-
-			for ( let deltaToTransform of transformed ) {
-				const transformedDelta = History._transform( deltaToTransform, historyDelta );
-				allResults = allResults.concat( transformedDelta );
-			}
-
-			transformed = allResults;
-		}
-
-		// Fix base versions.
-		let baseVersion = transformed[ 0 ].operations[ 0 ].baseVersion;
-
-		for ( let i = 0; i < transformed.length; i++ ) {
-			transformed[ i ].baseVersion = baseVersion;
-			baseVersion += transformed[ i ].operations.length;
-		}
-
-		return transformed;
-	}
-
-	/**
-	 * Returns all deltas from history, starting from given history point (if passed).
-	 *
+	 * @see engine.model.History#markInactiveDelta
+	 * @see engine.model.History#updateDelta
 	 * @param {Number} from History point.
-	 * @returns {Iterator.<engine.model.delta.Delta>} Deltas from given history point to the end of history.
+	 * @returns {Iterator.<engine.model.HistoryItem>} Deltas from given history point to the end of history.
 	 */
-	*getDeltas( from = 0 ) {
+	*getHistoryItems( from = 0 ) {
+		// No deltas added, nothing to yield.
+		if ( this._deltas.length === 0 ) {
+			return;
+		}
+
+		const lastDelta = this._deltas[ this._deltas.length - 1 ];
+		const lastHistoryPoint = lastDelta.baseVersion + lastDelta.operations.length;
+
+		// Given history point is too big for the history (history has not reached it yet). Nothing to return.
+		if ( from >= lastHistoryPoint ) {
+			return;
+		}
+
 		let i = this._historyPoints.get( from );
 
-		if ( i === undefined ) {
-			throw new CKEditorError( 'history-wrong-version: Cannot retrieve given point in the history.' );
+		// Given history point is in the middle of delta.
+		if ( i === undefined && from !== this._lastHistoryPoint ) {
+			throw new CKEditorError( 'history-wrong-version: Given history point is incorrect.' );
 		}
 
-		for ( ; i < this._deltas.length; i++ ) {
-			yield this._deltas[ i ];
+		const skipReversed = from <= this._earliestInactivePoint;
+
+		while ( i < this._deltas.length ) {
+			if ( !skipReversed ) {
+				yield {
+					delta: this._deltas[ i ],
+					index: i
+				};
+			} else {
+				if ( this._inactiveDeltas.has( this._deltas[ i ] ) ) {
+					yield {
+						delta: this._inactiveDeltas.get( this._deltas[ i ] ),
+						index: i
+					};
+				} else {
+					for ( let delta of this._updatedDeltas.get( this._deltas[ i ] ) ) {
+						yield {
+							delta: delta,
+							index: i
+						};
+					}
+				}
+			}
+
+			i++;
 		}
 	}
 
 	/**
-	 * Transforms given delta by another given delta. Exposed for testing purposes.
+	 * Marks given delta from document history as inactive.
 	 *
-	 * @protected
-	 * @param {engine.model.delta.Delta} toTransform Delta to be transformed.
-	 * @param {engine.model.delta.Delta} transformBy Delta to transform by.
-	 * @returns {Array.<engine.model.delta.Delta>} Result of the transformation.
+	 * @see engine.model.History#getHistoryItems
+	 * @param {engine.model.delta.Delta} delta Delta to mark as inactive.
 	 */
-	static _transform( toTransform, transformBy ) {
-		return transform( toTransform, transformBy, true );
+	markInactiveDelta( delta ) {
+		this._inactiveDeltas.set( delta, convertToNoOps( delta ) );
+
+		if ( delta.baseVersion < this._earliestInactivePoint ) {
+			this._earliestInactivePoint = delta.baseVersion;
+		}
+	}
+
+	/**
+	 * Updates delta at given index. This method allows to updated single delta with multiple ones. If that's the case,
+	 * the deltas will be returned as separate {@link engine.model.HistoryItem history items} but will have same
+	 * {@link engine.model.HistoryItem#index history item index}. Updating one of those deltas will result in
+	 * updating all of them.
+	 *
+	 * @see engine.model.History#getHistoryItems
+	 * @param {Number} historyDeltaIndex Index of delta to update.
+	 * @param {Array.<engine.model.delta.Delta>} newDeltas Deltas that will overwrite updated delta.
+	 */
+	updateDelta( historyDeltaIndex, newDeltas ) {
+		this._updatedDeltas.set( this._deltas[ historyDeltaIndex ], newDeltas );
 	}
 }
+
+function convertToNoOps( delta ) {
+	const noOpDelta = new Delta();
+
+	for ( let operation of delta.operations ) {
+		noOpDelta.addOperation( new NoOperation( operation.baseVersion ) );
+	}
+
+	return noOpDelta;
+}
+
+/**
+ * Object containing information about an item from document history.
+ *
+ * @typedef {Object} engine.model.HistoryItem
+ * @property {String} name Entity name.
+ * @property {engine.model.SchemaPath} inside Path inside which the entity is placed.
+ * @property {Array.<String>|String} [attributes] If set, the query applies only to entities that has attribute(s) with given key.
+ */
