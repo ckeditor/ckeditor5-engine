@@ -47,8 +47,13 @@ export default class Composer {
 	 * @param {engine.model.Selection} selection Selection of which the content should be deleted.
 	 * @param {Object} options See {@link engine.model.composer.deleteContents}'s options.
 	 */
-	deleteContents( batch, selection, options ) {
-		this.fire( 'deleteContents', { batch, selection, options } );
+	deleteContents( batch, selection,
+		{
+			direction = 'BACKWARD',
+			merge = true
+		} = {}
+	) {
+		this.fire( 'deleteContents', { batch, selection, options: { direction, merge } } );
 	}
 
 	/**
