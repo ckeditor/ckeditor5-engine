@@ -42,7 +42,10 @@ export function convertRangeSelection() {
 
 		for ( let range of selection.getRanges() ) {
 			const viewRange = conversionApi.mapper.toViewRange( range );
-			conversionApi.viewSelection.addRange( viewRange, selection.isBackward );
+
+			if ( viewRange ) {
+				conversionApi.viewSelection.addRange( viewRange, selection.isBackward );
+			}
 		}
 	};
 }
@@ -85,8 +88,12 @@ export function convertCollapsedSelection() {
 
 		const modelPosition = selection.getFirstPosition();
 		const viewPosition = conversionApi.mapper.toViewPosition( modelPosition );
-		const brokenPosition = conversionApi.writer.breakAttributes( viewPosition );
 
+		if ( !viewPosition ) {
+			return;
+		}
+
+		const brokenPosition = conversionApi.writer.breakAttributes( viewPosition );
 		conversionApi.viewSelection.removeAllRanges();
 		conversionApi.viewSelection.addRange( new ViewRange( brokenPosition, brokenPosition ) );
 	};

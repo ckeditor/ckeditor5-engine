@@ -10,6 +10,7 @@ import ViewPosition from '../view/position.js';
 import ModelRange from '../model/range.js';
 import ViewRange from '../view/range.js';
 import ViewText from '../view/text.js';
+import ModelElement from '../model/element.js';
 
 /**
  * Maps elements and positions between {@link engine.view.Document view} and {@link engine.model model}.
@@ -100,7 +101,14 @@ export default class Mapper {
 	 * @returns {engine.view.Range} Corresponding view range.
 	 */
 	toViewRange( modelRange ) {
-		return new ViewRange( this.toViewPosition( modelRange.start ), this.toViewPosition( modelRange.end ) );
+		const start = this.toViewPosition( modelRange.start );
+		const end = this.toViewPosition( modelRange.end );
+
+		if ( start && end ) {
+			return new ViewRange( start, end );
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -132,7 +140,11 @@ export default class Mapper {
 	toViewPosition( modelPosition ) {
 		let viewContainer = this._modelToViewMapping.get( modelPosition.parent );
 
-		return this._findPositionIn( viewContainer, modelPosition.offset );
+		if ( !viewContainer ) {
+			return null;
+		}
+
+		return this._findPositionIn( viewContainer, modelPosition.offset, modelPosition.parent );
 	}
 
 	/**
@@ -236,7 +248,7 @@ export default class Mapper {
 	 * @param {Number} expectedOffset Expected offset.
 	 * @returns {engine.view.Position} Found position.
 	 */
-	_findPositionIn( viewParent, expectedOffset ) {
+	_findPositionIn( viewParent, expectedOffset, modelParent ) {
 		// Last scanned view node.
 		let viewNode;
 		// Length of the last scanned view node.
@@ -254,10 +266,16 @@ export default class Mapper {
 
 		// If it is smaller we add the length.
 		while ( modelOffset < expectedOffset ) {
-			viewNode = viewParent.getChild( viewOffset );
-			lastLength = this._getModelLength( viewNode );
-			modelOffset += lastLength;
-			viewOffset++;
+			const modelChild = modelParent.getChild( modelOffset );
+
+			if ( modelChild instanceof ModelElement && !this.toViewElement( modelChild ) ) {
+				modelOffset++;
+			} else {
+				viewNode = viewParent.getChild( viewOffset );
+				lastLength = this._getModelLength( viewNode );
+				modelOffset += lastLength;
+				viewOffset++;
+			}
 		}
 
 		// If it equals we found the position.
@@ -268,7 +286,7 @@ export default class Mapper {
 		else {
 			// ( modelOffset - lastLength ) is the offset to the child we enter,
 			// so we subtract it from the expected offset to fine the offset in the child.
-			return this._findPositionIn( viewNode, expectedOffset - ( modelOffset - lastLength ) );
+			return this._findPositionIn( viewNode, expectedOffset - ( modelOffset - lastLength ), modelParent );
 		}
 	}
 

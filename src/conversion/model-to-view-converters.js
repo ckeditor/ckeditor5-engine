@@ -49,9 +49,14 @@ import ViewText from '../view/text.js';
  */
 export function insertElement( elementCreator ) {
 	return ( evt, data, consumable, conversionApi ) => {
+		const viewPosition = conversionApi.mapper.toViewPosition( data.range.start );
+
+		if ( !viewPosition ) {
+			return;
+		}
+
 		consumable.consume( data.item, 'insert' );
 
-		const viewPosition = conversionApi.mapper.toViewPosition( data.range.start );
 		const viewElement = ( elementCreator instanceof ViewElement ) ?
 			elementCreator.clone( true ) :
 			elementCreator( data, consumable, conversionApi );
@@ -77,9 +82,14 @@ export function insertElement( elementCreator ) {
  */
 export function insertText() {
 	return ( evt, data, consumable, conversionApi ) => {
+		const viewPosition = conversionApi.mapper.toViewPosition( data.range.start );
+
+		if ( !viewPosition ) {
+			return;
+		}
+
 		consumable.consume( data.item, 'insert' );
 
-		const viewPosition = conversionApi.mapper.toViewPosition( data.range.start );
 		const viewText = new ViewText( data.item.text );
 
 		conversionApi.writer.insert( viewPosition, viewText );
@@ -214,6 +224,10 @@ export function wrap( elementCreator ) {
 
 		const viewRange = conversionApi.mapper.toViewRange( data.range );
 
+		if ( !viewRange ) {
+			return;
+		}
+
 		const viewElement = ( elementCreator instanceof ViewElement ) ?
 			elementCreator.clone( true ) :
 			elementCreator( data.attributeNewValue, data, consumable, conversionApi );
@@ -261,6 +275,11 @@ export function unwrap( elementCreator ) {
 		consumable.consume( data.item, eventNameToConsumableType( evt.name ) );
 
 		const viewRange = conversionApi.mapper.toViewRange( data.range );
+
+		if ( !viewRange ) {
+			return;
+		}
+
 		const viewNode = ( elementCreator instanceof ViewElement ) ?
 			elementCreator.clone( true ) :
 			elementCreator( data.attributeOldValue, data, consumable, conversionApi );
@@ -295,6 +314,10 @@ export function move() {
 		const sourceViewRange = conversionApi.mapper.toViewRange( sourceModelRange );
 		const targetViewPosition = conversionApi.mapper.toViewPosition( data.range.start );
 
+		if ( !sourceViewRange || !targetViewPosition ) {
+			return;
+		}
+
 		conversionApi.writer.move( sourceViewRange, targetViewPosition );
 	};
 }
@@ -320,6 +343,10 @@ export function remove() {
 
 		const sourceModelRange = ModelRange.createFromPositionAndShift( data.sourcePosition, length );
 		const sourceViewRange = conversionApi.mapper.toViewRange( sourceModelRange );
+
+		if ( !sourceViewRange ) {
+			return;
+		}
 
 		conversionApi.writer.remove( sourceViewRange );
 	};

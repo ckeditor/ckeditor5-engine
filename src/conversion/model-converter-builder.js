@@ -183,7 +183,11 @@ class ModelConverterBuilder {
 		for ( let dispatcher of this._dispatchers ) {
 			if ( this._from.type == 'element' ) {
 				// From model element to view element -> insert element.
-				element = typeof element == 'string' ? new ViewContainerElement( element ) : element;
+				if ( typeof element == 'string' ) {
+					const spittedName = element.split( '.' );
+					const attributes = spittedName[ 1 ] ? { 'class': spittedName[ 1 ] } : null;
+					element = new ViewContainerElement( spittedName[ 0 ], attributes );
+				}
 
 				dispatcher.on( 'insert:' + this._from.name, insertElement( element ), null, priority );
 			} else {
