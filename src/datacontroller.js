@@ -171,8 +171,10 @@ export default class DataController {
 		const modelRoot = this.model.getRoot( rootName );
 
 		this.model.enqueueChanges( () => {
-			this.model.batch()
-				.remove( ModelRange.createFromElement( modelRoot ) )
+			const batch = this.model.batch();
+			batch.type = 'ignore';
+
+			batch.remove( ModelRange.createFromElement( modelRoot ) )
 				.insert( ModelPosition.createAt( modelRoot, 0 ), this.parse( data ) );
 		} );
 	}
