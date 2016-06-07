@@ -188,7 +188,11 @@ class ModelConverterBuilder {
 				dispatcher.on( 'insert:' + this._from.name, insertElement( element ), null, priority );
 			} else {
 				// From model attribute to view element -> wrap and unwrap.
-				element = typeof element == 'string' ? new ViewAttributeElement( element ) : element;
+				if ( typeof element == 'string' ) {
+					const spittedName = element.split( '.' );
+					const attributes = spittedName[ 1 ] ? { 'class': spittedName[ 1 ] } : null;
+					element = new ViewAttributeElement( spittedName[ 0 ], attributes );
+				}
 
 				dispatcher.on( 'addAttribute:' + this._from.key, wrap( element ), null, priority );
 				dispatcher.on( 'changeAttribute:' + this._from.key, wrap( element ), null, priority );
