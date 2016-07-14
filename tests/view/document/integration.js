@@ -9,7 +9,7 @@
 
 import Document from '/ckeditor5/engine/view/document.js';
 import ViewElement from '/ckeditor5/engine/view/element.js';
-import { isBlockFiller, BR_FILLER } from '/ckeditor5/engine/view/filler.js';
+import { isBlockFiller, brFiller } from '/ckeditor5/engine/view/filler.js';
 
 import createElement from '/ckeditor5/utils/dom/createelement.js';
 
@@ -25,7 +25,7 @@ describe( 'Document integration', () => {
 		viewDocument.render();
 
 		expect( domDiv.childNodes.length ).to.equal( 1 );
-		expect( isBlockFiller( domDiv.childNodes[ 0 ], BR_FILLER ) ).to.be.true;
+		expect( isBlockFiller( domDiv.childNodes[ 0 ], brFiller ) ).to.be.true;
 	} );
 
 	it( 'should render changes in the Document', () => {

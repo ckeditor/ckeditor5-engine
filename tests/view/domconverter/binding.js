@@ -10,7 +10,7 @@
 import ViewElement from '/ckeditor5/engine/view/element.js';
 import DomConverter from '/ckeditor5/engine/view/domconverter.js';
 import ViewDocumentFragment from '/ckeditor5/engine/view/documentfragment.js';
-import { INLINE_FILLER } from '/ckeditor5/engine/view/filler.js';
+import { inlineFiller } from '/ckeditor5/engine/view/filler.js';
 
 import { parse } from '/tests/engine/_utils/view.js';
 
@@ -168,7 +168,7 @@ describe( 'DomConverter', () => {
 		} );
 
 		it( 'should return null for inline filler', () => {
-			const domFiller = document.createTextNode( INLINE_FILLER );
+			const domFiller = document.createTextNode( inlineFiller );
 			const domP = createElement( document, 'p', null, domFiller );
 
 			const viewP = converter.domToView( domP );

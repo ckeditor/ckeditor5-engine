@@ -10,7 +10,7 @@
 import ViewRange from '/ckeditor5/engine/view/range.js';
 import ViewDocument from '/ckeditor5/engine/view/document.js';
 import KeyObserver from '/ckeditor5/engine/view/observer/keyobserver.js';
-import { INLINE_FILLER_LENGTH, isInlineFiller, startsWithFiller } from '/ckeditor5/engine/view/filler.js';
+import { inlineFillerLength, isInlineFiller, startsWithFiller } from '/ckeditor5/engine/view/filler.js';
 
 import { keyCodes } from '/ckeditor5/utils/keyboard.js';
 
@@ -52,7 +52,7 @@ describe( 'Document', () => {
 
 			const domRange = document.getSelection().getRangeAt( 0 );
 			expect( isInlineFiller( domRange.startContainer ) ).to.be.true;
-			expect( domRange.startOffset ).to.equal( INLINE_FILLER_LENGTH );
+			expect( domRange.startOffset ).to.equal( inlineFillerLength );
 			expect( domRange.collapsed ).to.be.true;
 		} );
 
@@ -97,7 +97,7 @@ describe( 'Document', () => {
 
 			const domRange = document.getSelection().getRangeAt( 0 );
 			expect( startsWithFiller( domRange.startContainer ) ).to.be.true;
-			expect( domRange.startOffset ).to.equal( INLINE_FILLER_LENGTH + 1 );
+			expect( domRange.startOffset ).to.equal( inlineFillerLength + 1 );
 			expect( domRange.collapsed ).to.be.true;
 		} );
 	} );

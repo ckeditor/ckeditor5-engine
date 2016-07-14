@@ -10,7 +10,7 @@
 import ViewElement from '/ckeditor5/engine/view/element.js';
 import DomConverter from '/ckeditor5/engine/view/domconverter.js';
 import ViewDocumentFragment from '/ckeditor5/engine/view/documentfragment.js';
-import { INLINE_FILLER, INLINE_FILLER_LENGTH, NBSP_FILLER } from '/ckeditor5/engine/view/filler.js';
+import { inlineFiller, inlineFillerLength, nbspFiller } from '/ckeditor5/engine/view/filler.js';
 
 import { parse, stringify } from '/tests/engine/_utils/view.js';
 
@@ -230,8 +230,8 @@ describe( 'DomConverter', () => {
 		} );
 
 		it( 'should converter position inside block filler', () => {
-			const converter = new DomConverter( { blockFiller: NBSP_FILLER } );
-			const domFiller = NBSP_FILLER( document );
+			const converter = new DomConverter( { blockFiller: nbspFiller } );
+			const domFiller = nbspFiller( document );
 			const domP = createElement( document, 'p', null, domFiller );
 
 			const viewP = parse( '<p></p>' );
@@ -244,7 +244,7 @@ describe( 'DomConverter', () => {
 		} );
 
 		it( 'should converter position inside inline filler', () => {
-			const domFiller = document.createTextNode( INLINE_FILLER );
+			const domFiller = document.createTextNode( inlineFiller );
 			const domText = document.createTextNode( 'foo' );
 			const domB = createElement( document, 'b', null, domFiller );
 			const domP = createElement( document, 'p', null, [ domText, domB ] );
@@ -254,13 +254,13 @@ describe( 'DomConverter', () => {
 			converter.bindElements( domP, viewP );
 			converter.bindElements( domB, viewP.getChild( 1 ) );
 
-			const viewPosition = converter.domPositionToView( domFiller, INLINE_FILLER_LENGTH );
+			const viewPosition = converter.domPositionToView( domFiller, inlineFillerLength );
 
 			expect( stringify( viewP, viewPosition ) ).to.equal( '<p>foo<b>[]</b></p>' );
 		} );
 
 		it( 'should converter position inside inline filler with text', () => {
-			const domFiller = document.createTextNode( INLINE_FILLER + 'bar' );
+			const domFiller = document.createTextNode( inlineFiller + 'bar' );
 			const domText = document.createTextNode( 'foo' );
 			const domB = createElement( document, 'b', null, domFiller );
 			const domP = createElement( document, 'p', null, [ domText, domB ] );
@@ -270,14 +270,14 @@ describe( 'DomConverter', () => {
 			converter.bindElements( domP, viewP );
 			converter.bindElements( domB, viewP.getChild( 1 ) );
 
-			const viewPosition = converter.domPositionToView( domFiller, INLINE_FILLER_LENGTH + 2 );
+			const viewPosition = converter.domPositionToView( domFiller, inlineFillerLength + 2 );
 
 			expect( viewPosition.offset ).to.equal( 2 );
 			expect( stringify( viewP, viewPosition ) ).to.equal( '<p>foo<b>ba{}r</b></p>' );
 		} );
 
 		it( 'should converter position inside inline filler with text at the beginning', () => {
-			const domFiller = document.createTextNode( INLINE_FILLER + 'bar' );
+			const domFiller = document.createTextNode( inlineFiller + 'bar' );
 			const domText = document.createTextNode( 'foo' );
 			const domB = createElement( document, 'b', null, domFiller );
 			const domP = createElement( document, 'p', null, [ domText, domB ] );
@@ -287,7 +287,7 @@ describe( 'DomConverter', () => {
 			converter.bindElements( domP, viewP );
 			converter.bindElements( domB, viewP.getChild( 1 ) );
 
-			const viewPosition = converter.domPositionToView( domFiller, INLINE_FILLER_LENGTH - 1 );
+			const viewPosition = converter.domPositionToView( domFiller, inlineFillerLength - 1 );
 
 			expect( viewPosition.offset ).to.equal( 0 );
 			expect( stringify( viewP, viewPosition ) ).to.equal( '<p>foo<b>{}bar</b></p>' );

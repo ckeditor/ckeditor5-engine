@@ -15,7 +15,7 @@ import { convertText, convertToModelFragment } from './conversion/view-to-model-
 
 import ViewDocumentFragment from './view/documentfragment.js';
 import DomConverter from './view/domconverter.js';
-import { NBSP_FILLER } from './view/filler.js';
+import { nbspFiller } from './view/filler.js';
 
 import ModelRange from './model/range.js';
 import ModelPosition from './model/position.js';
@@ -72,7 +72,7 @@ export default class DataController {
 		 * @private
 		 * @member {engine.view.DomConverter} engine.DataController#_domConverter
 		 */
-		this._domConverter = new DomConverter( { blockFiller: NBSP_FILLER } );
+		this._domConverter = new DomConverter( { blockFiller: nbspFiller } );
 
 		/**
 		 * Model to view conversion dispatcher used by the {@link engine.DataController#get get method}.

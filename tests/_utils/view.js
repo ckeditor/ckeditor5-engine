@@ -16,10 +16,10 @@ import AttributeElement from '/ckeditor5/engine/view/attributeelement.js';
 import ContainerElement from '/ckeditor5/engine/view/containerelement.js';
 import ViewText from '/ckeditor5/engine/view/text.js';
 
-const ELEMENT_RANGE_START_TOKEN = '[';
-const ELEMENT_RANGE_END_TOKEN = ']';
-const TEXT_RANGE_START_TOKEN = '{';
-const TEXT_RANGE_END_TOKEN = '}';
+const elementRangeStartToken = '[';
+const elementRangeEndToken = ']';
+const textRangeStartToken = '{';
+const textRangeEndToken = '}';
 
 /**
  * Writes the contents of the {@link engine.view.Document Document} to an HTML-like string.
@@ -331,7 +331,7 @@ class RangeParser {
 
 		if ( node instanceof ViewText ) {
 			const regexp = new RegExp(
-				`[${ TEXT_RANGE_START_TOKEN }${ TEXT_RANGE_END_TOKEN }\\${ ELEMENT_RANGE_END_TOKEN }\\${ ELEMENT_RANGE_START_TOKEN }]`,
+				`[${ textRangeStartToken }${ textRangeEndToken }\\${ elementRangeEndToken }\\${ elementRangeStartToken }]`,
 				'g'
 			);
 			let text = node.data;
@@ -364,7 +364,7 @@ class RangeParser {
 			for ( let item of brackets ) {
 				// Non-empty text node.
 				if ( text ) {
-					if ( item.bracket == TEXT_RANGE_START_TOKEN || item.bracket == TEXT_RANGE_END_TOKEN ) {
+					if ( item.bracket == textRangeStartToken || item.bracket == textRangeEndToken ) {
 						// Store information about text range delimiter.
 						this._positions.push( {
 							bracket: item.bracket,
@@ -386,7 +386,7 @@ class RangeParser {
 						} );
 					}
 				} else {
-					if ( item.bracket == TEXT_RANGE_START_TOKEN || item.bracket == TEXT_RANGE_END_TOKEN ) {
+					if ( item.bracket == textRangeStartToken || item.bracket == textRangeEndToken ) {
 						throw new Error( `Parse error - text range delimiter '${ item.bracket }' is placed inside empty text node. ` );
 					}
 
@@ -438,17 +438,17 @@ class RangeParser {
 
 		for ( let item of this._positions ) {
 			// When end of range is found without opening.
-			if ( !range && ( item.bracket == ELEMENT_RANGE_END_TOKEN || item.bracket == TEXT_RANGE_END_TOKEN ) ) {
+			if ( !range && ( item.bracket == elementRangeEndToken || item.bracket == textRangeEndToken ) ) {
 				throw new Error( `Parse error - end of range was found '${ item.bracket }' but range was not started before.` );
 			}
 
 			// When second start of range is found when one is already opened - selection does not allow intersecting
 			// ranges.
-			if ( range && ( item.bracket == ELEMENT_RANGE_START_TOKEN || item.bracket == TEXT_RANGE_START_TOKEN ) ) {
+			if ( range && ( item.bracket == elementRangeStartToken || item.bracket == textRangeStartToken ) ) {
 				throw new Error( `Parse error - start of range was found '${ item.bracket }' but one range is already started.` );
 			}
 
-			if ( item.bracket == ELEMENT_RANGE_START_TOKEN || item.bracket == TEXT_RANGE_START_TOKEN ) {
+			if ( item.bracket == elementRangeStartToken || item.bracket == textRangeStartToken ) {
 				range = new Range( item.position, item.position );
 			} else {
 				range.end = item.position;
@@ -774,14 +774,14 @@ class ViewStringify {
 		for ( let range of this.ranges ) {
 			if ( range.start.parent == element && range.start.offset === offset ) {
 				if ( range.isCollapsed ) {
-					collapsed += ELEMENT_RANGE_START_TOKEN + ELEMENT_RANGE_END_TOKEN;
+					collapsed += elementRangeStartToken + elementRangeEndToken;
 				} else {
-					start += ELEMENT_RANGE_START_TOKEN;
+					start += elementRangeStartToken;
 				}
 			}
 
 			if ( range.end.parent === element && range.end.offset === offset && !range.isCollapsed ) {
-				end += ELEMENT_RANGE_END_TOKEN;
+				end += elementRangeEndToken;
 			}
 		}
 
@@ -819,14 +819,14 @@ class ViewStringify {
 
 			if ( start.parent == node && start.offset >= 0 && start.offset <= length ) {
 				if ( range.isCollapsed ) {
-					result[ end.offset ].collapsed += TEXT_RANGE_START_TOKEN + TEXT_RANGE_END_TOKEN;
+					result[ end.offset ].collapsed += textRangeStartToken + textRangeEndToken;
 				} else {
-					result[ start.offset ].start += TEXT_RANGE_START_TOKEN;
+					result[ start.offset ].start += textRangeStartToken;
 				}
 			}
 
 			if ( end.parent == node && end.offset >= 0 && end.offset <= length && !range.isCollapsed  ) {
-				result[ end.offset ].end += TEXT_RANGE_END_TOKEN;
+				result[ end.offset ].end += textRangeEndToken;
 			}
 		}
 

@@ -8,7 +8,7 @@
 import Element from './element.js';
 
 // Default attribute priority.
-const DEFAULT_PRIORITY = 10;
+const defaultPriority = 10;
 
 /**
  * Attributes are elements which define document presentation. They are mostly elements like `<b>` or `<span>`.
@@ -37,7 +37,7 @@ export default class AttributeElement extends Element {
 		 *
 		 * @member {Number} engine.view.AttributeElement#priority
 		 */
-		this.priority = DEFAULT_PRIORITY;
+		this.priority = defaultPriority;
 	}
 
 	/**
@@ -101,6 +101,6 @@ export default class AttributeElement extends Element {
 /**
  * Default attribute priority.
  *
- * @member {Number} engine.view.AttributeElement.DEFAULT_PRIORITY
+ * @member {Number} engine.view.AttributeElement.defaultPriority
  */
-AttributeElement.DEFAULT_PRIORITY = DEFAULT_PRIORITY;
+AttributeElement.defaultPriority = defaultPriority;

@@ -10,7 +10,7 @@
 import DomConverter from '/ckeditor5/engine/view/domconverter.js';
 import ViewEditable from '/ckeditor5/engine/view/editableelement.js';
 import ViewDocument from '/ckeditor5/engine/view/document.js';
-import { BR_FILLER, NBSP_FILLER } from '/ckeditor5/engine/view/filler.js';
+import { brFiller, nbspFiller } from '/ckeditor5/engine/view/filler.js';
 import testUtils from '/tests/ckeditor5/_utils/utils.js';
 
 testUtils.createSinonSandbox();
@@ -24,12 +24,12 @@ describe( 'DomConverter', () => {
 
 	describe( 'constructor', () => {
 		it( 'should create converter with BR block filler by default', () => {
-			expect( converter.blockFiller ).to.equal( BR_FILLER );
+			expect( converter.blockFiller ).to.equal( brFiller );
 		} );
 
 		it( 'should create converter with defined block filler', () => {
-			converter = new DomConverter( { blockFiller: NBSP_FILLER } );
-			expect( converter.blockFiller ).to.equal( NBSP_FILLER );
+			converter = new DomConverter( { blockFiller: nbspFiller } );
+			expect( converter.blockFiller ).to.equal( nbspFiller );
 		} );
 	} );
 
