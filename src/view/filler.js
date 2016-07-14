@@ -18,13 +18,13 @@ import { keyCodes } from '../../utils/keyboard.js';
  * as browsers do natively. So instead of an empty `<p>` there will be `<p><br></p>`. The advantage of block filler is that
  * it is transparent for the selection, so when the caret is before the `<br>` and user presses right arrow he will be
  * moved to the next paragraph, not after the `<br>`. The disadvantage is that it breaks a block, so it can not be used
- * in the middle of a line of text. The {@link engine.view.filler.BR_FILLER `<br>` filler} can be replaced with any other
- * character in the data output, for instance {@link engine.view.filler.NBSP_FILLER non-breaking space}.
+ * in the middle of a line of text. The {@link engine.view.filler.brFiller `<br>` filler} can be replaced with any other
+ * character in the data output, for instance {@link engine.view.filler.nbspFiller non-breaking space}.
  *
  * * Inline filler is a filler which does not break a line of text, so it can be used inside the text, for instance in the empty
  * `<b>` surrendered by text: `foo<b></b>bar`, if we want to put the caret there. CKEditor uses a sequence of the zero-width
- * spaces as an {@link engine.view.filler.INLINE_FILLER inline filler} having the predetermined
- * {@link engine.view.filler.INLINE_FILLER_LENGTH length}. A sequence is used, instead of a single character to
+ * spaces as an {@link engine.view.filler.inlineFiller inline filler} having the predetermined
+ * {@link engine.view.filler.inlineFillerLength length}. A sequence is used, instead of a single character to
  * avoid treating random zero-width spaces as the inline filler. Disadvantage of the inline filler is that it is not
  * transparent for the selection. The arrow key moves the caret between zero-width spaces characters, so the additional
  * code is needed to handle the caret.
@@ -39,10 +39,10 @@ import { keyCodes } from '../../utils/keyboard.js';
  * `<br> filler creator. This is a function which creates `<br data-cke-filler="true">` element.
  * It defines how the filler is created.
  *
- * @see engine.view.filler.NBSP_FILLER_FILLER
- * @member {Function} engine.view.filler.BR_FILLER
+ * @see engine.view.filler.nbspFiller_FILLER
+ * @member {Function} engine.view.filler.brFiller
  */
-export const BR_FILLER = ( domDocument ) => {
+export const brFiller = ( domDocument ) => {
 	const fillerBr = domDocument.createElement( 'br' );
 	fillerBr.dataset.ckeFiller = true;
 
@@ -53,62 +53,62 @@ export const BR_FILLER = ( domDocument ) => {
  * Non-breaking space filler creator. This is a function which creates `&nbsp;` text node.
  * It defines how the filler is created.
  *
- * @see engine.view.filler.BR_FILLER
- * @member {Function} engine.view.filler.NBSP_FILLER_FILLER
+ * @see engine.view.filler.brFiller
+ * @member {Function} engine.view.filler.nbspFiller_FILLER
  */
-export const NBSP_FILLER = ( domDocument ) => domDocument.createTextNode( '\u00A0' );
+export const nbspFiller = ( domDocument ) => domDocument.createTextNode( '\u00A0' );
 
 /**
- * Length of the {@link engine.view.filler.INLINE_FILLER INLINE_FILLER}.
+ * Length of the {@link engine.view.filler.inlineFiller inlineFiller}.
  *
- * @member {Function} engine.view.filler.INLINE_FILLER_LENGTH
+ * @member {Function} engine.view.filler.inlineFillerLength
  */
-export const INLINE_FILLER_LENGTH = 7;
+export const inlineFillerLength = 7;
 
 /**
  * Inline filler which is sequence of the zero width spaces.
  *
- * @member {String} engine.view.filler.INLINE_FILLER
+ * @member {String} engine.view.filler.inlineFiller
  */
-export let INLINE_FILLER = '';
+export let inlineFiller = '';
 
-for ( let i = 0; i < INLINE_FILLER_LENGTH; i++ ) {
-	INLINE_FILLER += '\u200b';
+for ( let i = 0; i < inlineFillerLength; i++ ) {
+	inlineFiller += '\u200b';
 }
 
 /**
- * Checks if the node is a text node which starts with the {@link engine.view.filler.INLINE_FILLER inline filler}.
+ * Checks if the node is a text node which starts with the {@link engine.view.filler.inlineFiller inline filler}.
  *
- *		startsWithFiller( document.createTextNode( INLINE_FILLER ) ); // true
- *		startsWithFiller( document.createTextNode( INLINE_FILLER + 'foo' ) ); // true
+ *		startsWithFiller( document.createTextNode( inlineFiller ) ); // true
+ *		startsWithFiller( document.createTextNode( inlineFiller + 'foo' ) ); // true
  *		startsWithFiller( document.createTextNode( 'foo' ) ); // false
  *		startsWithFiller( document.createElement( 'p' ) ); // false
  *
  * @param {Node} domNode DOM node.
- * @returns {Boolean} True if the text node starts with the {@link engine.view.filler.INLINE_FILLER inline filler}.
+ * @returns {Boolean} True if the text node starts with the {@link engine.view.filler.inlineFiller inline filler}.
  */
 export function startsWithFiller( domNode ) {
-	return ( domNode instanceof Text ) && ( domNode.data.substr( 0, INLINE_FILLER_LENGTH ) === INLINE_FILLER );
+	return ( domNode instanceof Text ) && ( domNode.data.substr( 0, inlineFillerLength ) === inlineFiller );
 }
 
 /**
- * Checks if the text node contains only the {@link engine.view.filler.INLINE_FILLER inline filler}.
+ * Checks if the text node contains only the {@link engine.view.filler.inlineFiller inline filler}.
  *
- *		isInlineFiller( document.createTextNode( INLINE_FILLER ) ); // true
- *		isInlineFiller( document.createTextNode( INLINE_FILLER + 'foo' ) ); // false
+ *		isInlineFiller( document.createTextNode( inlineFiller ) ); // true
+ *		isInlineFiller( document.createTextNode( inlineFiller + 'foo' ) ); // false
  *
  * @param {Text} domText DOM text node.
- * @returns {Boolean} True if the text node contains only the {@link engine.view.filler.INLINE_FILLER inline filler}.
+ * @returns {Boolean} True if the text node contains only the {@link engine.view.filler.inlineFiller inline filler}.
  */
 export function isInlineFiller( domText ) {
-	return domText.data.length == INLINE_FILLER_LENGTH && startsWithFiller( domText );
+	return domText.data.length == inlineFillerLength && startsWithFiller( domText );
 }
 
 /**
- * Get string data from the text node, removing an {@link engine.view.filler.INLINE_FILLER inline filler} from it,
+ * Get string data from the text node, removing an {@link engine.view.filler.inlineFiller inline filler} from it,
  * if text node contains it.
  *
- *		getDataWithoutFiller( document.createTextNode( INLINE_FILLER + 'foo' ) ) == 'foo' // true
+ *		getDataWithoutFiller( document.createTextNode( inlineFiller + 'foo' ) ) == 'foo' // true
  *		getDataWithoutFiller( document.createTextNode( 'foo' ) ) == 'foo' // true
  *
  * @param {Text} domText DOM text node, possible with inline filler.
@@ -116,7 +116,7 @@ export function isInlineFiller( domText ) {
  */
 export function getDataWithoutFiller( domText ) {
 	if ( startsWithFiller( domText ) ) {
-		return domText.data.slice( INLINE_FILLER_LENGTH );
+		return domText.data.slice( inlineFillerLength );
 	} else {
 		return domText.data;
 	}
@@ -128,12 +128,12 @@ const templateBlockFillers = new WeakMap();
 /**
  * Checks if the node is an instance of the block filler of the given type.
  *
- *		const brFillerInstance = BR_FILLER( document );
- *		isBlockFiller( brFillerInstance, BR_FILLER ); // true
+ *		const brFillerInstance = brFiller( document );
+ *		isBlockFiller( brFillerInstance, brFiller ); // true
  *
  * @param {Node} domNode DOM node to check.
  * @param {Function} blockFiller Block filler creator.
- * @returns {Boolean} True if text node contains only {@link engine.view.filler.INLINE_FILLER inline filler}.
+ * @returns {Boolean} True if text node contains only {@link engine.view.filler.inlineFiller inline filler}.
  */
 export function isBlockFiller( domNode, blockFiller ) {
 	let templateBlockFiller = templateBlockFillers.get( blockFiller );
@@ -165,7 +165,7 @@ function jumpOverInlineFiller( evt, data ) {
 			const domParent = domSelection.getRangeAt( 0 ).startContainer;
 			const domOffset = domSelection.getRangeAt( 0 ).startOffset;
 
-			if ( startsWithFiller( domParent ) && domOffset <= INLINE_FILLER_LENGTH ) {
+			if ( startsWithFiller( domParent ) && domOffset <= inlineFillerLength ) {
 				const domRange = new Range();
 				domRange.setStart( domParent, 0 );
 				domRange.collapse( true );

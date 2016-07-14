@@ -19,7 +19,7 @@ describe( 'AttributeElement', () => {
 			expect( el ).to.be.an.instanceof( AttributeElement );
 			expect( el ).to.be.an.instanceof( Element );
 			expect( el ).to.have.property( 'name' ).that.equals( 'strong' );
-			expect( el ).to.have.property( 'priority' ).that.equals( AttributeElement.DEFAULT_PRIORITY );
+			expect( el ).to.have.property( 'priority' ).that.equals( AttributeElement.defaultPriority );
 		} );
 	} );
 

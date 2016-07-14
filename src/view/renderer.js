@@ -8,7 +8,7 @@
 import ViewText from './text.js';
 import ViewElement from './element.js';
 import ViewPosition from './position.js';
-import { INLINE_FILLER, INLINE_FILLER_LENGTH, startsWithFiller, isInlineFiller, isBlockFiller } from './filler.js';
+import { inlineFiller, inlineFillerLength, startsWithFiller, isInlineFiller, isBlockFiller } from './filler.js';
 
 import mix from '../../utils/mix.js';
 import diff from '../../utils/diff.js';
@@ -262,7 +262,7 @@ export default class Renderer {
 		if ( isInlineFiller( domFillerNode ) ) {
 			domFillerNode.parentNode.removeChild( domFillerNode );
 		} else {
-			domFillerNode.data = domFillerNode.data.substr( INLINE_FILLER_LENGTH );
+			domFillerNode.data = domFillerNode.data.substr( inlineFillerLength );
 		}
 	}
 
@@ -320,7 +320,7 @@ export default class Renderer {
 		const filler = this._inlineFillerPosition;
 
 		if ( filler && filler.parent == viewText.parent && filler.offset == viewText.getIndex() ) {
-			expectedText = INLINE_FILLER + expectedText;
+			expectedText = inlineFiller + expectedText;
 		}
 
 		if ( actualText != expectedText ) {
@@ -372,9 +372,9 @@ export default class Renderer {
 			const expectedNodeAfterFiller = expectedDomChildren[ filler.offset ];
 
 			if ( this.domConverter.isText( expectedNodeAfterFiller ) ) {
-				expectedNodeAfterFiller.data = INLINE_FILLER + expectedNodeAfterFiller.data;
+				expectedNodeAfterFiller.data = inlineFiller + expectedNodeAfterFiller.data;
 			} else {
-				expectedDomChildren.splice( filler.offset, 0, domDocument.createTextNode( INLINE_FILLER ) );
+				expectedDomChildren.splice( filler.offset, 0, domDocument.createTextNode( inlineFiller ) );
 			}
 		}
 

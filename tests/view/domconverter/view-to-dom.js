@@ -11,7 +11,7 @@ import ViewText from '/ckeditor5/engine/view/text.js';
 import ViewElement from '/ckeditor5/engine/view/element.js';
 import DomConverter from '/ckeditor5/engine/view/domconverter.js';
 import ViewDocumentFragment from '/ckeditor5/engine/view/documentfragment.js';
-import { INLINE_FILLER, INLINE_FILLER_LENGTH, isBlockFiller } from '/ckeditor5/engine/view/filler.js';
+import { inlineFiller, inlineFillerLength, isBlockFiller } from '/ckeditor5/engine/view/filler.js';
 
 import { parse } from '/tests/engine/_utils/view.js';
 
@@ -272,7 +272,7 @@ describe( 'DomConverter', () => {
 		} );
 
 		it( 'should update offset if DOM text node starts with inline filler', () => {
-			const domFoo = document.createTextNode( INLINE_FILLER + 'foo' );
+			const domFoo = document.createTextNode( inlineFiller + 'foo' );
 			const domP = createElement( document, 'p', null, domFoo );
 			const { view: viewP, selection } = parse( '<container:p>fo{}o</container:p>' );
 
@@ -281,12 +281,12 @@ describe( 'DomConverter', () => {
 			const viewPosition = selection.getFirstPosition();
 			const domPosition = converter.viewPositionToDom( viewPosition );
 
-			expect( domPosition.offset ).to.equal( INLINE_FILLER_LENGTH + 2 );
+			expect( domPosition.offset ).to.equal( inlineFillerLength + 2 );
 			expect( domPosition.parent ).to.equal( domFoo );
 		} );
 
 		it( 'should move the position to the text node if the position is where inline filler is', () => {
-			const domFiller = document.createTextNode( INLINE_FILLER );
+			const domFiller = document.createTextNode( inlineFiller );
 			const domP = createElement( document, 'p', null, domFiller );
 			const { view: viewP, selection } = parse( '<container:p>[]</container:p>' );
 
@@ -295,7 +295,7 @@ describe( 'DomConverter', () => {
 			const viewPosition = selection.getFirstPosition();
 			const domPosition = converter.viewPositionToDom( viewPosition );
 
-			expect( domPosition.offset ).to.equal( INLINE_FILLER_LENGTH );
+			expect( domPosition.offset ).to.equal( inlineFillerLength );
 			expect( domPosition.parent ).to.equal( domFiller );
 		} );
 	} );

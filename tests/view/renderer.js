@@ -15,7 +15,7 @@ import DomConverter from '/ckeditor5/engine/view/domconverter.js';
 import Renderer from '/ckeditor5/engine/view/renderer.js';
 import CKEditorError from '/ckeditor5/utils/ckeditorerror.js';
 import { parse } from '/tests/engine/_utils/view.js';
-import { INLINE_FILLER, INLINE_FILLER_LENGTH, isBlockFiller, BR_FILLER } from '/ckeditor5/engine/view/filler.js';
+import { inlineFiller, inlineFillerLength, isBlockFiller, brFiller } from '/ckeditor5/engine/view/filler.js';
 import testUtils from '/tests/ckeditor5/_utils/utils.js';
 import createElement from '/ckeditor5/utils/dom/createelement.js';
 
@@ -325,11 +325,11 @@ describe( 'Renderer', () => {
 			expect( domP.childNodes[ 2 ].data ).to.equal( 'bar' );
 			expect( domP.childNodes[ 1 ].tagName.toLowerCase() ).to.equal( 'b' );
 			expect( domP.childNodes[ 1 ].childNodes.length ).to.equal( 1 );
-			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( inlineFiller );
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domP.childNodes[ 1 ].childNodes[ 0 ] );
-			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH );
+			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( inlineFillerLength );
 			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
 
 			// Step 2: No mutation on second render
@@ -378,14 +378,14 @@ describe( 'Renderer', () => {
 			const domP = domRoot.childNodes[ 0 ];
 
 			expect( domP.childNodes.length ).to.equal( 2 );
-			expect( domP.childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+			expect( domP.childNodes[ 0 ].data ).to.equal( inlineFiller );
 			expect( domP.childNodes[ 1 ].tagName.toLowerCase() ).to.equal( 'b' );
 			expect( domP.childNodes[ 1 ].childNodes.length ).to.equal( 1 );
 			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( 'foo' );
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domP.childNodes[ 0 ] );
-			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH );
+			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( inlineFillerLength );
 			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
 
 			// Step 2: No mutation on second render
@@ -433,11 +433,11 @@ describe( 'Renderer', () => {
 			expect( domP.childNodes[ 0 ].tagName.toLowerCase() ).to.equal( 'b' );
 			expect( domP.childNodes[ 0 ].childNodes.length ).to.equal( 1 );
 			expect( domP.childNodes[ 0 ].childNodes[ 0 ].data ).to.equal( 'foo' );
-			expect( domP.childNodes[ 1 ].data ).to.equal( INLINE_FILLER );
+			expect( domP.childNodes[ 1 ].data ).to.equal( inlineFiller );
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domP.childNodes[ 1 ] );
-			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH );
+			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( inlineFillerLength );
 			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
 
 			// Step 2: No mutation on second render
@@ -484,14 +484,14 @@ describe( 'Renderer', () => {
 			expect( domP.childNodes[ 0 ].tagName.toLowerCase() ).to.equal( 'b' );
 			expect( domP.childNodes[ 0 ].childNodes.length ).to.equal( 1 );
 			expect( domP.childNodes[ 0 ].childNodes[ 0 ].data ).to.equal( 'foo' );
-			expect( domP.childNodes[ 1 ].data ).to.equal( INLINE_FILLER );
+			expect( domP.childNodes[ 1 ].data ).to.equal( inlineFiller );
 			expect( domP.childNodes[ 2 ].tagName.toLowerCase() ).to.equal( 'b' );
 			expect( domP.childNodes[ 2 ].childNodes.length ).to.equal( 1 );
 			expect( domP.childNodes[ 2 ].childNodes[ 0 ].data ).to.equal( 'bar' );
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domP.childNodes[ 1 ] );
-			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH );
+			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( inlineFillerLength );
 			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
 		} );
 
@@ -513,7 +513,7 @@ describe( 'Renderer', () => {
 			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
 			expect( domP.childNodes[ 1 ].tagName.toLowerCase() ).to.equal( 'b' );
 			expect( domP.childNodes[ 1 ].childNodes.length ).to.equal( 1 );
-			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( inlineFiller );
 			expect( domP.childNodes[ 2 ].tagName.toLowerCase() ).to.equal( 'i' );
 			expect( domP.childNodes[ 2 ].childNodes.length ).to.equal( 0 );
 
@@ -530,7 +530,7 @@ describe( 'Renderer', () => {
 			expect( domP.childNodes[ 1 ].childNodes.length ).to.equal( 0 );
 			expect( domP.childNodes[ 2 ].tagName.toLowerCase() ).to.equal( 'i' );
 			expect( domP.childNodes[ 2 ].childNodes.length ).to.equal( 1 );
-			expect( domP.childNodes[ 2 ].childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+			expect( domP.childNodes[ 2 ].childNodes[ 0 ].data ).to.equal( inlineFiller );
 		} );
 
 		it( 'should remove filler when text is added and selection removed', () => {
@@ -548,7 +548,7 @@ describe( 'Renderer', () => {
 			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
 			expect( domP.childNodes[ 1 ].tagName.toLowerCase() ).to.equal( 'b' );
 			expect( domP.childNodes[ 1 ].childNodes.length ).to.equal( 1 );
-			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( inlineFiller );
 
 			// Step 2: Add text node.
 			const viewText = new ViewText( 'x' );
@@ -585,7 +585,7 @@ describe( 'Renderer', () => {
 			const domP = domRoot.childNodes[ 0 ];
 
 			expect( domP.childNodes.length ).to.equal( 1 );
-			expect( isBlockFiller( domP.childNodes[ 0 ], BR_FILLER ) ).to.be.true;
+			expect( isBlockFiller( domP.childNodes[ 0 ], brFiller ) ).to.be.true;
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domP );
@@ -625,7 +625,7 @@ describe( 'Renderer', () => {
 			const domP = domRoot.childNodes[ 0 ];
 
 			expect( domP.childNodes.length ).to.equal( 1 );
-			expect( isBlockFiller( domP.childNodes[ 0 ], BR_FILLER ) ).to.be.true;
+			expect( isBlockFiller( domP.childNodes[ 0 ], brFiller ) ).to.be.true;
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domP );
@@ -673,7 +673,7 @@ describe( 'Renderer', () => {
 
 			// Remove text and add filler to both DOM and View <p>{}</p>
 			domP.removeChild( domP.childNodes[ 0 ] );
-			domP.appendChild( BR_FILLER( document ) );
+			domP.appendChild( brFiller( document ) );
 
 			domSelection.removeAllRanges();
 			const domRange = new Range();
@@ -712,11 +712,11 @@ describe( 'Renderer', () => {
 			const viewB = viewP.getChild( 0 );
 
 			expect( domB.childNodes.length ).to.equal( 1 );
-			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+			expect( domB.childNodes[ 0 ].data ).to.equal( inlineFiller );
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domB.childNodes[ 0 ] );
-			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH );
+			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( inlineFillerLength );
 			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
 
 			// Add text node to both DOM and View <p><b>x</b>foo</p>
@@ -724,7 +724,7 @@ describe( 'Renderer', () => {
 
 			domSelection.removeAllRanges();
 			const domRange = new Range();
-			domRange.setStart( domB.childNodes[ 0 ], INLINE_FILLER_LENGTH + 1 );
+			domRange.setStart( domB.childNodes[ 0 ], inlineFillerLength + 1 );
 			domRange.collapse( true );
 			domSelection.addRange( domRange );
 
@@ -759,11 +759,11 @@ describe( 'Renderer', () => {
 			const viewB = viewP.getChild( 0 );
 
 			expect( domB.childNodes.length ).to.equal( 1 );
-			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+			expect( domB.childNodes[ 0 ].data ).to.equal( inlineFiller );
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domB.childNodes[ 0 ] );
-			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH );
+			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( inlineFillerLength );
 			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
 
 			// Add text node only to View <p><b>x</b>foo</p>
@@ -776,11 +776,11 @@ describe( 'Renderer', () => {
 			renderer.render();
 
 			expect( domB.childNodes.length ).to.equal( 1 );
-			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER + 'x' );
+			expect( domB.childNodes[ 0 ].data ).to.equal( inlineFiller + 'x' );
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domB.childNodes[ 0 ] );
-			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH + 1 );
+			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( inlineFillerLength + 1 );
 			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
 		} );
 
@@ -806,11 +806,11 @@ describe( 'Renderer', () => {
 			const viewB = viewP.getChild( 0 );
 
 			expect( domB.childNodes.length ).to.equal( 1 );
-			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+			expect( domB.childNodes[ 0 ].data ).to.equal( inlineFiller );
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domB.childNodes[ 0 ] );
-			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH );
+			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( inlineFillerLength );
 			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
 
 			// Add text node only to View <p><b>x</b>foo</p>
@@ -823,11 +823,11 @@ describe( 'Renderer', () => {
 			renderer.render();
 
 			expect( domB.childNodes.length ).to.equal( 1 );
-			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER + 'x' );
+			expect( domB.childNodes[ 0 ].data ).to.equal( inlineFiller + 'x' );
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domB.childNodes[ 0 ] );
-			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH + 1 );
+			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( inlineFillerLength + 1 );
 			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
 		} );
 
@@ -970,7 +970,7 @@ describe( 'Renderer', () => {
 			const domB = domRoot.childNodes[ 0 ].childNodes[ 1 ];
 			const viewB = viewP.getChild( 1 );
 
-			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+			expect( domB.childNodes[ 0 ].data ).to.equal( inlineFiller );
 
 			// Remove filler.
 			domB.childNodes[ 0 ].data = '';

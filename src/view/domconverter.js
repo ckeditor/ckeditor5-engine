@@ -11,7 +11,7 @@ import ViewPosition from './position.js';
 import ViewRange from './range.js';
 import ViewSelection from './selection.js';
 import ViewDocumentFragment from './documentfragment.js';
-import { BR_FILLER, INLINE_FILLER_LENGTH, isBlockFiller, isInlineFiller, startsWithFiller, getDataWithoutFiller } from './filler.js';
+import { brFiller, inlineFillerLength, isBlockFiller, isInlineFiller, startsWithFiller, getDataWithoutFiller } from './filler.js';
 
 import indexOf from '../../utils/dom/indexof.js';
 
@@ -32,7 +32,7 @@ export default class DomConverter {
 	 * Creates DOM converter.
 	 *
 	 * @param {Object} options Object with configuration options.
-	 * @param {Function} [options.blockFiller=engine.view.filler.BR_FILLER] Block filler creator.
+	 * @param {Function} [options.blockFiller=engine.view.filler.brFiller] Block filler creator.
 	 */
 	constructor( options = {} ) {
 		// Using WeakMap prevent memory leaks: when the converter will be destroyed all referenced between View and DOM
@@ -52,7 +52,7 @@ export default class DomConverter {
 		 * @readonly
 		 * @member {Function} engine.view.DomConverter#blockFiller
 		 */
-		this.blockFiller = options.blockFiller || BR_FILLER;
+		this.blockFiller = options.blockFiller || brFiller;
 
 		/**
 		 * DOM to View mapping.
@@ -214,7 +214,7 @@ export default class DomConverter {
 			let offset = viewPosition.offset;
 
 			if ( startsWithFiller( domParent ) ) {
-				offset += INLINE_FILLER_LENGTH;
+				offset += inlineFillerLength;
 			}
 
 			return { parent: domParent, offset: offset };
@@ -235,7 +235,7 @@ export default class DomConverter {
 			// If there is an inline filler at position return position inside the filler. We should never return
 			// the position before the inline filler.
 			if ( this.isText( domAfter ) && startsWithFiller( domAfter ) ) {
-				return { parent: domAfter, offset: INLINE_FILLER_LENGTH };
+				return { parent: domAfter, offset: inlineFillerLength };
 			}
 
 			const offset = domBefore ? indexOf( domBefore ) + 1 : 0;
@@ -396,7 +396,7 @@ export default class DomConverter {
 			}
 
 			if ( startsWithFiller( domParent ) ) {
-				offset -= INLINE_FILLER_LENGTH;
+				offset -= inlineFillerLength;
 				offset = offset < 0 ? 0 : offset;
 			}
 
