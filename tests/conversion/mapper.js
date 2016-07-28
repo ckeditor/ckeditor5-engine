@@ -58,31 +58,26 @@ describe( 'Mapper', () => {
 		let modelDiv, modelP, modelImg;
 
 		let viewDiv, viewP, viewB, viewI, viewU, viewSup, viewImg;
-		let viewTextB, viewTextO, viewTextM, viewTextX, viewTextY, viewTextZZ, viewTextFOO, viewTextBAR;
+		let viewTextB, viewTextO, viewTextM, viewTextX, viewTextY, viewTextZZ, viewTextFOO, viewTextTamil;
 
 		let mapper;
 
 		before( () => {
-			// Tree Model:
+			// Model:
 			//
 			// <div>             ---> modelDiv
 			//   ├─ x
 			//   ├─ <p>          ---> modelP
 			//   │   ├─ y
-			//   │   ├─ f {b,i}
-			//   │   ├─ o {b,i}
-			//   │   ├─ o {b,i}
-			//   │   ├─ b
-			//   │   ├─ a
-			//   │   ├─ r
+			//   │   ├─ foo {b,i}
+			//   │   ├─ நிலைக்
 			//   │   ├─ <img>    ---> modelImg
 			//   │   ├─ b {u}
 			//   │   ├─ o {u,sup}
 			//   │   └─ m {u}
-			//   ├─ z
-			//   └─ z
+			//   └─ zz
 			//
-			// Tree View:
+			// View:
 			//
 			// <div>                 ---> viewDiv
 			//   ├─ x                ---> viewTextX
@@ -91,7 +86,7 @@ describe( 'Mapper', () => {
 			//   │   ├─ <b>          ---> viewB
 			//   │   │   └─ <i>      ---> viewI
 			//   │   │       └─ foo  ---> viewTextFOO
-			//   │   ├─ bar          ---> viewTextBAR
+			//   │   ├─ நிலைக்கு      ---> viewTextTamil
 			//   │   ├─ <img>        ---> viewImg
 			//   │   └─ <u>          ---> viewU
 			//   │       ├─ b        ---> viewTextB
@@ -104,7 +99,7 @@ describe( 'Mapper', () => {
 			modelP = new ModelElement( 'p', {}, [
 				new ModelText( 'y' ),
 				new ModelText( 'foo', { b: true, i: true } ),
-				new ModelText( 'bar' ),
+				new ModelText( 'நிலைக்' ),
 				modelImg,
 				new ModelText( 'b', { u: true } ),
 				new ModelText( 'o', { u: true, sup: true } ),
@@ -125,13 +120,13 @@ describe( 'Mapper', () => {
 			viewTextY = new ViewText( 'y' );
 			viewTextZZ = new ViewText( 'zz' );
 			viewTextFOO = new ViewText( 'foo' );
-			viewTextBAR = new ViewText( 'bar' );
+			viewTextTamil = new ViewText( 'நிலைக்' );
 			viewImg = new ViewElement( 'img' );
 			viewSup = new ViewElement( 'sup', {}, [ viewTextO ] );
 			viewU = new ViewElement( 'u', {}, [ viewTextB, viewSup, viewTextM ] );
 			viewI = new ViewElement( 'i', {}, [ viewTextFOO ] );
 			viewB = new ViewElement( 'b', {}, [ viewI ] );
-			viewP = new ViewElement( 'p', {}, [ viewTextY, viewB, viewTextBAR, viewImg, viewU ] );
+			viewP = new ViewElement( 'p', {}, [ viewTextY, viewB, viewTextTamil, viewImg, viewU ] );
 			viewDiv = new ViewElement( 'div', {}, [ viewTextX, viewP, viewTextZZ ] );
 
 			mapper = new Mapper();
@@ -193,10 +188,10 @@ describe( 'Mapper', () => {
 			it( 'should transform viewTextFOO 2', () => createToModelTest( viewTextFOO, 2, modelP, 3 ) );
 			it( 'should transform viewTextFOO 3', () => createToModelTest( viewTextFOO, 3, modelP, 4 ) );
 
-			it( 'should transform viewTextBAR 0', () => createToModelTest( viewTextBAR, 0, modelP, 4 ) );
-			it( 'should transform viewTextBAR 1', () => createToModelTest( viewTextBAR, 1, modelP, 5 ) );
-			it( 'should transform viewTextBAR 2', () => createToModelTest( viewTextBAR, 2, modelP, 6 ) );
-			it( 'should transform viewTextBAR 3', () => createToModelTest( viewTextBAR, 3, modelP, 7 ) );
+			it( 'should transform viewTextTamil 0', () => createToModelTest( viewTextTamil, 0, modelP, 4 ) );
+			it( 'should transform viewTextTamil 1', () => createToModelTest( viewTextTamil, 1, modelP, 5 ) );
+			it( 'should transform viewTextTamil 2', () => createToModelTest( viewTextTamil, 2, modelP, 6 ) );
+			it( 'should transform viewTextTamil 3', () => createToModelTest( viewTextTamil, 3, modelP, 7 ) );
 
 			it( 'should transform viewU 0', () => createToModelTest( viewU, 0, modelP, 8 ) );
 			it( 'should transform viewU 1', () => createToModelTest( viewU, 1, modelP, 9 ) );
@@ -238,10 +233,10 @@ describe( 'Mapper', () => {
 			it( 'should transform modelP 1', () => createToViewTest( modelP, 1, viewTextY, 1 ) );
 			it( 'should transform modelP 2', () => createToViewTest( modelP, 2, viewTextFOO, 1 ) );
 			it( 'should transform modelP 3', () => createToViewTest( modelP, 3, viewTextFOO, 2 ) );
-			it( 'should transform modelP 4', () => createToViewTest( modelP, 4, viewTextBAR, 0 ) );
-			it( 'should transform modelP 5', () => createToViewTest( modelP, 5, viewTextBAR, 1 ) );
-			it( 'should transform modelP 6', () => createToViewTest( modelP, 6, viewTextBAR, 2 ) );
-			it( 'should transform modelP 7', () => createToViewTest( modelP, 7, viewTextBAR, 3 ) );
+			it( 'should transform modelP 4', () => createToViewTest( modelP, 4, viewTextTamil, 0 ) );
+			it( 'should transform modelP 5', () => createToViewTest( modelP, 5, viewTextTamil, 1 ) );
+			it( 'should transform modelP 6', () => createToViewTest( modelP, 6, viewTextTamil, 2 ) );
+			it( 'should transform modelP 7', () => createToViewTest( modelP, 7, viewTextTamil, 3 ) );
 			it( 'should transform modelP 8', () => createToViewTest( modelP, 8, viewP, 4 ) );
 			it( 'should transform modelP 9', () => createToViewTest( modelP, 9, viewTextB, 1 ) );
 			it( 'should transform modelP 10', () => createToViewTest( modelP, 10, viewTextM, 0 ) );

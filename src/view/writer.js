@@ -101,7 +101,7 @@ export function mergeAt( position ) {
 		return position;
 	}
 
-	// When inside empty attribute - remove it.
+	// When inside empty attribute element - remove it.
 	if ( positionParent instanceof AttributeElement && positionParent.childCount === 0 ) {
 		const parent = positionParent.parent;
 		const offset = positionParent.index;
@@ -128,7 +128,7 @@ export function mergeAt( position ) {
 		return mergeTextNodes( nodeBefore, nodeAfter );
 	}
 
-	// When selection is between same nodes.
+	// When position is between same nodes.
 	else if ( nodeBefore.isSimilar( nodeAfter ) ) {
 		// Move all children nodes from node placed after selection and remove that node.
 		const count = nodeBefore.childCount;
@@ -506,19 +506,20 @@ function _breakAt( position, forceSplitText = false ) {
 	const positionOffset = position.offset;
 	const positionParent = position.parent;
 
-	// There are no attributes to break and text nodes breaking is not forced.
-	if ( !forceSplitText && positionParent instanceof Text && isContainerOrFragment( positionParent.parent ) ) {
-		return Position.createFromPosition( position );
-	}
-
-	// Position's parent is container, so no attributes to break.
+	// Position in container -> so no attributes to break.
 	if ( isContainerOrFragment( positionParent ) ) {
 		return Position.createFromPosition( position );
 	}
 
-	// Break text and start again in new position.
 	if ( positionParent instanceof Text ) {
-		return _breakAt( breakTextNode( position ), forceSplitText );
+		// Position in text node...
+		if ( isContainerOrFragment( positionParent.parent ) && !forceSplitText ) {
+			// ... but no attributes to break and not forcing text node splitting.
+			return Position.createFromPosition( position );
+		} else {
+			// ... there is something to break or text split is forced.
+			return _breakAt( breakTextNode( position ), forceSplitText );
+		}
 	}
 
 	const length = positionParent.childCount;
@@ -704,7 +705,7 @@ function movePositionToTextNode( position ) {
 	const nodeBefore = position.nodeBefore;
 
 	if ( nodeBefore && nodeBefore instanceof Text ) {
-		return new Position( nodeBefore, nodeBefore.data.length );
+		return new Position( nodeBefore, nodeBefore.size );
 	}
 
 	const nodeAfter = position.nodeAfter;
@@ -725,7 +726,7 @@ function movePositionToTextNode( position ) {
 // @param {engine.view.Position} position Position that need to be placed inside text node.
 // @returns {engine.view.Position} New position after breaking text node.
 function breakTextNode( position ) {
-	if ( position.offset == position.parent.data.length ) {
+	if ( position.offset == position.parent.size ) {
 		return new Position( position.parent.parent, position.parent.index + 1 );
 	}
 
@@ -734,10 +735,10 @@ function breakTextNode( position ) {
 	}
 
 	// Get part of the text that need to be moved.
-	const textToMove = position.parent.data.slice( position.offset );
+	const textToMove = position.parent.getSymbols( position.offset, position.parent.size - position.offset );
 
 	// Leave rest of the text in position's parent.
-	position.parent.data = position.parent.data.slice( 0, position.offset );
+	position.parent.data = position.parent.getSymbols( 0, position.offset );
 
 	// Insert new text node after position's parent text node.
 	position.parent.parent.insertChildren( position.parent.index + 1, new Text( textToMove ) );
@@ -754,7 +755,7 @@ function breakTextNode( position ) {
 // @returns {engine.view.Position} Position after merging text nodes.
 function mergeTextNodes( t1, t2 ) {
 	// Merge text data into first text node and remove second one.
-	const nodeBeforeLength = t1.data.length;
+	const nodeBeforeLength = t1.size;
 	t1.data += t2.data;
 	t2.remove();
 

@@ -13,6 +13,7 @@ import DocumentFragment from '/ckeditor5/engine/model/documentfragment.js';
 import Selection from '/ckeditor5/engine/model/selection.js';
 import Document from '/ckeditor5/engine/model/document.js';
 import writer from '/ckeditor5/engine/model/writer.js';
+import splitter from '/ckeditor5/utils/lib/grapheme-splitter.js';
 
 /**
  * Writes the contents of the {@link engine.model.Document Document} to an HTML-like string.
@@ -309,7 +310,7 @@ function writeItem( walkerValue, selection, options ) {
 function writeText( walkerValue, selection, options ) {
 	const item = walkerValue.item;
 	const attrs = writeAttributes( item.getAttributes() );
-	let text = Array.from( item.data );
+	let text = splitter.splitGraphemes( item.data );
 
 	if ( options.selection ) {
 		const startIndex = walkerValue.previousPosition.offset + 1;

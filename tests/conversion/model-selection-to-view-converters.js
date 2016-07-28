@@ -76,6 +76,14 @@ describe( 'default converters', () => {
 			);
 		} );
 
+		it( 'in same container with unicode characters', () => {
+			test(
+				[ 1, 3 ],
+				'நிலைக்கு',
+				'நி{லைக்}கு'
+			);
+		} );
+
 		it( 'in same container, over attribute', () => {
 			test(
 				[ 1, 5 ],

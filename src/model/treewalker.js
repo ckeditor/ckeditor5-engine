@@ -12,6 +12,10 @@ import CKEditorError from '../../utils/ckeditorerror.js';
 /**
  * Position iterator class. It allows to iterate forward and backward over the document.
  *
+ * `TreeWalker` supports unicode. See {@link engine.model.Text} for more information. {@link engine.model.TextProxy} instances
+ * returned by `TreeWalker` never splits unicode string in incorrect place (i.e. between surrogate pair), even with
+ * `singleCharacters` flag set to `true`.
+ *
  * @memberOf engine.model
  */
 export default class TreeWalker {

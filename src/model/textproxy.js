@@ -3,6 +3,8 @@
  * For licensing, see LICENSE.md.
  */
 
+import CKEditorError from '../../utils/ckeditorerror.js';
+
 /**
  * `TextProxy` represents a part of {@link engine.model.Text text node}.
  *
@@ -15,16 +17,19 @@
  * on model nodes.
  *
  * **Note:** Some `TextProxy` instances may represent whole text node, not just a part of it.
+ * See {@link engine.model.TextProxy#isPartial}.
  *
  * **Note:** `TextProxy` is not an instance of {@link engine.model.Node node}. Keep this in mind when using it as a
  * parameter of methods.
  *
- * **Note:** `TextProxy` is readonly interface. If you want to perform changes on model data represented by a `TextProxy`
+ * **Note:** `TextProxy` is a readonly interface. If you want to perform changes on model data represented by a `TextProxy`
  * use {@link engine.model.writer model writer API}.
  *
  * **Note:** `TextProxy` instances are created on the fly, basing on the current state of model. Because of this, it is
  * highly unrecommended to store references to `TextProxy` instances. `TextProxy` instances are not refreshed when
  * model changes, so they might get invalidated. Instead, consider creating {@link engine.model.LivePosition live position}.
+ *
+ * `TextProxy` supports unicode. See {@link engine.model.Text} for more information.
  *
  * `TextProxy` instances are created by {@link engine.model.TreeWalker model tree walker}. You should not need to create
  * an instance of this class by your own.
@@ -50,13 +55,31 @@ export default class TextProxy {
 		 */
 		this.textNode = textNode;
 
+		if ( offsetInText < 0 || offsetInText > textNode.offsetSize ) {
+			/**
+			 * Given offsetInText value is incorrect.
+			 *
+			 * @error model-textproxy-wrong-offsetintext
+			 */
+			throw new CKEditorError( 'model-textproxy-wrong-offsetintext: Given offsetInText value is incorrect.' );
+		}
+
+		if ( length < 0 || offsetInText + length > textNode.offsetSize ) {
+			/**
+			 * Given length value is incorrect.
+			 *
+			 * @error model-textproxy-wrong-length
+			 */
+			throw new CKEditorError( 'model-textproxy-wrong-length: Given length value is incorrect.' );
+		}
+
 		/**
-		 * Text data represented by this text proxy.
+		 * Offset size of this text proxy. Equal to the number of symbols represented by the text proxy.
 		 *
 		 * @readonly
-		 * @member {String} engine.model.TextProxy#data
+		 * @member {Number} engine.model.TextProxy#offsetSize
 		 */
-		this.data = textNode.data.substring( offsetInText, offsetInText + length );
+		this.offsetSize = length;
 
 		/**
 		 * Offset in {@link engine.model.TextProxy#textNode text node} from which the text proxy starts.
@@ -65,6 +88,14 @@ export default class TextProxy {
 		 * @member {Number} engine.model.TextProxy#offsetInText
 		 */
 		this.offsetInText = offsetInText;
+
+		/**
+		 * Text data represented by this text proxy.
+		 *
+		 * @readonly
+		 * @member {String} engine.model.TextProxy#data
+		 */
+		this.data = this.textNode.getSymbols( this.offsetInText, this.offsetSize );
 	}
 
 	/**
@@ -76,17 +107,6 @@ export default class TextProxy {
 	 */
 	get startOffset() {
 		return this.textNode.startOffset !== null ? this.textNode.startOffset + this.offsetInText : null;
-	}
-
-	/**
-	 * Offset size of this text proxy. Equal to the number of characters represented by the text proxy.
-	 *
-	 * @see engine.model.Node#offsetSize
-	 * @readonly
-	 * @type {Number}
-	 */
-	get offsetSize() {
-		return this.data.length;
 	}
 
 	/**
@@ -112,7 +132,7 @@ export default class TextProxy {
 	 * @type {Boolean}
 	 */
 	get isPartial() {
-		return this.offsetInText !== 0 || this.offsetSize !== this.textNode.offsetSize;
+		return this.offsetSize !== this.textNode.offsetSize;
 	}
 
 	/**
@@ -150,8 +170,7 @@ export default class TextProxy {
 	 * Gets path to this text proxy.
 	 *
 	 * @see engine.model.Node#getPath
-	 * @readonly
-	 * @type {Array.<Number>}
+	 * @returns {Array.<Number>}
 	 */
 	getPath() {
 		const path = this.textNode.getPath();

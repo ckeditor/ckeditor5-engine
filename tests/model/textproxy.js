@@ -9,6 +9,7 @@ import Element from '/ckeditor5/engine/model/element.js';
 import Text from '/ckeditor5/engine/model/text.js';
 import TextProxy from '/ckeditor5/engine/model/textproxy.js';
 import Document from '/ckeditor5/engine/model/document.js';
+import CKEditorError from '/ckeditor5/utils/ckeditorerror.js';
 
 describe( 'TextProxy', () => {
 	let doc, element, textProxy, root, textProxyNoParent, text, textNoParent;
@@ -81,6 +82,26 @@ describe( 'TextProxy', () => {
 		expect( fullTextProxy.isPartial ).to.be.false;
 	} );
 
+	it( 'should throw if wrong offsetInText is passed', () => {
+		expect( () => {
+			new TextProxy( text, -1, 2 );
+		} ).to.throw( CKEditorError, /model-textproxy-wrong-offsetintext/ );
+
+		expect( () => {
+			new TextProxy( text, 9, 1 );
+		} ).to.throw( CKEditorError, /model-textproxy-wrong-offsetintext/ );
+	} );
+
+	it( 'should throw if wrong length is passed', () => {
+		expect( () => {
+			new TextProxy( text, 2, -1 );
+		} ).to.throw( CKEditorError, /model-textproxy-wrong-length/ );
+
+		expect( () => {
+			new TextProxy( text, 2, 9 );
+		} ).to.throw( CKEditorError, /model-textproxy-wrong-length/ );
+	} );
+
 	describe( 'getPath', () => {
 		it( 'should return path to the text proxy', () => {
 			expect( textProxy.getPath() ).to.deep.equal( [ 0, 5 ] );
@@ -135,6 +156,36 @@ describe( 'TextProxy', () => {
 				expect( Array.from( textProxy.getAttributeKeys() ) ).to.deep.equal( [ 'foo' ] );
 				expect( Array.from( textProxyNoParent.getAttributeKeys() ) ).to.deep.equal( [] );
 			} );
+		} );
+	} );
+
+	describe( 'unicode support', () => {
+		it( 'should create correct text proxy instances of text nodes containing special unicode symbols', () => {
+			let textHamil = new Text( 'நிலைக்கு' );
+
+			let textProxy02 = new TextProxy( textHamil, 0, 2 ); // Should contain two symbols from original text node.
+			let textProxy04 = new TextProxy( textHamil, 0, 4 ); // Whole text node.
+			let textProxy12 = new TextProxy( textHamil, 1, 2 );
+			let textProxy22 = new TextProxy( textHamil, 2, 2 );
+			let textProxy31 = new TextProxy( textHamil, 3, 1 );
+
+			expect( textProxy02.data ).to.equal( 'நிலை' );
+			expect( textProxy04.data ).to.equal( 'நிலைக்கு' );
+			expect( textProxy12.data ).to.equal( 'லைக்' );
+			expect( textProxy22.data ).to.equal( 'க்கு' );
+			expect( textProxy31.data ).to.equal( 'கு' );
+
+			expect( textProxy02.offsetSize ).to.equal( 2 );
+			expect( textProxy04.offsetSize ).to.equal( 4 );
+			expect( textProxy12.offsetSize ).to.equal( 2 );
+			expect( textProxy22.offsetSize ).to.equal( 2 );
+			expect( textProxy31.offsetSize ).to.equal( 1 );
+
+			expect( textProxy02.data.length ).to.equal( 4 );
+			expect( textProxy04.data.length ).to.equal( 8 );
+			expect( textProxy12.data.length ).to.equal( 4 );
+			expect( textProxy22.data.length ).to.equal( 4 );
+			expect( textProxy31.data.length ).to.equal( 2 );
 		} );
 	} );
 } );

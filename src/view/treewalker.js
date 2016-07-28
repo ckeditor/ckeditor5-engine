@@ -200,7 +200,7 @@ export default class TreeWalker {
 
 				return this._next();
 			} else {
-				let charactersCount = node.data.length;
+				let charactersCount = node.size;
 				let item = node;
 
 				// If text stick out of walker range, we need to cut it and wrap by TextProxy.
@@ -224,7 +224,7 @@ export default class TreeWalker {
 				textLength = 1;
 			} else {
 				// Check if text stick out of walker range.
-				const endOffset = parent === this._boundaryEndParent ? this.boundaries.end.offset : parent.data.length;
+				const endOffset = parent === this._boundaryEndParent ? this.boundaries.end.offset : parent.size;
 
 				textLength = endOffset - position.offset;
 			}
@@ -299,20 +299,20 @@ export default class TreeWalker {
 			}
 		} else if ( node instanceof Text ) {
 			if ( this.singleCharacters ) {
-				position = new Position( node, node.data.length );
+				position = new Position( node, node.size );
 				this.position = position;
 
 				return this._previous();
 			} else {
-				let charactersCount = node.data.length;
+				let charactersCount = node.size;
 				let item = node;
 
 				// If text stick out of walker range, we need to cut it and wrap by TextProxy.
 				if ( node == this._boundaryStartParent ) {
 					const offset = this.boundaries.start.offset;
 
-					item = new TextProxy( node, offset, node.data.length - offset );
-					charactersCount = item.data.length;
+					item = new TextProxy( node, offset, node.size - offset );
+					charactersCount = item.size;
 					position = Position.createBefore( item );
 				} else {
 					// If not just keep moving backward.
@@ -369,7 +369,7 @@ export default class TreeWalker {
 		// we move it just before or just after Text.
 		if ( item instanceof TextProxy ) {
 			// Position is at the end of Text.
-			if ( item.offsetInText + item.data.length == item.textNode.data.length ) {
+			if ( item.offsetInText + item.size == item.textNode.size ) {
 				if ( this.direction == 'forward' ) {
 					nextPosition = Position.createAfter( item.textNode );
 					// When we change nextPosition of returned value we need also update walker current position.

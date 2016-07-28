@@ -29,7 +29,7 @@ describe( 'writer', () => {
 		// index:	0001112333
 		// offset:	0123456789
 		// data:	foobarIxyz
-		// bold:	___BBBB___
+		// attr:	___BBBS___
 		root.appendChildren( [
 			new Text( 'foo' ),
 			new Text( 'bar', { bold: true } ),
@@ -153,6 +153,59 @@ describe( 'writer', () => {
 			writer.removeAttribute( range, 'src' );
 
 			expect( writer.setAttribute.calledWithExactly( range, 'src', null ) ).to.be.true;
+		} );
+	} );
+
+	describe( 'unicode support', () => {
+		let rootUni;
+
+		beforeEach( () => {
+			rootUni = doc.createRoot( '$root', 'rootUni' );
+			rootUni.appendChildren( 'நிலைக்கு' );
+		} );
+
+		it( 'should insert unicode text inside unicode text', () => {
+			writer.insert( Position.createAt( rootUni, 2 ), 'க்' );
+
+			expect( rootUni.getChild( 0 ).data ).to.equal( 'நிலைக்க்கு');
+		} );
+
+		it( 'should insert unicode combining mark before BMP character', () => {
+			const foo = root.getChild( 0 );
+
+			expect( foo.data ).to.equal( 'foo' );
+			expect( foo.offsetSize ).to.equal( 3 );
+
+			writer.insert( Position.createAt( root, 2 ), '\u0301' );
+
+			expect( foo.data ).to.equal( 'foó' );
+			expect( foo.offsetSize ).to.equal( 3 );
+		} );
+
+		it( 'should remove unicode text', () => {
+			writer.remove( Range.createFromParentsAndOffsets( rootUni, 1, rootUni, 3 ) );
+
+			expect( rootUni.getChild( 0 ).data ).to.equal( 'நிகு' );
+		} );
+
+		it( 'should set and remove attribute on unicode text', () => {
+			let range = Range.createFromParentsAndOffsets( rootUni, 1, rootUni, 3 );
+
+			writer.setAttribute( range, 'bold', true );
+
+			expect( rootUni.getChild( 0 ).data ).to.equal( 'நி' );
+			expect( Array.from( rootUni.getChild( 0 ).getAttributes() ) ).to.deep.equal( [] );
+
+			expect( rootUni.getChild( 1 ).data ).to.equal( 'லைக்' );
+			expect( Array.from( rootUni.getChild( 1 ).getAttributes() ) ).to.deep.equal( [ [ 'bold', true ] ] );
+
+			expect( rootUni.getChild( 2 ).data ).to.equal( 'கு' );
+			expect( Array.from( rootUni.getChild( 2 ).getAttributes() ) ).to.deep.equal( [] );
+
+			writer.removeAttribute( range, 'bold' );
+
+			expect( rootUni.getChild( 0 ).data ).to.equal( 'நிலைக்கு');
+			expect( Array.from( rootUni.getChild( 0 ).getAttributes() ) ).to.deep.equal( [] );
 		} );
 	} );
 } );

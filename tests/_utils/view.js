@@ -13,6 +13,7 @@ import Position from '/ckeditor5/engine/view/position.js';
 import AttributeElement from '/ckeditor5/engine/view/attributeelement.js';
 import ContainerElement from '/ckeditor5/engine/view/containerelement.js';
 import ViewText from '/ckeditor5/engine/view/text.js';
+import splitter from '/ckeditor5/utils/lib/grapheme-splitter.js';
 
 const ELEMENT_RANGE_START_TOKEN = '[';
 const ELEMENT_RANGE_END_TOKEN = ']';
@@ -367,40 +368,37 @@ class RangeParser {
 		}
 
 		if ( node instanceof ViewText ) {
-			const regexp = new RegExp(
-				`[${ TEXT_RANGE_START_TOKEN }${ TEXT_RANGE_END_TOKEN }\\${ ELEMENT_RANGE_END_TOKEN }\\${ ELEMENT_RANGE_START_TOKEN }]`,
-				'g'
-			);
-			let text = node.data;
-			let match;
-			let offset = 0;
+			const bracketsTypes = [ TEXT_RANGE_START_TOKEN, TEXT_RANGE_END_TOKEN, ELEMENT_RANGE_START_TOKEN, ELEMENT_RANGE_END_TOKEN ];
 			const brackets = [];
+			const graphemes = splitter.splitGraphemes( node.data );
+			let text = '';
 
-			// Remove brackets from text and store info about offset inside text node.
-			while ( ( match = regexp.exec( text ) ) ) {
-				const index = match.index;
-				const bracket = match[ 0 ];
+			for ( let i = 0; i < graphemes.length; i++ ) {
+				const grapheme = graphemes[ i ];
 
-				brackets.push( {
-					bracket: bracket,
-					textOffset: index - offset
-				} );
-
-				offset++;
+				if ( bracketsTypes.indexOf( grapheme ) > -1 ) {
+					brackets.push( {
+						bracket: grapheme,
+						textOffset: i - brackets.length
+					} );
+				} else {
+					text += grapheme;
+				}
 			}
-			text = text.replace( regexp, '' );
+
 			node.data = text;
+
 			const index = node.index;
 			const parent = node.parent;
 
 			// Remove empty text nodes.
-			if ( !text ) {
+			if ( text == '' ) {
 				node.remove();
 			}
 
 			for ( let item of brackets ) {
 				// Non-empty text node.
-				if ( text ) {
+				if ( text != '' ) {
 					if ( item.bracket == TEXT_RANGE_START_TOKEN || item.bracket == TEXT_RANGE_END_TOKEN ) {
 						// Store information about text range delimiter.
 						this._positions.push( {
@@ -625,7 +623,7 @@ class ViewStringify {
 	 */
 	_stringifyTextRanges( node ) {
 		const length = node.data.length;
-		let result = node.data.split( '' );
+		let result = splitter.splitGraphemes( node.data );
 
 		// Add one more element for ranges ending after last character in text.
 		result[ length ] = '';

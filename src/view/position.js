@@ -85,7 +85,7 @@ export default class Position {
 	 * @type {Boolean}
 	 */
 	get isAtEnd() {
-		const endOffset = this.parent instanceof Text ? this.parent.data.length : this.parent.childCount;
+		const endOffset = this.parent instanceof Text ? this.parent.size : this.parent.childCount;
 
 		return this.offset === endOffset;
 	}
@@ -272,7 +272,7 @@ export default class Position {
 			let node = itemOrPosition;
 
 			if ( offset == 'end' ) {
-				offset = node instanceof Text ? node.data.length : node.childCount;
+				offset = node instanceof Text ? node.size : node.childCount;
 			} else if ( offset == 'before' ) {
 				return this.createBefore( node );
 			} else if ( offset == 'after' ) {
@@ -294,7 +294,7 @@ export default class Position {
 	static createAfter( item ) {
 		// TextProxy is not a instance of Node so we need do handle it in specific way.
 		if ( item instanceof TextProxy ) {
-			return new Position( item.textNode, item.offsetInText + item.data.length );
+			return new Position( item.textNode, item.offsetInText + item.size );
 		}
 
 		if ( !item.parent ) {

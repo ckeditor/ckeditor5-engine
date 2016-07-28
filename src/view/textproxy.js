@@ -3,16 +3,29 @@
  * For licensing, see LICENSE.md.
  */
 
+import CKEditorError from '../../utils/ckeditorerror.js';
+
 /**
  * TextProxy is a wrapper for substring of {@link engine.view.Text}. Instance of this class is created by
  * {@link engine.view.TreeWalker} when only a part of {@link engine.view.Text} needs to be returned.
+ *
+ * `TextProxy` has an API similar to {@link engine.view.Text Text} and allows to do most of the common tasks performed
+ * on view nodes.
+ *
+ * **Note:** Some `TextProxy` instances may represent whole text node, not just a part of it.
+ * See {@link engine.view.TextProxy#isPartial}.
+ *
+ * **Note:** `TextProxy` is a readonly interface.
  *
  * **Note:** `TextProxy` instances are created on the fly basing on the current state of parent {@link engine.view.Text}.
  * Because of this it is highly unrecommended to store references to `TextProxy instances because they might get
  * invalidated due to operations on Document. Also TextProxy is not a {@link engine.view.Node} so it can not be
  * inserted as a child of {@link engine.view.Element}.
  *
- * You should never create an instance of this class by your own.
+ * `TextProxy` supports unicode. See {@link engine.model.Text} for more information.
+ *
+ * `TextProxy` instances are created by {@link engine.view.TreeWalker view tree walker}. You should not need to create
+ * an instance of this class by your own.
  *
  * @memberOf engine.view
  */
@@ -35,13 +48,31 @@ export default class TextProxy {
 		 */
 		this.textNode = textNode;
 
+		if ( offsetInText < 0 || offsetInText > textNode.size ) {
+			/**
+			 * Given offsetInText value is incorrect.
+			 *
+			 * @error view-textproxy-wrong-offsetintext
+			 */
+			throw new CKEditorError( 'view-textproxy-wrong-offsetintext: Given offsetInText value is incorrect.' );
+		}
+
+		if ( length < 0 || offsetInText + length > textNode.size ) {
+			/**
+			 * Given length value is incorrect.
+			 *
+			 * @error view-textproxy-wrong-length
+			 */
+			throw new CKEditorError( 'view-textproxy-wrong-length: Given length value is incorrect.' );
+		}
+
 		/**
-		 * Text data represented by this text proxy.
+		 * Size of this text proxy. Equal to the number of symbols represented by the text proxy.
 		 *
 		 * @readonly
-		 * @member {String} engine.view.TextProxy#data
+		 * @member {Number} engine.view.TextProxy#size
 		 */
-		this.data = textNode.data.substring( offsetInText, offsetInText + length );
+		this.size = length;
 
 		/**
 		 * Offset in the `textNode` where this `TextProxy` instance starts.
@@ -50,6 +81,14 @@ export default class TextProxy {
 		 * @member {Number} engine.view.TextProxy#offsetInText
 		 */
 		this.offsetInText = offsetInText;
+
+		/**
+		 * Text data represented by this text proxy.
+		 *
+		 * @readonly
+		 * @member {String} engine.view.TextProxy#data
+		 */
+		this.data = this.textNode.getSymbols( this.offsetInText, this.size );
 	}
 
 	/**
@@ -64,7 +103,7 @@ export default class TextProxy {
 	 * @type {Boolean}
 	 */
 	get isPartial() {
-		return this.offsetInText !== 0 || this.data.length !== this.textNode.data.length;
+		return this.size !== this.textNode.size;
 	}
 
 	/**

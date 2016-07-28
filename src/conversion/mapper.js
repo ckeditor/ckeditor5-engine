@@ -197,7 +197,7 @@ export default class Mapper {
 		if ( this._viewToModelMapping.has( viewNode ) ) {
 			return 1;
 		} else if ( viewNode instanceof ViewText ) {
-			return viewNode.data.length;
+			return viewNode.size;
 		} else {
 			let len = 0;
 
@@ -289,7 +289,7 @@ export default class Mapper {
 		const nodeAfter = viewPosition.nodeAfter;
 
 		if ( nodeBefore instanceof ViewText ) {
-			return new ViewPosition( nodeBefore, nodeBefore.data.length );
+			return new ViewPosition( nodeBefore, nodeBefore.size );
 		} else if ( nodeAfter instanceof ViewText ) {
 			return new ViewPosition( nodeAfter, 0 );
 		}

@@ -539,6 +539,45 @@ describe( 'TreeWalker', () => {
 			} );
 		} );
 	} );
+
+	describe( 'unicode support', () => {
+		let unicodeElement, pTamil, pHindi;
+
+		beforeEach( () => {
+			pTamil = new Element( 'p', null, 'நிலைக்கு' );
+			pHindi = new Element( 'p', null, 'अनुच्छेद' );
+			unicodeElement = new Element( 'div', null, [ pTamil, pHindi ] );
+		} );
+
+		it( 'should return correct unicode supported text nodes when tree walker starts inside text node', () => {
+			let iterator = new TreeWalker( {
+				boundaries: Range.createFromParentsAndOffsets( pTamil, 2, pHindi, 4 )
+			} );
+
+			let expectedValues = [ 'க்கு', 'अनुच्छे' ];
+
+			for ( let value of iterator ) {
+				if ( value.type == 'text' ) {
+					expect( value.item.data ).to.equal( expectedValues.shift() );
+				}
+			}
+		} );
+
+		it( 'should return correct unicode supported text nodes when tree walker starts inside text node (singleCharacters)', () => {
+			let iterator = new TreeWalker( {
+				boundaries: Range.createFromParentsAndOffsets( pTamil, 2, pHindi, 4 ),
+				singleCharacters: true
+			} );
+
+			let expectedValues = [ 'க்', 'கு', 'अ', 'नु', 'च्', 'छे' ];
+
+			for ( let value of iterator ) {
+				if ( value.type == 'text' ) {
+					expect( value.item.data ).to.equal( expectedValues.shift() );
+				}
+			}
+		} );
+	} );
 } );
 
 function expectValue( value, expected, options ) {

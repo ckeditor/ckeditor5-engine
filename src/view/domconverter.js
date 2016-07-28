@@ -11,6 +11,7 @@ import ViewSelection from './selection.js';
 import ViewDocumentFragment from './documentfragment.js';
 import { BR_FILLER, INLINE_FILLER_LENGTH, isBlockFiller, isInlineFiller, startsWithFiller, getDataWithoutFiller } from './filler.js';
 
+import splitter from '../../utils/lib/grapheme-splitter.js';
 import indexOf from '../../utils/dom/indexof.js';
 
 /**
@@ -209,7 +210,7 @@ export default class DomConverter {
 
 		if ( viewParent instanceof ViewText ) {
 			const domParent = this.getCorrespondingDomText( viewParent );
-			let offset = viewPosition.offset;
+			let offset = viewParent.getSymbols( 0, viewPosition.offset ).length;
 
 			if ( startsWithFiller( domParent ) ) {
 				offset += INLINE_FILLER_LENGTH;
@@ -387,7 +388,7 @@ export default class DomConverter {
 			}
 
 			const viewParent = this.getCorrespondingViewText( domParent );
-			let offset = domOffset;
+			let offset = splitter.countGraphemes( domParent.textContent.substring( 0, domOffset ) );
 
 			if ( !viewParent ) {
 				return null;
