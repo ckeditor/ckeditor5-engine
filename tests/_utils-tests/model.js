@@ -222,9 +222,8 @@ describe( 'model test utils', () => {
 			] );
 
 			expect( stringify( root ) ).to.equal(
-				'<$text bold="true">foo</$text>' +
-				'bar' +
-				'<$text bold="true" italic="true">bom</$text>' +
+				// Because of https://github.com/ckeditor/ckeditor5-engine/issues/562 attributes are not merged
+				'<$text bold="true">foo</$text>bar<$text italic="true"><$text bold="true">bom</$text></$text>' +
 				'<a><$text bold="true" underline="true">pom</$text></a>'
 			);
 		} );
@@ -285,9 +284,8 @@ describe( 'model test utils', () => {
 				selection.collapse( elB, 'before' );
 
 				expect( stringify( root, selection ) ).to.equal(
-					'<a></a>foo<$text bold="true">bar</$text>[]<b></b>'
+					'<a></a>foo<$text bold="true">bar[]</$text><b></b>'
 				);
-				expect( selection.getAttribute( 'bold' ) ).to.true;
 			} );
 
 			it( 'writes selection collapsed at the end of the root', () => {
@@ -522,9 +520,8 @@ describe( 'model test utils', () => {
 					italic: true
 				} } );
 
-				expect( stringify( result.model, result.selection ) ).to.equal( 'foo[]bar' );
-				expect( result.selection.getAttribute( 'italic' ) ).to.be.true;
-				expect( result.selection.getAttribute( 'bold' ) ).to.be.true;
+				expect( stringify( result.model, result.selection ) ).to.equal(
+					'foo<$text bold="true" italic="true">[]</$text>bar' );
 			} );
 
 			test( 'sets collapsed selection between text and text with attributes', {

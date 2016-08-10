@@ -209,25 +209,27 @@ export function removeAttribute( attributeCreator ) {
  */
 export function wrap( elementCreator ) {
 	return ( evt, data, consumable, conversionApi ) => {
-		consumable.consume( data.item, eventNameToConsumableType( evt.name ) );
-
 		let viewRange = conversionApi.mapper.toViewRange( data.range );
 
 		const viewElement = ( elementCreator instanceof ViewElement ) ?
 			elementCreator.clone( true ) :
 			elementCreator( data.attributeNewValue, data, consumable, conversionApi );
 
-		// If this is a change event (because old value is not empty) and the creator is a function (so
-		// it may create different view elements basing on attribute value) we have to create
-		// view element basing on old value and unwrap it before wrapping with a newly created view element.
-		if ( data.attributeOldValue !== null && !( elementCreator instanceof ViewElement ) ) {
-			const oldViewElement = elementCreator( data.attributeOldValue, data, consumable, conversionApi );
-			viewRange = viewWriter.unwrap( viewRange, oldViewElement, evt.priority );
+		if ( viewElement ) {
+			consumable.consume( data.item, eventNameToConsumableType( evt.name ) );
+
+			// If this is a change event (because old value is not empty) and the creator is a function (so
+			// it may create different view elements basing on attribute value) we have to create
+			// view element basing on old value and unwrap it before wrapping with a newly created view element.
+			if ( data.attributeOldValue !== null && !( elementCreator instanceof ViewElement ) ) {
+				const oldViewElement = elementCreator( data.attributeOldValue, data, consumable, conversionApi );
+				viewRange = viewWriter.unwrap( viewRange, oldViewElement, evt.priority );
+			}
+
+			viewWriter.wrap( viewRange, viewElement );
+
+			evt.stop();
 		}
-
-		viewWriter.wrap( viewRange, viewElement, evt.priority );
-
-		evt.stop();
 	};
 }
 

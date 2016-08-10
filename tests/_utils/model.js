@@ -14,18 +14,23 @@ import ModelSelection from '/ckeditor5/engine/model/selection.js';
 import ModelDocumentFragment from '/ckeditor5/engine/model/documentfragment.js';
 import ModelElement from '/ckeditor5/engine/model/element.js';
 import ModelText from '/ckeditor5/engine/model/text.js';
+import ModelTextProxy from '/ckeditor5/engine/model/textproxy.js';
 import modelWriter from '/ckeditor5/engine/model/writer.js';
 
 import ViewConversionDispatcher from '/ckeditor5/engine/conversion/viewconversiondispatcher.js';
 import ViewSelection from '/ckeditor5/engine/view/selection.js';
 import ViewDocumentFragment from '/ckeditor5/engine/view/documentfragment.js';
+import ViewAttributeElement from '/ckeditor5/engine/view/attributeelement.js';
 import ViewElement from '/ckeditor5/engine/view/containerelement.js';
-import ViewText from '/ckeditor5/engine/view/text.js';
 import viewWriter from '/ckeditor5/engine/view/writer.js';
 
-import count from '/ckeditor5/utils/count.js';
 import { parse as viewParse, stringify as viewStringify } from '/tests/engine/_utils/view.js';
-import { convertRangeSelection, convertCollapsedSelection } from '/ckeditor5/engine/conversion/model-selection-to-view-converters.js';
+import {
+	convertRangeSelection,
+	convertCollapsedSelection,
+	convertSelectionAttribute
+} from '/ckeditor5/engine/conversion/model-selection-to-view-converters.js';
+import { insertText, wrap } from '/ckeditor5/engine/conversion/model-to-view-converters.js';
 
 // Test utils uses `<$text foo="bar">Lorem ipsum</$text>` notation to create text with attributes, but `$text` is not
 // valid XML element name, so needs to be parsed before conversion to view.
@@ -199,9 +204,16 @@ export function stringify( node, selectionOrPositionOrRange = null ) {
 	mapper.bindElements( node.root, viewDocumentFragment );
 
 	modelToView.on( 'insert:$text', insertText() );
+	modelToView.on( 'addAttribute', wrap( ( value, data ) => {
+		if ( data.item instanceof ModelTextProxy ) {
+			return new ViewAttributeElement( VIEW_TEXT_WITH_ATTRIBUTES_ELEMENT, { [ data.attributeKey ]: value } );
+		}
+	} ) );
 	modelToView.on( 'insert', insertElement() );
 	modelToView.on( 'selection', convertRangeSelection() );
 	modelToView.on( 'selection', convertCollapsedSelection() );
+	modelToView.on( 'selectionAttribute', convertSelectionAttribute(
+		( value, data ) => new ViewAttributeElement( VIEW_TEXT_WITH_ATTRIBUTES_ELEMENT, { [ data.key ]: value } ) ) );
 
 	// Convert model to view.
 	modelToView.convertInsert( range );
@@ -377,25 +389,5 @@ function insertElement() {
 
 		conversionApi.mapper.bindElements( data.item, viewElement );
 		viewWriter.insert( viewPosition, viewElement );
-	};
-}
-
-function insertText() {
-	return ( evt, data, consumable, conversionApi ) => {
-		consumable.consume( data.item, 'insert' );
-
-		const viewPosition = conversionApi.mapper.toViewPosition( data.range.start );
-		const viewText = new ViewText( data.item.data );
-		let node;
-
-		if ( count( data.item.getAttributes() ) ) {
-			node = new ViewElement( VIEW_TEXT_WITH_ATTRIBUTES_ELEMENT, data.item.getAttributes(), [ viewText ] );
-		} else {
-			node = viewText;
-		}
-
-		viewWriter.insert( viewPosition, node );
-
-		evt.stop();
 	};
 }
