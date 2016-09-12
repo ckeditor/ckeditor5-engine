@@ -135,7 +135,7 @@ class ViewConverterBuilder {
 	 * @param {String|RegExp} [value] View attribute value.
 	 * @returns {engine.conversion.ViewConverterBuilder}
 	 */
-	fromAttribute( key, value = /.*/ ) {
+	fromAttribute( key, value = /[\s\S]*/ ) {
 		let pattern = {};
 		pattern[ key ] = value;
 
