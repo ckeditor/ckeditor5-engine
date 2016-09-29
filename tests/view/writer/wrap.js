@@ -270,5 +270,13 @@ describe( 'writer', () => {
 				'</container:p>'
 			);
 		} );
+
+		it( 'should merge different attributes with the same priority into one', () => {
+			test(
+				'<container:p>foo{<attribute:b view-priority="1" foo="1"></attribute:b>]</container:p>',
+				'<attribute:b view-priority="1" bar="2"></attribute:b>',
+				'<container:p>foo{<attribute:b view-priority="1" bar="2" foo="1"></attribute:b>]</container:p>'
+			);
+		} );
 	} );
 } );
