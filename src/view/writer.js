@@ -394,6 +394,14 @@ export function wrap( range, attribute ) {
 		return range;
 	}
 
+	const isStartTextParent = range.start.parent instanceof Text;
+	const isEndAttributeBefore = range.end.nodeBefore instanceof AttributeElement;
+
+	// Range starts in text and indicates on an attribute.
+	if ( isStartTextParent && isEndAttributeBefore && wrapAttributeElement( attribute, range.end.nodeBefore ) ) {
+		return range;
+	}
+
 	// Range around one element.
 	if ( range.end.isEqual( range.start.getShiftedBy( 1 ) ) ) {
 		const node = range.start.nodeAfter;
