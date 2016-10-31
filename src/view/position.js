@@ -155,6 +155,109 @@ export default class Position {
 	}
 
 	/**
+	 * Checks whether this position is touching given position. Positions touch when there are no text nodes
+	 * or empty nodes in a range between them. Technically, those positions are not equal but in many cases
+	 * they are very similar or even indistinguishable.
+	 *
+	 * @param {engine.view.Position} otherPosition Position to compare with.
+	 * @returns {Boolean} `true` if positions touch, `false` otherwise.
+	 */
+	isTouching( otherPosition ) {
+		if ( this.root != otherPosition.root ) {
+			return false;
+		}
+
+		const thisPath = this.parent.getAncestors( { includeNode: true } ).map( ( node ) => node.index );
+		thisPath.push( this.offset );
+		thisPath.shift();
+
+		const otherPath = otherPosition.parent.getAncestors( { includeNode: true } ).map( ( node ) => node.index );
+		otherPath.push( otherPosition.offset );
+		otherPath.shift();
+
+		let left = null;
+		let right = null;
+
+		let leftPath = null;
+		let rightPath = null;
+
+		let compare = compareArrays( thisPath, otherPath );
+		let diffAt = null;
+
+		switch ( compare ) {
+			case 'same':
+				return true;
+
+			case 'prefix':
+				left = Position.createFromPosition( this );
+				leftPath = thisPath;
+
+				right = Position.createFromPosition( otherPosition );
+				rightPath = otherPath;
+
+				diffAt = leftPath.length;
+				break;
+
+			case 'extension':
+				left = Position.createFromPosition( otherPosition );
+				leftPath = otherPath;
+
+				right = Position.createFromPosition( this );
+				rightPath = thisPath;
+
+				diffAt = leftPath.length;
+				break;
+
+			default:
+				diffAt = compare;
+
+				left = Position.createFromPosition( thisPath[ diffAt ] < otherPath[ diffAt ] ? this : otherPosition );
+				leftPath = thisPath[ diffAt ] < otherPath[ diffAt ] ? thisPath : otherPath;
+
+				right = Position.createFromPosition( thisPath[ diffAt ] < otherPath[ diffAt ] ? otherPosition : this );
+				rightPath = thisPath[ diffAt ] < otherPath[ diffAt ] ? otherPath : thisPath;
+				break;
+		}
+
+		// Right: [ a, ..., x, 0, ..., 0 ] -> [ a, ..., x ].
+		// Left:  [ 0, 0 ], Right: [ 0, 0, 0, 0 ] -> [ 0, 0 ].
+		// From "touching" perspective, those paths are same.
+		while ( rightPath[ rightPath.length - 1 ] === 0 && rightPath.length > diffAt ) {
+			rightPath.pop();
+		}
+
+		if ( diffAt == rightPath.length && diffAt == leftPath.length ) {
+			// Case:
+			// Left:  [ common, ..., common ]
+			// Right: [ common, ..., common ]
+			return true;
+		} else if ( diffAt == rightPath.length - 1 && leftPath[ diffAt ] == rightPath[ diffAt ] - 1 && leftPath.length > diffAt + 1 ) {
+			// Case:
+			//                                            { 1 - m }
+			// Left:  [ common, ..., common, x - 1, lastIndex, ..., lastIndex ]
+			// Right: [ common, ..., common, x ]
+			//
+			// Check if all offsets on left path after diff point are start offsets of last children.
+			let element = left.parent;
+			leftPath[ leftPath.length - 1 ]--;
+
+			for ( let i = leftPath.length - 1; i >= diffAt + 1; i-- ) {
+				const count = element.data ? element.data.length : element.childCount;
+
+				if ( leftPath[ i ] !== count - 1 ) {
+					return false;
+				}
+
+				element = element.parent;
+			}
+
+			return true;
+		}
+
+		return false;
+	}
+
+	/**
 	 * Checks whether this position is located before given position. When method returns `false` it does not mean that
 	 * this position is after give one. Two positions may be located inside separate roots and in that situation this
 	 * method will still return `false`.
@@ -195,56 +298,38 @@ export default class Position {
 		}
 
 		// If positions have same parent.
-		if ( this.parent === otherPosition.parent ) {
-			return this.offset - otherPosition.offset < 0 ? 'before' : 'after';
+		if ( this.parent == otherPosition.parent ) {
+			return this.offset < otherPosition.offset ? 'before' : 'after';
+		}
+
+		if ( this.root != otherPosition.root ) {
+			return 'different';
 		}
 
 		// Get path from root to position's parent element.
-		const path = this.parent.getAncestors( { includeNode: true } );
-		const otherPath = otherPosition.parent.getAncestors( { includeNode: true } );
+		const path = this.parent.getAncestors( { includeNode: true } ).map( ( node ) => node.index );
+		path.push( this.offset );
+
+		const otherPath = otherPosition.parent.getAncestors( { includeNode: true } ).map( ( node ) => node.index );
+		otherPath.push( otherPosition.offset );
 
 		// Compare both path arrays to find common ancestor.
 		const result = compareArrays( path, otherPath );
 
-		let commonAncestorIndex;
-
 		switch ( result ) {
-			case 0:
-				// No common ancestors found.
-				return 'different';
-
 			case 'prefix':
-				commonAncestorIndex = path.length - 1;
-				break;
+				return 'before';
 
 			case 'extension':
-				commonAncestorIndex = otherPath.length - 1;
-				break;
+				return 'after';
 
 			default:
-				commonAncestorIndex = result - 1;
+				if ( path[ result ] < otherPath[ result ] ) {
+					return 'before';
+				} else {
+					return 'after';
+				}
 		}
-
-		// Common ancestor of two positions.
-		const commonAncestor = path[ commonAncestorIndex ];
-		const nextAncestor1 = path[ commonAncestorIndex + 1 ];
-		const nextAncestor2 = otherPath[ commonAncestorIndex + 1 ];
-
-		// Check if common ancestor is not one of the parents.
-		if ( commonAncestor === this.parent ) {
-			const index = this.offset - nextAncestor2.index;
-
-			return index <= 0 ? 'before' : 'after';
-		} else if ( commonAncestor === otherPosition.parent ) {
-			const index = nextAncestor1.index - otherPosition.offset;
-
-			return index < 0 ? 'before' : 'after';
-		}
-
-		const index = nextAncestor1.index - nextAncestor2.index;
-
-		// Compare indexes of next ancestors inside common one.
-		return index < 0 ? 'before' : 'after';
 	}
 
 	/**

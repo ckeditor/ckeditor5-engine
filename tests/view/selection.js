@@ -462,7 +462,10 @@ describe( 'Selection', () => {
 		} );
 
 		it( 'should return false if one selection is fake', () => {
+			selection.addRange( range1 );
+
 			const otherSelection = new Selection();
+			otherSelection.addRange( range1 );
 			otherSelection.setFake( true );
 
 			expect( selection.isEqual( otherSelection ) ).to.be.false;
@@ -486,6 +489,146 @@ describe( 'Selection', () => {
 			selection.addRange( range1 );
 
 			expect( selection.isEqual( otherSelection ) ).to.be.false;
+		} );
+	} );
+
+	describe( 'isTouching', () => {
+		// root
+		//  |- p
+		//  |- ul
+		//     |- li
+		//     |  |- foz
+		//     |- li
+		//        |- bar
+		let root, otherRoot, foz, li1, bar, li2, ul, p;
+
+		before( () => {
+			root = new Element( 'div' );
+			otherRoot = new Element( 'div' );
+
+			foz = new Text( 'foz' );
+			li1 = new Element( 'li', [], foz );
+			bar = new Text( 'bar' );
+			li2 = new Element( 'li', [], bar );
+			ul = new Element( 'ul', [], [ li1, li2 ] );
+			p = new Element( 'p', [], new Text( 'xxx' ) );
+
+			root.insertChildren( 0, [ p, ul ] );
+		} );
+
+		it( 'should return true if ranges in selections are touching and have same direction and touching anchor and focus', () => {
+			let rangeP = Range.createIn( p );
+			let rangeLi1 = Range.createIn( li1 );
+			let rangeTouchingLi1 = Range.createFromParentsAndOffsets( ul, 0, ul, 1 );
+
+			selection.setRanges( [ rangeP, rangeLi1 ] );
+
+			const otherSelection = new Selection();
+			otherSelection.setRanges( [ rangeP, rangeTouchingLi1 ] );
+
+			expect( selection.isTouching( otherSelection ) ).to.be.true;
+			expect( otherSelection.isTouching( selection ) ).to.be.true;
+		} );
+
+		it( 'should return true if order of ranges is different (except of last added range)', () => {
+			let rangeP = Range.createIn( p );
+			let rangeLi1 = Range.createIn( li1 );
+			let rangeLi2 = Range.createIn( li2 );
+			let rangeTouchingLi1 = Range.createFromParentsAndOffsets( ul, 0, ul, 1 );
+
+			selection.setRanges( [ rangeP, rangeLi2, rangeLi1 ] );
+
+			const otherSelection = new Selection();
+			otherSelection.setRanges( [ rangeLi2, rangeP, rangeTouchingLi1 ] );
+
+			expect( selection.isTouching( otherSelection ) ).to.be.true;
+			expect( otherSelection.isTouching( selection ) ).to.be.true;
+		} );
+
+		it( 'should return false if direction is different', () => {
+			let rangeP = Range.createIn( p );
+			let rangeLi1 = Range.createIn( li1 );
+			let rangeTouchingLi1 = Range.createFromParentsAndOffsets( ul, 0, ul, 1 );
+
+			selection.setRanges( [ rangeP, rangeLi1 ] );
+
+			const otherSelection = new Selection();
+			otherSelection.setRanges( [ rangeP, rangeTouchingLi1 ], true );
+
+			expect( selection.isTouching( otherSelection ) ).to.be.false;
+			expect( otherSelection.isTouching( selection ) ).to.be.false;
+		} );
+
+		it( 'should return false if anchor and focus is different', () => {
+			let rangeP = Range.createIn( p );
+			let rangeLi1 = Range.createIn( li1 );
+			let rangeTouchingLi1 = Range.createFromParentsAndOffsets( ul, 0, ul, 1 );
+
+			selection.setRanges( [ rangeP, rangeLi1 ] );
+
+			const otherSelection = new Selection();
+			otherSelection.setRanges( [ rangeTouchingLi1, rangeP ] );
+
+			expect( selection.isTouching( otherSelection ) ).to.be.false;
+			expect( otherSelection.isTouching( selection ) ).to.be.false;
+		} );
+
+		it( 'should return false if there are more ranges in one of selections', () => {
+			let rangeP = Range.createIn( p );
+			let rangeLi1 = Range.createIn( li1 );
+			let rangeTouchingLi1 = Range.createFromParentsAndOffsets( ul, 0, ul, 1 );
+
+			selection.setRanges( [ rangeP, rangeLi1 ] );
+
+			const otherSelection = new Selection();
+			otherSelection.setRanges( [ rangeTouchingLi1 ] );
+
+			expect( selection.isTouching( otherSelection ) ).to.be.false;
+			expect( otherSelection.isTouching( selection ) ).to.be.false;
+		} );
+
+		it( 'should return false if one selection is fake', () => {
+			let rangeP = Range.createIn( p );
+			let rangeLi1 = Range.createIn( li1 );
+			let rangeTouchingLi1 = Range.createFromParentsAndOffsets( ul, 0, ul, 1 );
+
+			selection.setRanges( [ rangeP, rangeLi1 ] );
+
+			const otherSelection = new Selection();
+			otherSelection.setRanges( [ rangeP, rangeTouchingLi1 ] );
+			otherSelection.setFake( true );
+
+			expect( selection.isTouching( otherSelection ) ).to.be.false;
+		} );
+
+		it( 'should return true if both selection are fake', () => {
+			let rangeP = Range.createIn( p );
+			let rangeLi1 = Range.createIn( li1 );
+			let rangeTouchingLi1 = Range.createFromParentsAndOffsets( ul, 0, ul, 1 );
+
+			selection.setRanges( [ rangeP, rangeLi1 ] );
+			selection.setFake( true );
+
+			const otherSelection = new Selection();
+			otherSelection.setRanges( [ rangeP, rangeTouchingLi1 ] );
+			otherSelection.setFake( true );
+
+			expect( selection.isTouching( otherSelection ) ).to.be.true;
+		} );
+
+		it( 'should return false if both selection are fake but have different label', () => {
+			let rangeP = Range.createIn( p );
+			let rangeLi1 = Range.createIn( li1 );
+			let rangeTouchingLi1 = Range.createFromParentsAndOffsets( ul, 0, ul, 1 );
+
+			selection.setRanges( [ rangeP, rangeLi1 ] );
+			selection.setFake( true, { label: 'foo' } );
+
+			const otherSelection = new Selection();
+			otherSelection.setRanges( [ rangeP, rangeTouchingLi1 ] );
+			otherSelection.setFake( true, { label: 'bar' } );
+
+			expect( selection.isTouching( otherSelection ) ).to.be.false;
 		} );
 	} );
 

@@ -127,6 +127,17 @@ export default class Range {
 	}
 
 	/**
+	 * Two ranges are touching if their {@link engine.model.Range#start start} and
+	 * {@link engine.model.Range#end end} positions are {@link engine.model.Position#isTouching touching}.
+	 *
+	 * @param {engine.model.Range} otherRange Range to compare with.
+	 * @returns {Boolean} `true` if ranges are equal, `false` otherwise.
+	 */
+	isTouching( otherRange ) {
+		return this.start.isTouching( otherRange.start ) && this.end.isTouching( otherRange.end );
+	}
+
+	/**
 	 * Checks and returns whether this range intersects with given range.
 	 *
 	 * @param {engine.model.Range} otherRange Range to compare with.

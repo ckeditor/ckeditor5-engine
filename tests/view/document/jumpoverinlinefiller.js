@@ -90,9 +90,11 @@ describe( 'Document', () => {
 
 			viewDocument.fire( 'keydown', { keyCode: keyCodes.arrowleft, domTarget: viewDocument.domRoots.get( 'main' ) } );
 
+			const domText = viewDocument.domConverter.getCorrespondingDom( viewDocument.selection.anchor.parent );
+
 			const domRange = document.getSelection().getRangeAt( 0 );
-			expect( startsWithFiller( domRange.startContainer ) ).to.be.true;
-			expect( domRange.startOffset ).to.equal( INLINE_FILLER_LENGTH + 1 );
+			expect( startsWithFiller( domText ) ).to.be.true;
+			expect( domText.data.length ).to.equal( INLINE_FILLER_LENGTH + 1 );
 			expect( domRange.collapsed ).to.be.true;
 		} );
 	} );

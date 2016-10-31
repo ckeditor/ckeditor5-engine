@@ -135,6 +135,55 @@ describe( 'Range', () => {
 		} );
 	} );
 
+	describe( 'isTouching', () => {
+		// root
+		//  |- p
+		//  |- ul
+		//     |- li
+		//     |  |- foz
+		//     |- li
+		//        |- bar
+		let root, otherRoot, foz, li1, bar, li2, ul, p;
+
+		before( () => {
+			root = new Element( 'div' );
+			otherRoot = new Element( 'div' );
+
+			foz = new Text( 'foz' );
+			li1 = new Element( 'li', [], foz );
+			bar = new Text( 'bar' );
+			li2 = new Element( 'li', [], bar );
+			ul = new Element( 'ul', [], [ li1, li2 ] );
+			p = new Element( 'p', [], new Text( 'xxx' ) );
+
+			root.insertChildren( 0, [ p, ul ] );
+		} );
+
+		it( 'should return true if both start and end range positions are touching', () => {
+			let range = Range.createIn( p );
+			let touchingRange = Range.createFromParentsAndOffsets( root, 0, li1, 0 );
+
+			expect( touchingRange.isTouching( range ) ).to.be.true;
+			expect( range.isTouching( touchingRange ) ).to.be.true;
+		} );
+
+		it( 'should return false if start position is not touching other range start position', () => {
+			let range = Range.createIn( p );
+			let touchingRange = Range.createFromParentsAndOffsets( root, 1, li1, 0 );
+
+			expect( touchingRange.isTouching( range ) ).to.be.false;
+			expect( range.isTouching( touchingRange ) ).to.be.false;
+		} );
+
+		it( 'should return false if end position is not touching other range end position', () => {
+			let range = Range.createIn( p );
+			let touchingRange = Range.createFromParentsAndOffsets( root, 0, root, 0 );
+
+			expect( touchingRange.isTouching( range ) ).to.be.false;
+			expect( range.isTouching( touchingRange ) ).to.be.false;
+		} );
+	} );
+
 	describe( 'containsPosition', () => {
 		let viewRoot, range;
 

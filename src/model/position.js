@@ -341,52 +341,72 @@ export default class Position {
 	 * @returns {Boolean} True if positions touch.
 	 */
 	isTouching( otherPosition ) {
+		if ( this.root != otherPosition.root ) {
+			return false;
+		}
+
 		let left = null;
 		let right = null;
-		let compare = this.compareWith( otherPosition );
+		let compare = compareArrays( this.path, otherPosition.path );
+		let diffAt = null;
 
 		switch ( compare ) {
 			case 'same':
 				return true;
 
-			case 'before':
+			case 'prefix':
 				left = Position.createFromPosition( this );
 				right = Position.createFromPosition( otherPosition );
+				diffAt = left.path.length;
 				break;
 
-			case 'after':
+			case 'extension':
 				left = Position.createFromPosition( otherPosition );
 				right = Position.createFromPosition( this );
+				diffAt = left.path.length;
 				break;
 
 			default:
-				return false;
+				diffAt = compare;
+				left = Position.createFromPosition( this.path[ diffAt ] < otherPosition.path[ diffAt ] ? this : otherPosition );
+				right = Position.createFromPosition( this.path[ diffAt ] < otherPosition.path[ diffAt ] ? otherPosition : this );
+				break;
 		}
 
-		// Cached for optimization purposes.
-		let leftParent = left.parent;
+		// Right: [ a, ..., x, 0, ..., 0 ] -> [ a, ..., x ].
+		// Left:  [ 0, 0 ], Right: [ 0, 0, 0, 0 ] -> [ 0, 0 ].
+		// From "touching" perspective, those paths are same.
+		while ( right.path[ right.path.length - 1 ] === 0 && right.path.length > diffAt ) {
+			right.path.pop();
+		}
 
-		while ( left.path.length + right.path.length ) {
-			if ( left.isEqual( right ) ) {
-				return true;
-			}
+		if ( diffAt == right.path.length && diffAt == left.path.length ) {
+			// Case:
+			// Left:  [ common, ..., common ]
+			// Right: [ common, ..., common ]
+			return true;
+		} else if ( diffAt == right.path.length - 1 && left.path[ diffAt ] == right.path[ diffAt ] - 1 && left.path.length > diffAt + 1 ) {
+			// Case:
+			//                                            { 1 - m }
+			// Left:  [ common, ..., common, x - 1, lastIndex, ..., maxOffset ]
+			// Right: [ common, ..., common, x ]
+			//
+			// Check if all offsets on left path after diff point are start offsets of last children.
+			let element = left.parent;
+			left.path[ left.path.length - 1 ]--;
 
-			if ( left.path.length > right.path.length ) {
-				if ( left.offset !== leftParent.maxOffset ) {
+			for ( let i = left.path.length - 1; i >= diffAt + 1; i-- ) {
+				if ( left.path[ i ] !== element.maxOffset - 1 ) {
 					return false;
 				}
 
-				left.path = left.path.slice( 0, -1 );
-				leftParent = leftParent.parent;
-				left.offset++;
-			} else {
-				if ( right.offset !== 0 ) {
-					return false;
-				}
-
-				right.path = right.path.slice( 0, -1 );
+				element = element.parent;
 			}
+
+			return true;
 		}
+
+		return false;
 	}
 
 	/**

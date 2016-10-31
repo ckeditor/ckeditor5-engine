@@ -217,6 +217,86 @@ describe( 'Position', () => {
 		} );
 	} );
 
+	describe( 'isTouching', () => {
+		// root
+		//  |- p
+		//  |- ul
+		//     |- li
+		//     |  |- foz
+		//     |- li
+		//        |- bar
+		let root, otherRoot, foz, li1, bar, li2, ul, p;
+
+		before( () => {
+			root = new Element( 'div' );
+			otherRoot = new Element( 'div' );
+
+			foz = new Text( 'foz' );
+			li1 = new Element( 'li', [], foz );
+			bar = new Text( 'bar' );
+			li2 = new Element( 'li', [], bar );
+			ul = new Element( 'ul', [], [ li1, li2 ] );
+			p = new Element( 'p' );
+
+			root.insertChildren( 0, [ p, ul ] );
+		} );
+
+		it( 'should return true if positions are same', () => {
+			let position = new Position( li2, 1 );
+			let result = position.isTouching( new Position( li2, 1 ) );
+
+			expect( result ).to.be.true;
+		} );
+
+		it( 'should return true if given position is in next node and there are no whole nodes before it', () => {
+			let positionA = new Position( root, 1 );
+			let positionB = new Position( foz, 0 );
+
+			expect( positionA.isTouching( positionB ) ).to.be.true;
+			expect( positionB.isTouching( positionA ) ).to.be.true;
+		} );
+
+		it( 'should return true if given position is in previous node and there are no whole nodes after it', () => {
+			let positionA = new Position( root, 2 );
+			let positionB = new Position( bar, 3 );
+
+			expect( positionA.isTouching( positionB ) ).to.be.true;
+			expect( positionB.isTouching( positionA ) ).to.be.true;
+		} );
+
+		it( 'should return true if positions are in different sub-trees but there are no whole nodes between them', () => {
+			let positionA = new Position( foz, 3 );
+			let positionB = new Position( bar, 0 );
+
+			expect( positionA.isTouching( positionB ) ).to.be.true;
+			expect( positionB.isTouching( positionA ) ).to.be.true;
+		} );
+
+		it( 'should return false if there are whole nodes between positions', () => {
+			let positionA = new Position( root, 2 );
+			let positionB = new Position( foz, 3 );
+
+			expect( positionA.isTouching( positionB ) ).to.be.false;
+			expect( positionB.isTouching( positionA ) ).to.be.false;
+		} );
+
+		it( 'should return false if there are whole nodes between positions', () => {
+			let positionA = new Position( foz, 3 );
+			let positionB = new Position( bar, 1 );
+
+			expect( positionA.isTouching( positionB ) ).to.be.false;
+			expect( positionB.isTouching( positionA ) ).to.be.false;
+		} );
+
+		it( 'should return false if positions are in different roots', () => {
+			let positionA = new Position( foz, 3 );
+			let positionB = new Position( otherRoot, 0 );
+
+			expect( positionA.isTouching( positionB ) ).to.be.false;
+			expect( positionB.isTouching( positionA ) ).to.be.false;
+		} );
+	} );
+
 	describe( 'isBefore', () => {
 		it( 'should return false for same positions', () => {
 			const node = new Node();

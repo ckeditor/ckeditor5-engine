@@ -126,7 +126,7 @@ export default class SelectionObserver extends Observer {
 		const domSelection = domDocument.defaultView.getSelection();
 		const newViewSelection = this.domConverter.domSelectionToView( domSelection );
 
-		if ( this.selection.isEqual( newViewSelection ) ) {
+		if ( newViewSelection && this.selection.isTouching( newViewSelection ) ) {
 			return;
 		}
 
