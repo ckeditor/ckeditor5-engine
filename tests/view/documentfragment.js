@@ -61,6 +61,12 @@ describe( 'DocumentFragment', () => {
 
 			expect( fragment.getAncestors() ).to.deep.equal( [] );
 		} );
+
+		it( 'should return array with itself when `includeNode` option is set as true', () => {
+			const fragment = new DocumentFragment();
+
+			expect( fragment.getAncestors( { includeNode: true } ) ).to.deep.equal( [ fragment ] );
+		} );
 	} );
 
 	describe( 'isEmpty', () => {
