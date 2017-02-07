@@ -86,10 +86,12 @@ export default class DocumentFragment {
 	/**
 	 * Returns ancestor elements of `DocumentFragment`, which is an empty array. Added for compatibility reasons.
 	 *
-	 * @returns {Array}
+	 * @param {Object} options Options object.
+	 * @param {Boolean} [options.includeNode=false] When set to `true` this node will be also included in parent's array.
+	 * @returns {Array} Empty Array or Array with itself.
 	 */
-	getAncestors() {
-		return [];
+	getAncestors( options = { includeNode: false } ) {
+		return options.includeNode ? [ this ] : [];
 	}
 
 	/**
