@@ -1,0 +1,110 @@
+@import '../../../node_modules/@ckeditor/ckeditor5-theme-lark/theme/theme';
+@import url(https://fonts.googleapis.com/css?family=Inconsolata&subset=latin,latin-ext);
+
+.ck-editor__code {
+	@extend .ck-editor;
+
+	font-family: Inconsolata, monospace;
+	margin-top: 20px;
+	resize: vertical;
+	overflow: auto;
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	-webkit-touch-callout: none;
+	white-space: pre-wrap;
+
+	ol {
+		margin: 0;
+	}
+}
+
+.ck-editor__element {
+	color: #4db741;
+}
+
+.ck-editor__text {
+	color: #794a00;
+
+	&:before {
+		content: '"';
+	}
+
+	&:after {
+		content: '"';
+	}
+}
+
+.ck-editor__text-badge {
+	margin-left: 10px;
+	background-color: #822111;
+	color: #f6c5be;
+	display: inline-block;
+	padding: 3px 4px;
+	font-size: 10px;
+	border-radius: 2px;
+	vertical-align: 2px;
+
+	+ .ck-editor__text-badge {
+		margin-left: 5px;
+	}
+
+	&--italic {
+		background-color: #fce8b3;
+		color: #755e22;
+	}
+
+	&--bold {
+		background-color: #89d3b2;
+		color: #076239;
+	}
+
+	&--linkHref {
+		background-color: #84b6eb;
+		color: #1c2733;
+	}
+
+	&--src {
+		background-color: #cc317c;
+		color: #fff;
+	}
+
+	&--alt {
+		background-color: #ffdd33;
+		color: #332c0a;
+	}
+
+	&--indent {
+		background-color: #e6e6e6;
+		color: #333333;
+	}
+
+	&--type {
+		background-color: #ee6622;
+		color: #fff;
+	}
+
+	&--imageStyle {
+		background-color: #159818;
+		color: #fff;
+	}
+}
+
+.ck-editor__code-line {
+	border-top: 1px solid transparent;
+	border-bottom: 1px solid transparent;
+	border-left: 1px solid #b9b9b9;
+	padding-left: 10px;
+	padding-top: 2px;
+	padding-bottom: 2px;
+
+	&:hover {
+		&:not(:first-of-type) {
+			border-top-color: #d0d0d0;
+		}
+		&:not(:last-of-type) {
+			border-bottom-color: #d0d0d0;
+		}
+	}
+}
