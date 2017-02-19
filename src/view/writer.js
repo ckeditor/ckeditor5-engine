@@ -21,6 +21,9 @@ import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 import DocumentFragment from './documentfragment';
 import isIterable from '@ckeditor/ckeditor5-utils/src/isiterable';
 
+// Left here for easy debugging.
+// import { stringify } from '../dev-utils/view';
+
 /**
  * Contains functions used for composing view tree.
  *
@@ -337,6 +340,8 @@ export function breakViewRangePerContainer( range ) {
  * @returns {module:engine/view/range~Range} Range around inserted nodes.
  */
 export function insert( position, nodes ) {
+	// console.log( 'insert', stringify( position.root, position ), nodes );
+
 	nodes = isIterable( nodes ) ? [ ...nodes ] : [ nodes ];
 
 	// Check if nodes to insert are instances of AttributeElements, ContainerElements, EmptyElements, UIElements or Text.
@@ -387,6 +392,8 @@ export function insert( position, nodes ) {
  * @returns {module:engine/view/documentfragment~DocumentFragment} Document fragment containing removed nodes.
  */
 export function remove( range ) {
+	// console.log( 'remove', stringify( range.root, range ) );
+
 	validateRangeContainer( range );
 
 	// If range is collapsed - nothing to remove.
@@ -486,6 +493,8 @@ export function clear( range, element ) {
  * {@link module:engine/view/range~Range#start start} and {@link module:engine/view/range~Range#end end} positions.
  */
 export function move( sourceRange, targetPosition ) {
+	// console.log( 'move', stringify( sourceRange.root, sourceRange ), stringify( targetPosition.root, targetPosition ) );
+
 	let nodes;
 
 	if ( targetPosition.isAfter( sourceRange.end ) ) {

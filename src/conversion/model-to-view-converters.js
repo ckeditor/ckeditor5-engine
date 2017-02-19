@@ -11,6 +11,9 @@ import ViewElement from '../view/element';
 import ViewText from '../view/text';
 import viewWriter from '../view/writer';
 
+import { stringify } from '../dev-utils/model';
+import { stringify as stringifyView } from '../dev-utils/view';
+
 /**
  * Contains {@link module:engine/model/model model} to {@link module:engine/view/view view} converters for
  * {@link module:engine/conversion/modelconversiondispatcher~ModelConversionDispatcher}.
@@ -423,7 +426,11 @@ export function move() {
 			return;
 		}
 
-		const modelRange = ModelRange.createFromPositionAndShift( data.sourcePosition, data.item.offsetSize );
+		// The nodes might've been inserted before the source position, so it needs to be recalculated. (See #823)
+		const sourcePos = data.sourcePosition._getTransformedByInsertion( data.targetPosition, data.item.offsetSize );
+
+		const modelRange = ModelRange.createFromPositionAndShift( sourcePos, data.item.offsetSize );
+
 		const sourceViewRange = conversionApi.mapper.toViewRange( modelRange );
 
 		const targetViewPosition = conversionApi.mapper.toViewPosition( data.targetPosition );
