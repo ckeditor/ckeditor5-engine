@@ -25,15 +25,25 @@
 }
 
 .ck-editor__text {
-	color: #794a00;
+	color: #4c2600;
 
-	&:before {
-		content: '"';
-	}
+	//&--first,
+	//&:first-of-type {
+	//	&:before {
+	//		content: '"';
+	//	}
+	//}
+	//
+	//&--last,
+	//&:last-of-type {
+	//	&:after {
+	//		content: '"';
+	//	}
+	//}
+}
 
-	&:after {
-		content: '"';
-	}
+.ck-editor__selection {
+	color: #cdc2ce;
 }
 
 .ck-editor__text-badge {
