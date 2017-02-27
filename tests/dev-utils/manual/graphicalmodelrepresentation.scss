@@ -27,19 +27,12 @@
 .ck-editor__text {
 	color: #4c2600;
 
-	//&--first,
-	//&:first-of-type {
-	//	&:before {
-	//		content: '"';
-	//	}
-	//}
-	//
-	//&--last,
-	//&:last-of-type {
-	//	&:after {
-	//		content: '"';
-	//	}
-	//}
+	&:before {
+		content: '"';
+	}
+	&:after {
+		content: '"';
+	}
 }
 
 .ck-editor__selection {

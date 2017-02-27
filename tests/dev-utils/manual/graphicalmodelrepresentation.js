@@ -42,7 +42,7 @@ ClassicEditor.create( document.querySelector( '#editor' ), {
 } )
 .then( editor => {
 	window.editor = editor;
-	graphicalModelRepresentation( editor.document );
+	graphicalModelRepresentation( editor );
 } )
 .catch( err => {
 	console.error( err.stack );

@@ -52,6 +52,8 @@ import isPlainObject from '@ckeditor/ckeditor5-utils/src/lib/lodash/isPlainObjec
  * be not included in returned string.
  * @param {Boolean} [options.rootName='main'] Name of the root from which data should be stringified. If not provided
  * default `main` name will be used.
+ * @param {Boolean} [options.validXML=false] Whether to return a valid XML tree. When set to `true` returned tree
+ * can be parsed by external libraries
  * @returns {String} The stringified data.
  */
 export function getData( document, options = {} ) {
@@ -60,10 +62,15 @@ export function getData( document, options = {} ) {
 	}
 
 	const withoutSelection = !!options.withoutSelection;
+	const validXML = !!options.validXML;
 	const rootName = options.rootName || 'main';
 	const root = document.getRoot( rootName );
 
-	return withoutSelection ? getData._stringify( root ) : getData._stringify( root, document.selection );
+	return getData._stringify(
+		root,
+		withoutSelection ? null : document.selection,
+		validXML
+	);
 }
 
 // Set stringify as getData private method - needed for testing/spying.
@@ -168,14 +175,15 @@ setData._parse = parse;
  *
  * @param {module:engine/model/rootelement~RootElement|module:engine/model/element~Element|module:engine/model/text~Text|
  * module:engine/model/documentfragment~DocumentFragment} node Node to stringify.
- * @param {module:engine/model/selection~Selection|module:engine/model/position~Position|module:engine/model/range~Range}
- * [selectionOrPositionOrRange=null]
+ * @param [selectionOrPositionOrRange=null]
  * Selection instance which ranges will be included in returned string data. If Range instance is provided - it will be
  * converted to selection containing this range. If Position instance is provided - it will be converted to selection
  * containing one range collapsed at this position.
+ * @param {Boolean} [validXML=false] Whether to return a valid XML-like string.
+ * If set to `false`, function replaces valid XML `model-text-with-attributes` element name to `$text`.
  * @returns {String} HTML-like string representing the model.
  */
-export function stringify( node, selectionOrPositionOrRange = null ) {
+export function stringify( node, selectionOrPositionOrRange = null, validXML = false ) {
 	const mapper = new Mapper();
 	let selection, range;
 
@@ -244,7 +252,11 @@ export function stringify( node, selectionOrPositionOrRange = null ) {
 	let data = viewStringify( viewDocumentFragment, viewSelection, { sameSelectionCharacters: true } );
 
 	// Replace valid XML `model-text-with-attributes` element name to `$text`.
-	return data.replace( new RegExp( 'model-text-with-attributes', 'g' ), '$text' );
+	if ( !validXML ) {
+		return data.replace( new RegExp( 'model-text-with-attributes', 'g' ), '$text' );
+	}
+
+	return data;
 }
 
 /**
