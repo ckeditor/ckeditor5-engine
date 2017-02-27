@@ -140,7 +140,7 @@ class ViewConverterBuilder {
 	 * @param {String|RegExp} [value] View attribute value.
 	 * @returns {module:engine/conversion/buildviewconverter~ViewConverterBuilder}
 	 */
-	fromAttribute( key, value = /.*/ ) {
+	fromAttribute( key, value = /[\s\S]*/ ) {
 		let pattern = {};
 		pattern[ key ] = value;
 
