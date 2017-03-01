@@ -351,11 +351,16 @@ export function wrapRange( elementCreator ) {
 			return;
 		}
 
+		const viewRange = conversionApi.mapper.toViewRange( data.range );
+
+		if ( viewRange.isCollapsed ) {
+			return;
+		}
+
 		if ( !consumable.consume( data.range, 'addMarker' ) ) {
 			return;
 		}
 
-		const viewRange = conversionApi.mapper.toViewRange( data.range );
 		const flatViewRanges = viewWriter.breakViewRangePerContainer( viewRange );
 
 		for ( let range of flatViewRanges ) {
@@ -395,11 +400,16 @@ export function unwrapRange( elementCreator ) {
 			return;
 		}
 
+		const viewRange = conversionApi.mapper.toViewRange( data.range );
+
+		if ( viewRange.isCollapsed ) {
+			return;
+		}
+
 		if ( !consumable.consume( data.range, 'removeMarker' ) ) {
 			return;
 		}
 
-		const viewRange = conversionApi.mapper.toViewRange( data.range );
 		const flatViewRanges = viewWriter.breakViewRangePerContainer( viewRange );
 
 		for ( let range of flatViewRanges ) {

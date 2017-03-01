@@ -608,6 +608,36 @@ describe( 'model-to-view-converters', () => {
 			expect( viewToString( viewRoot ) ).to.equal( '<div><p>foobar</p></div>' );
 		} );
 
+		it( 'should not convert or consume if range is collapsed', () => {
+			const viewElement = new ViewAttributeElement( 'b' );
+
+			sinon.spy( dispatcher, 'fire' );
+
+			dispatcher.on( 'addMarker:name', wrapRange( viewElement ) );
+			dispatcher.on( 'addMarker:name', ( evt, data, consumable ) => {
+				// Check whether value was not consumed from `consumable`.
+				expect( consumable.test( data.range, 'addMarker' ) ).to.be.true;
+			} );
+
+			dispatcher.on( 'removeMarker:name', unwrapRange( viewElement ) );
+			dispatcher.on( 'removeMarker:name', ( evt, data, consumable ) => {
+				// Check whether value was not consumed from `consumable`.
+				expect( consumable.test( data.range, 'removeMarker' ) ).to.be.true;
+			} );
+
+			const collapsedRange = ModelRange.createFromParentsAndOffsets( modelElement, 2, modelElement, 2 );
+
+			dispatcher.convertMarker( 'addMarker', 'name', collapsedRange );
+
+			expect( dispatcher.fire.calledWith( 'addMarker:name' ) ).to.be.true;
+			expect( viewToString( viewRoot ) ).to.equal( '<div><p>foobar</p></div>' );
+
+			dispatcher.convertMarker( 'removeMarker', 'name', collapsedRange );
+
+			expect( dispatcher.fire.calledWith( 'removeMarker:name' ) ).to.be.true;
+			expect( viewToString( viewRoot ) ).to.equal( '<div><p>foobar</p></div>' );
+		} );
+
 		it( 'multiple overlapping non-collapsed markers', () => {
 			const converterCallbackName = ( data ) => {
 				const name = data.name.split( ':' )[ 1 ];
