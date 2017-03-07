@@ -7,7 +7,6 @@
 
 import CompositionObserver from '../../../src/view/observer/compositionobserver';
 import ViewDocument from '../../../src/view/document';
-import ViewRange from '../../../src/view/range';
 
 describe( 'CompositionObserver', () => {
 	let viewDocument, observer;
@@ -75,14 +74,10 @@ describe( 'CompositionObserver', () => {
 	} );
 
 	describe( 'handle isComposing property of the document', () => {
-		let domMain, domHeader, viewMain, viewHeader;
+		let domMain;
 
 		beforeEach( () => {
 			domMain = document.createElement( 'div' );
-			domHeader = document.createElement( 'h1' );
-
-			viewMain = viewDocument.createRoot( domMain );
-			viewHeader = viewDocument.createRoot( domHeader, 'header' );
 		} );
 
 		it( 'should set isComposing to true on compositionstart', () => {
