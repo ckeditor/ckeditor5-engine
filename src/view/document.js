@@ -18,6 +18,7 @@ import SelectionObserver from './observer/selectionobserver';
 import FocusObserver from './observer/focusobserver';
 import KeyObserver from './observer/keyobserver';
 import FakeSelectionObserver from './observer/fakeselectionobserver';
+import CompositionObserver from './observer/compositionobserver';
 import mix from '@ckeditor/ckeditor5-utils/src/mix';
 import ObservableMixin from '@ckeditor/ckeditor5-utils/src/observablemixin';
 
@@ -91,6 +92,18 @@ export default class Document {
 		this.set( 'isFocused', false );
 
 		/**
+		 * True if composition is in progress inside the document.
+		 *
+		 * This property is updated by the {@link module:engine/view/observer/compositionobserver~CompositionObserver}.
+		 * If the {@link module:engine/view/observer/compositionobserver~CompositionObserver} is disabled this property will not change.
+		 *
+		 * @readonly
+		 * @observable
+		 * @member {Boolean} module:engine/view/document~Document#isComposing
+		 */
+		this.set( 'isComposing', false );
+
+		/**
 		 * Instance of the {@link module:engine/view/document~Document#renderer renderer}.
 		 *
 		 * @readonly
@@ -98,6 +111,7 @@ export default class Document {
 		 */
 		this.renderer = new Renderer( this.domConverter, this.selection );
 		this.renderer.bind( 'isFocused' ).to( this, 'isFocused' );
+		this.renderer.bind( 'isComposing' ).to( this, 'isComposing' );
 
 		/**
 		 * Map of registered {@link module:engine/view/observer/observer~Observer observers}.
@@ -113,6 +127,7 @@ export default class Document {
 		this.addObserver( FocusObserver );
 		this.addObserver( KeyObserver );
 		this.addObserver( FakeSelectionObserver );
+		this.addObserver( CompositionObserver );
 
 		injectQuirksHandling( this );
 
