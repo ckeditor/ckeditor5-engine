@@ -105,7 +105,7 @@ export default class Renderer {
 		this.isFocused = false;
 
 		/**
-		 * Indicates if composition takes places inside view document. View will not be rendered durning composition.
+		 * Indicates if composition takes places inside view document. View will not be rerendered during composition.
 		 *
 		 * @member {Boolean}
 		 */
@@ -166,8 +166,8 @@ export default class Renderer {
 	 * if needed updates the selection.
 	 *
 	 * Renderer tries not to break text composition (e.g. IME) and x-index of the selection,
-	 * so it does as little as it is needed to update the DOM. During the composition all rendering is blocked
-	 * in order not to break the composition. Render is called after composition ends.
+	 * so it does as little as it is needed to update the DOM. During the composition all rendering is suspended
+	 * in order not to break the composition.
 	 *
 	 * For attributes it adds new attributes to DOM elements, updates values and removes
 	 * attributes which do not exist in the view element.
