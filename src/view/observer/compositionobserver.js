@@ -30,9 +30,6 @@ export default class CompositionObserver extends DomEventObserver {
 
 		document.on( 'compositionend', () => {
 			document.isComposing = false;
-
-			// Re-render the document to update view elements.
-			document.render();
 		} );
 	}
 

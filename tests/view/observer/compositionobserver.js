@@ -63,14 +63,6 @@ describe( 'CompositionObserver', () => {
 			const data = spy.args[ 0 ][ 1 ];
 			expect( data.domTarget ).to.equal( document.body );
 		} );
-
-		it( 'should render document after compositionend', () => {
-			const renderSpy = sinon.spy( viewDocument, 'render' );
-
-			observer.onDomEvent( { type: 'compositionend', target: document.body } );
-
-			sinon.assert.calledOnce( renderSpy );
-		} );
 	} );
 
 	describe( 'handle isComposing property of the document', () => {
