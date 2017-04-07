@@ -116,8 +116,8 @@ export default class LiveSelection extends Selection {
 	 * Unbinds all events previously bound by document selection.
 	 */
 	destroy() {
-		for ( let i = 0; i < this._ranges.length; i++ ) {
-			this._ranges[ i ].detach();
+		while ( this._ranges.length ) {
+			this._popRange();
 		}
 
 		this.stopListening();
@@ -255,7 +255,19 @@ export default class LiveSelection extends Selection {
 	 * @inheritDoc
 	 */
 	_popRange() {
-		this._ranges.pop().detach();
+		this._removeRangeAtIndex( this._ranges.length - 1 );
+	}
+
+	/**
+	 * Removes a range from `LiveSelection` and detaches it.
+	 *
+	 * @private
+	 * @params {Number} index Index from which a range should be removed.
+	 */
+	_removeRangeAtIndex( index ) {
+		const range = this._ranges.splice( index, 1 )[ 0 ];
+
+		range.detach();
 	}
 
 	/**
@@ -302,7 +314,8 @@ export default class LiveSelection extends Selection {
 		this._checkRange( range );
 
 		const liveRange = LiveRange.createFromRange( range );
-		this.listenTo( liveRange, 'change', ( evt, oldRange ) => {
+
+		liveRange.on( 'change', ( evt, oldRange ) => {
 			if ( liveRange.root == this._document.graveyard ) {
 				this._fixGraveyardSelection( liveRange, oldRange );
 			}
@@ -638,8 +651,11 @@ export default class LiveSelection extends Selection {
 
 		const newRange = this._prepareRange( selectionRange );
 		const index = this._ranges.indexOf( gyRange );
-		gyRange.detach();
 
+		// Remove incorrect range.
+		this._removeRangeAtIndex( index );
+
+		// Splice in correct range.
 		this._ranges.splice( index, 1, newRange );
 	}
 }

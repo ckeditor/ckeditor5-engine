@@ -171,15 +171,20 @@ describe( 'LiveSelection', () => {
 			selection.addRange( liveRange );
 			selection.addRange( range );
 
-			const ranges = selection._ranges;
+			const ranges = Array.from( selection._ranges );
 
 			sinon.spy( ranges[ 0 ], 'detach' );
 			sinon.spy( ranges[ 1 ], 'detach' );
+
+			sinon.spy( selection, 'stopListening' );
 
 			selection.destroy();
 
 			expect( ranges[ 0 ].detach.called ).to.be.true;
 			expect( ranges[ 1 ].detach.called ).to.be.true;
+
+			expect( selection.stopListening.calledWith( ranges[ 0 ] ) ).to.be.true;
+			expect( selection.stopListening.calledWith( ranges[ 1 ] ) ).to.be.true;
 
 			ranges[ 0 ].detach.restore();
 			ranges[ 1 ].detach.restore();
@@ -226,6 +231,7 @@ describe( 'LiveSelection', () => {
 			sinon.spy( ranges[ 0 ], 'detach' );
 			sinon.spy( ranges[ 1 ], 'detach' );
 
+			sinon.spy( selection, 'stopListening' );
 			selection.removeAllRanges();
 		} );
 
@@ -240,7 +246,7 @@ describe( 'LiveSelection', () => {
 			expect( selection.focus.isEqual( new Position( root, [ 0, 0 ] ) ) ).to.be.true;
 		} );
 
-		it( 'should detach ranges', () => {
+		it( 'should detach ranges and stop listening to removed ranges', () => {
 			expect( ranges[ 0 ].detach.called ).to.be.true;
 			expect( ranges[ 1 ].detach.called ).to.be.true;
 		} );
@@ -261,7 +267,7 @@ describe( 'LiveSelection', () => {
 			} ).to.throw( CKEditorError, /model-selection-added-not-range/ );
 		} );
 
-		it( 'should detach removed ranges', () => {
+		it( 'should detach and stop listening to removed ranges', () => {
 			selection.addRange( liveRange );
 			selection.addRange( range );
 
@@ -269,6 +275,8 @@ describe( 'LiveSelection', () => {
 
 			sinon.spy( oldRanges[ 0 ], 'detach' );
 			sinon.spy( oldRanges[ 1 ], 'detach' );
+
+			sinon.spy( selection, 'stopListening' );
 
 			selection.setRanges( [] );
 
@@ -598,6 +606,25 @@ describe( 'LiveSelection', () => {
 				) );
 
 				expect( selection.getFirstPosition().path ).to.deep.equal( [ 0, 6 ] );
+			} );
+
+			it( 'detach and stop listening to a range that ended up in in graveyard', () => {
+				selection.collapse( new Position( root, [ 1, 3 ] ) );
+
+				const range = selection._ranges[ 0 ];
+
+				sinon.spy( range, 'detach' );
+				sinon.spy( selection, 'stopListening' );
+
+				doc.applyOperation( wrapInDelta(
+					new RemoveOperation(
+						new Position( root, [ 1, 2 ] ),
+						2,
+						doc.version
+					)
+				) );
+
+				expect( range.detach.called ).to.be.true;
 			} );
 		} );
 	} );
