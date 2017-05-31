@@ -13,6 +13,7 @@ import SelectionObserver from '../../../src/view/observer/selectionobserver';
 import FocusObserver from '../../../src/view/observer/focusobserver';
 import KeyObserver from '../../../src/view/observer/keyobserver';
 import FakeSelectionObserver from '../../../src/view/observer/fakeselectionobserver';
+import CompositionObserver from '../../../src/view/observer/compositionobserver';
 import Renderer from '../../../src/view/renderer';
 import ViewRange from '../../../src/view/range';
 import DomConverter from '../../../src/view/domconverter';
@@ -23,7 +24,7 @@ import log from '@ckeditor/ckeditor5-utils/src/log';
 testUtils.createSinonSandbox();
 
 describe( 'Document', () => {
-	const DEFAULT_OBSERVERS_COUNT = 5;
+	const DEFAULT_OBSERVERS_COUNT = 6;
 	let ObserverMock, ObserverMockGlobalCount, instantiated, enabled, domRoot, viewDocument;
 
 	before( () => {
@@ -88,6 +89,7 @@ describe( 'Document', () => {
 			expect( viewDocument.getObserver( FocusObserver ) ).to.be.instanceof( FocusObserver );
 			expect( viewDocument.getObserver( KeyObserver ) ).to.be.instanceof( KeyObserver );
 			expect( viewDocument.getObserver( FakeSelectionObserver ) ).to.be.instanceof( FakeSelectionObserver );
+			expect( viewDocument.getObserver( CompositionObserver ) ).to.be.instanceof( CompositionObserver );
 		} );
 	} );
 
@@ -419,6 +421,18 @@ describe( 'Document', () => {
 			viewDocument.focus();
 			expect( logSpy.calledOnce ).to.be.true;
 			expect( logSpy.args[ 0 ][ 0 ] ).to.match( /^view-focus-no-selection/ );
+		} );
+	} );
+
+	describe( 'isComposing', () => {
+		it( 'should change renderer.isComposing too', () => {
+			expect( viewDocument.isComposing ).to.equal( false );
+			expect( viewDocument.renderer.isComposing ).to.equal( false );
+
+			viewDocument.isComposing = true;
+
+			expect( viewDocument.isComposing ).to.equal( true );
+			expect( viewDocument.renderer.isComposing ).to.equal( true );
 		} );
 	} );
 } );

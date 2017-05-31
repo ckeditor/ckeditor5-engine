@@ -1241,6 +1241,113 @@ describe( 'Renderer', () => {
 			expect( domFocusSpy.called ).to.be.false;
 		} );
 
+		it( 'should block rendering during composition', () => {
+			renderer.isComposing = true;
+
+			const removeInlineFillerSpy = testUtils.sinon.spy( renderer, '_removeInlineFiller' );
+			const updateTextSpy = testUtils.sinon.spy( renderer, '_updateText' );
+			const updateAttrsSpy = testUtils.sinon.spy( renderer, '_updateAttrs' );
+			const updateChildrenSpy = testUtils.sinon.spy( renderer, '_updateChildren' );
+			const updateSelectionSpy = testUtils.sinon.spy( renderer, '_updateSelection' );
+			const updateFocusSpy = testUtils.sinon.spy( renderer, '_updateFocus' );
+
+			renderer.render();
+
+			expect( removeInlineFillerSpy.called ).to.be.false;
+			expect( updateTextSpy.called ).to.be.false;
+			expect( updateAttrsSpy.called ).to.be.false;
+			expect( updateChildrenSpy.called ).to.be.false;
+			expect( updateSelectionSpy.called ).to.be.false;
+			expect( updateFocusSpy.called ).to.be.false;
+		} );
+
+		it( 'should block rendering during composition (update attributes)', () => {
+			renderer.isComposing = true;
+
+			viewRoot.setAttribute( 'class', 'foo' );
+
+			renderer.markToSync( 'attributes', viewRoot );
+			renderer.render();
+
+			expect( domRoot.getAttribute( 'class' ) ).to.equal( null );
+
+			expect( renderer.markedAttributes.size ).to.equal( 1 );
+		} );
+
+		it( 'should block rendering during composition (remove attributes)', () => {
+			renderer.isComposing = true;
+
+			viewRoot.setAttribute( 'class', 'foo' );
+			domRoot.setAttribute( 'id', 'bar' );
+			domRoot.setAttribute( 'class', 'bar' );
+
+			renderer.markToSync( 'attributes', viewRoot );
+			renderer.render();
+
+			expect( domRoot.getAttribute( 'class' ) ).to.equal( 'bar' );
+			expect( domRoot.getAttribute( 'id' ) ).to.equal( 'bar' );
+
+			expect( renderer.markedAttributes.size ).to.equal( 1 );
+		} );
+
+		it( 'should block rendering during composition (add children)', () => {
+			renderer.isComposing = true;
+
+			viewRoot.appendChildren( new ViewText( 'foo' ) );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			expect( domRoot.childNodes.length ).to.equal( 0 );
+
+			expect( renderer.markedChildren.size ).to.equal( 1 );
+		} );
+
+		it( 'should block rendering during composition (remove children)', () => {
+			viewRoot.appendChildren( new ViewText( 'foo' ) );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			expect( domRoot.childNodes.length ).to.equal( 1 );
+			expect( domRoot.childNodes[ 0 ].data ).to.equal( 'foo' );
+
+			renderer.isComposing = true;
+
+			viewRoot.removeChildren( 0, 1 );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			expect( domRoot.childNodes.length ).to.equal( 1 );
+			expect( domRoot.childNodes[ 0 ].data ).to.equal( 'foo' );
+
+			expect( renderer.markedChildren.size ).to.equal( 1 );
+		} );
+
+		it( 'should block rendering during composition (update text)', () => {
+			const viewText = new ViewText( 'foo' );
+			viewRoot.appendChildren( viewText );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			expect( domRoot.childNodes.length ).to.equal( 1 );
+			expect( domRoot.childNodes[ 0 ].data ).to.equal( 'foo' );
+
+			renderer.isComposing = true;
+
+			viewText.data = 'bar';
+
+			renderer.markToSync( 'text', viewText );
+			renderer.render();
+
+			expect( domRoot.childNodes.length ).to.equal( 1 );
+			expect( domRoot.childNodes[ 0 ].data ).to.equal( 'foo' );
+
+			expect( renderer.markedTexts.size ).to.equal( 1 );
+		} );
+
 		describe( 'fake selection', () => {
 			beforeEach( () => {
 				const { view: viewP, selection: newSelection } = parse(
