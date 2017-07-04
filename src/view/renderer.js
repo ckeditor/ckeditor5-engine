@@ -625,7 +625,7 @@ export default class Renderer {
 
 		for ( const markedElement of this.markedChildren ) {
 			for ( const selectionRange of selectionRanges ) {
-				if ( selectionRange.getIntersection( ViewRange.createOn( markedElement ) ) ) {
+				if ( selectionRange.getIntersection( ViewRange.createIn( markedElement ) ) ) {
 					return true;
 				}
 			}

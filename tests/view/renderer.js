@@ -1596,7 +1596,6 @@ describe( 'Renderer', () => {
 					new ViewRange( new ViewPosition( viewP.getChild( 0 ), 3 ), new ViewPosition( viewB.getChild( 0 ), 2 ) )
 				] );
 
-				renderer.markToSync( 'children', viewP );
 				renderer.render();
 
 				expect( selectionCollapseSpy.notCalled ).to.true;
@@ -1635,7 +1634,6 @@ describe( 'Renderer', () => {
 					new ViewRange( new ViewPosition( viewB.getChild( 0 ), 1 ), new ViewPosition( viewP.getChild( 2 ), 0 ) )
 				] );
 
-				renderer.markToSync( 'children', viewP );
 				renderer.render();
 
 				expect( selectionCollapseSpy.notCalled ).to.true;
@@ -1674,7 +1672,6 @@ describe( 'Renderer', () => {
 					new ViewRange( new ViewPosition( viewP.getChild( 0 ), 3 ), new ViewPosition( viewI.getChild( 0 ), 2 ) )
 				] );
 
-				renderer.markToSync( 'children', viewP );
 				renderer.render();
 
 				expect( selectionCollapseSpy.notCalled ).to.true;
@@ -1712,7 +1709,6 @@ describe( 'Renderer', () => {
 					new ViewRange( new ViewPosition( viewP.getChild( 0 ), 1 ), new ViewPosition( viewP.getChild( 2 ), 0 ) )
 				] );
 
-				renderer.markToSync( 'children', viewP );
 				renderer.render();
 
 				expect( selectionCollapseSpy.notCalled ).to.true;
