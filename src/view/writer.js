@@ -500,6 +500,7 @@ export function move( sourceRange, targetPosition ) {
  * @function module:engine/view/writer~writer.wrap
  * @param {module:engine/view/range~Range} range Range to wrap.
  * @param {module:engine/view/attributeelement~AttributeElement} attribute Attribute element to use as wrapper.
+ * @returns {module:engine/view/range~Range} New range after wrapping.
  */
 export function wrap( range, attribute ) {
 	if ( !( attribute instanceof AttributeElement ) ) {
@@ -627,6 +628,7 @@ export function wrapPosition( position, attribute ) {
  *
  * @param {module:engine/view/range~Range} range
  * @param {module:engine/view/attributeelement~AttributeElement} element
+ * @returns {module:engine/view/range~Range} New range after unwrapping.
  */
 export function unwrap( range, attribute ) {
 	if ( !( attribute instanceof AttributeElement ) ) {
