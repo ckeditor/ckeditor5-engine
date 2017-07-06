@@ -583,12 +583,13 @@ export default class Renderer {
 	 */
 	_updateDomSelection( domRoot ) {
 		const domSelection = domRoot.ownerDocument.defaultView.getSelection();
-		const oldViewSelection = domSelection && this.domConverter.domSelectionToView( domSelection );
 
 		// Check selection is the same if children are not changed.
 		// When children are changed, renderer operations might change DOM selection and we need to re-render it
-		// even if view selection is not changed.
+		// even if view selection is the same.
 		if ( !this._areChildrenChangedInSelection() ) {
+			const oldViewSelection = domSelection && this.domConverter.domSelectionToView( domSelection );
+
 			if ( oldViewSelection && this.selection.isEqual( oldViewSelection ) ) {
 				return;
 			}
@@ -620,6 +621,13 @@ export default class Renderer {
 		domSelection.extend( focus.parent, focus.offset );
 	}
 
+	/**
+	 * Checks if any child nodes {@link #markedChildren marked as changed} are inside current
+	 * {@link module:engine/view/selection~Selection view selection}.
+	 *
+	 * @private
+	 * @returns {Boolean}
+	 */
 	_areChildrenChangedInSelection() {
 		const selectionRanges = this.selection.getRanges();
 
