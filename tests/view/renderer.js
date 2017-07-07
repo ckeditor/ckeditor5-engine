@@ -1596,7 +1596,6 @@ describe( 'Renderer', () => {
 					new ViewRange( new ViewPosition( viewP.getChild( 0 ), 3 ), new ViewPosition( viewB.getChild( 0 ), 2 ) )
 				] );
 
-				renderer.markToSync( 'children', viewP );
 				renderer.render();
 
 				expect( selectionCollapseSpy.notCalled ).to.true;
@@ -1635,7 +1634,6 @@ describe( 'Renderer', () => {
 					new ViewRange( new ViewPosition( viewB.getChild( 0 ), 1 ), new ViewPosition( viewP.getChild( 2 ), 0 ) )
 				] );
 
-				renderer.markToSync( 'children', viewP );
 				renderer.render();
 
 				expect( selectionCollapseSpy.notCalled ).to.true;
@@ -1674,7 +1672,6 @@ describe( 'Renderer', () => {
 					new ViewRange( new ViewPosition( viewP.getChild( 0 ), 3 ), new ViewPosition( viewI.getChild( 0 ), 2 ) )
 				] );
 
-				renderer.markToSync( 'children', viewP );
 				renderer.render();
 
 				expect( selectionCollapseSpy.notCalled ).to.true;
@@ -1712,13 +1709,92 @@ describe( 'Renderer', () => {
 					new ViewRange( new ViewPosition( viewP.getChild( 0 ), 1 ), new ViewPosition( viewP.getChild( 2 ), 0 ) )
 				] );
 
-				renderer.markToSync( 'children', viewP );
 				renderer.render();
 
 				expect( selectionCollapseSpy.notCalled ).to.true;
 				expect( selectionExtendSpy.notCalled ).to.true;
 				expect( logWarnStub.called ).to.true;
 			} );
+		} );
+	} );
+
+	describe( '#992', () => {
+		let viewDoc, viewRoot, domRoot;
+
+		beforeEach( () => {
+			viewDoc = new ViewDocument();
+			domRoot = document.createElement( 'div' );
+			document.body.appendChild( domRoot );
+			viewRoot = viewDoc.createRoot( domRoot );
+
+			viewDoc.renderer.isFocused = true;
+		} );
+
+		it( 'should re-render DOM selection if children inside it are changed', () => {
+			setViewData( viewDoc,
+				'<container:p>' +
+				'[' +
+					'<attribute:i>' +
+						'foo' +
+						'<attribute:strong>bar</attribute:strong>' +
+						'baz' +
+					'</attribute:i>' +
+				']' +
+				'</container:p>'
+			);
+
+			viewDoc.render();
+
+			// Unwrap strong attribute element - it will mark <p> children as changed.
+			const newRange = unwrap( viewDoc.selection.getFirstRange(), new ViewAttributeElement( 'i' ) );
+			viewDoc.selection.setRanges( [ newRange ] );
+
+			// Check if view selection is the same.
+			expect( getViewData( viewDoc ) ).to.equal( '<p>[foo<strong>bar</strong>baz]</p>' );
+
+			// Re-render view document and check if selection was re-rendered too.
+			const domSelection = window.getSelection();
+			const domCollapseSpy = testUtils.sinon.spy( domSelection, 'collapse' );
+			const domExtendSpy = testUtils.sinon.spy( domSelection, 'extend' );
+
+			viewDoc.render();
+
+			sinon.assert.calledOnce( domCollapseSpy );
+			sinon.assert.calledOnce( domExtendSpy );
+		} );
+
+		it( 'should not re-render DOM selection if there are no changed children inside', () => {
+			setViewData( viewDoc,
+				'<container:p>' +
+					'[foo]' +
+					'<attribute:i>' +
+						'bar' +
+					'</attribute:i>' +
+				'</container:p>'
+			);
+
+			// Render view to DOM.
+			viewDoc.render();
+
+			const savedRange = viewDoc.selection.getFirstRange();
+
+			// Remove text - it will mark only <i> children as changed.
+			const text = viewRoot.getChild( 0 ).getChild( 1 ).getChild( 0 );
+			text.remove();
+
+			// Check if view selection is the same.
+			expect( getViewData( viewDoc ) ).to.equal( '<p>[foo]<i></i></p>' );
+			expect( savedRange.isEqual( viewDoc.selection.getFirstRange() ) ).to.be.true;
+
+			// Re-render view document and check if selection was re-rendered too.
+			const domSelection = window.getSelection();
+			const domCollapseSpy = testUtils.sinon.spy( domSelection, 'collapse' );
+			const domExtendSpy = testUtils.sinon.spy( domSelection, 'extend' );
+
+			viewDoc.render();
+
+			sinon.assert.notCalled( domCollapseSpy );
+			sinon.assert.notCalled( domExtendSpy );
 		} );
 	} );
 

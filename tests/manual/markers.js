@@ -40,12 +40,29 @@ ClassicEditor.create( document.querySelector( '#editor' ), {
 			return new ViewAttributeElement( 'span', { class: 'h-' + color } );
 		} );
 
-	window.document.getElementById( 'add-yellow' ).addEventListener( 'click', () => addHighlight( 'yellow' ) );
-	window.document.getElementById( 'add-red' ).addEventListener( 'click', () => addHighlight( 'red' ) );
-	window.document.getElementById( 'remove-marker' ).addEventListener( 'click', () => removeHighlight() );
-	window.document.getElementById( 'move-to-start' ).addEventListener( 'click', () => moveSelectionToStart() );
-	window.document.getElementById( 'move-left' ).addEventListener( 'click', () => moveSelectionByOffset( -1 ) );
-	window.document.getElementById( 'move-right' ).addEventListener( 'click', () => moveSelectionByOffset( 1 ) );
+	const addYellowButton = window.document.getElementById( 'add-yellow' );
+	addYellowButton.addEventListener( 'click', () => addHighlight( 'yellow' ) );
+	addYellowButton.addEventListener( 'mousedown', e => e.preventDefault() );
+
+	const addRedButton = window.document.getElementById( 'add-red' );
+	addRedButton.addEventListener( 'click', () => addHighlight( 'red' ) );
+	addRedButton.addEventListener( 'mousedown', e => e.preventDefault() );
+
+	const removeMarkerButton = window.document.getElementById( 'remove-marker' );
+	removeMarkerButton.addEventListener( 'click', () => removeHighlight() );
+	removeMarkerButton.addEventListener( 'mousedown', e => e.preventDefault() );
+
+	const moveToStartButton = window.document.getElementById( 'move-to-start' );
+	moveToStartButton.addEventListener( 'click', () => moveSelectionToStart() );
+	moveToStartButton.addEventListener( 'mousedown', e => e.preventDefault() );
+
+	const moveLeftButton = window.document.getElementById( 'move-left' );
+	moveLeftButton.addEventListener( 'click', () => moveSelectionByOffset( -1 ) );
+	moveLeftButton.addEventListener( 'mousedown', e => e.preventDefault() );
+
+	const moveRightButton = window.document.getElementById( 'move-right' );
+	moveRightButton.addEventListener( 'click', () => moveSelectionByOffset( 1 ) );
+	moveRightButton.addEventListener( 'mousedown', e => e.preventDefault() );
 
 	model.enqueueChanges( () => {
 		const root = model.getRoot();

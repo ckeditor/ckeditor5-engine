@@ -9,6 +9,7 @@
 
 import ViewText from './text';
 import ViewPosition from './position';
+import ViewRange from './range';
 import Selection from './selection';
 import { INLINE_FILLER, INLINE_FILLER_LENGTH, startsWithFiller, isInlineFiller, isBlockFiller } from './filler';
 
@@ -582,24 +583,30 @@ export default class Renderer {
 	 */
 	_updateDomSelection( domRoot ) {
 		const domSelection = domRoot.ownerDocument.defaultView.getSelection();
-		const oldViewSelection = domSelection && this.domConverter.domSelectionToView( domSelection );
 
-		if ( oldViewSelection && this.selection.isEqual( oldViewSelection ) ) {
-			return;
-		}
+		// Check selection is the same if children are not changed.
+		// When children are changed, renderer operations might change DOM selection and we need to re-render it
+		// even if view selection is the same.
+		if ( !this._areChildrenChangedInSelection() ) {
+			const oldViewSelection = domSelection && this.domConverter.domSelectionToView( domSelection );
 
-		if ( oldViewSelection && areSimilarSelections( oldViewSelection, this.selection ) ) {
-			const data = {
-				oldSelection: oldViewSelection,
-				currentSelection: this.selection
-			};
+			if ( oldViewSelection && this.selection.isEqual( oldViewSelection ) ) {
+				return;
+			}
 
-			log.warn(
-				'renderer-skipped-selection-rendering: The selection was not rendered due to its similarity to the current one.',
-				data
-			);
+			if ( oldViewSelection && areSimilarSelections( oldViewSelection, this.selection ) ) {
+				const data = {
+					oldSelection: oldViewSelection,
+					currentSelection: this.selection
+				};
 
-			return;
+				log.warn(
+					'renderer-skipped-selection-rendering: The selection was not rendered due to its similarity to the current one.',
+					data
+				);
+
+				return;
+			}
 		}
 
 		// Multi-range selection is not available in most browsers, and, at least in Chrome, trying to
@@ -612,6 +619,27 @@ export default class Renderer {
 
 		domSelection.collapse( anchor.parent, anchor.offset );
 		domSelection.extend( focus.parent, focus.offset );
+	}
+
+	/**
+	 * Checks if any child nodes {@link #markedChildren marked as changed} are inside current
+	 * {@link module:engine/view/selection~Selection view selection}.
+	 *
+	 * @private
+	 * @returns {Boolean}
+	 */
+	_areChildrenChangedInSelection() {
+		const selectionRanges = this.selection.getRanges();
+
+		for ( const markedElement of this.markedChildren ) {
+			for ( const selectionRange of selectionRanges ) {
+				if ( selectionRange.getIntersection( ViewRange.createIn( markedElement ) ) ) {
+					return true;
+				}
+			}
+		}
+
+		return false;
 	}
 
 	/**
