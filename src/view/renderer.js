@@ -445,19 +445,10 @@ export default class Renderer {
 		}
 
 		const domDocument = domElement.ownerDocument;
-		const filler = options.inlineFillerPosition;
 		const actualDomChildren = domElement.childNodes;
-		const expectedDomChildren = Array.from( domConverter.viewChildrenToDom( viewElement, domDocument, { bind: true } ) );
-
-		if ( filler && filler.parent == viewElement ) {
-			const expectedNodeAfterFiller = expectedDomChildren[ filler.offset ];
-
-			if ( this.domConverter.isText( expectedNodeAfterFiller ) ) {
-				expectedNodeAfterFiller.data = INLINE_FILLER + expectedNodeAfterFiller.data;
-			} else {
-				expectedDomChildren.splice( filler.offset, 0, domDocument.createTextNode( INLINE_FILLER ) );
-			}
-		}
+		const expectedDomChildren = Array.from(
+			domConverter.viewChildrenToDom( viewElement, domDocument, { bind: true, inlineFiller: options.inlineFillerPosition } )
+		);
 
 		const actions = diff( actualDomChildren, expectedDomChildren, sameNodes );
 
