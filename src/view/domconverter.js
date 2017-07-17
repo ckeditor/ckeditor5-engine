@@ -252,7 +252,6 @@ export default class DomConverter {
 		let offset = 0;
 
 		for ( const childView of viewElement.getChildren() ) {
-			// debugger;
 			if ( blockFillerOffset === offset ) {
 				yield this.blockFiller( domDocument );
 			}
