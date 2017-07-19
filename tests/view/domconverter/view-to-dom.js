@@ -366,7 +366,7 @@ describe( 'DomConverter', () => {
 			expect( domChildren[ 1 ].childNodes.length ).to.equal( 1 );
 		} );
 
-		it( 'should add filler', () => {
+		it( 'should add block filler', () => {
 			const viewP = parse( '<container:p></container:p>' );
 
 			const domChildren = Array.from( converter.viewChildrenToDom( viewP, document ) );
@@ -375,7 +375,7 @@ describe( 'DomConverter', () => {
 			expect( isBlockFiller( domChildren[ 0 ], converter.blockFiller ) ).to.be.true;
 		} );
 
-		it( 'should add filler according to fillerPositionOffset', () => {
+		it( 'should add block filler according to fillerPositionOffset', () => {
 			const viewP = parse( '<container:p>foo</container:p>' );
 			viewP.getFillerOffset = () => 0;
 
@@ -384,6 +384,20 @@ describe( 'DomConverter', () => {
 			expect( domChildren.length ).to.equal( 2 );
 			expect( isBlockFiller( domChildren[ 0 ], converter.blockFiller ) ).to.be.true;
 			expect( domChildren[ 1 ].data ).to.equal( 'foo' );
+		} );
+
+		it( 'should add inline filler according to options.inlineFiller', () => {
+			const view = parse(
+				'<container:div><container:p>Foo</container:p><container:p><attribute:b></attribute:b>foo</container:p></container:div>'
+			);
+
+			const viewB = view.getChild( 1 ).getChild( 0 );
+			const inlineFiller = new ViewPosition( viewB, 0 );
+
+			const domChildren = Array.from( converter.viewChildrenToDom( view, document, { inlineFiller } ) );
+			const domFiller = domChildren[ 1 ].childNodes[ 0 ].childNodes[ 0 ];
+
+			expect( domFiller.data ).to.equal( INLINE_FILLER );
 		} );
 
 		it( 'should pass options', () => {

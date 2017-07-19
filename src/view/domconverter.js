@@ -16,7 +16,10 @@ import ViewRange from './range';
 import ViewSelection from './selection';
 import ViewDocumentFragment from './documentfragment';
 import ViewTreeWalker from './treewalker';
-import { BR_FILLER, INLINE_FILLER_LENGTH, isBlockFiller, isInlineFiller, startsWithFiller, getDataWithoutFiller } from './filler';
+import {
+	BR_FILLER, INLINE_FILLER, INLINE_FILLER_LENGTH, isBlockFiller,
+	isInlineFiller, startsWithFiller, getDataWithoutFiller
+} from './filler';
 
 import global from '@ckeditor/ckeditor5-utils/src/dom/global';
 import indexOf from '@ckeditor/ckeditor5-utils/src/dom/indexof';
@@ -177,7 +180,8 @@ export default class DomConverter {
 	 * @param {Document} domDocument Document which will be used to create DOM nodes.
 	 * @param {Object} [options] Conversion options.
 	 * @param {Boolean} [options.bind=false] Determines whether new elements will be bound.
-	 * @param {Boolean} [options.withChildren=true] If true node's and document fragment's children  will be converted too.
+	 * @param {Boolean} [options.withChildren=true] If true node's and document fragment's children will be converted too.
+	 * @param {module:engine/view/position~Position|null} [options.inlineFiller=null] Position where inline filler should be inserted.
 	 * @returns {Node|DocumentFragment} Converted node or DocumentFragment.
 	 */
 	viewToDom( viewNode, domDocument, options = {} ) {
@@ -243,21 +247,40 @@ export default class DomConverter {
 	 * @returns {Iterable.<Node>} DOM nodes.
 	 */
 	* viewChildrenToDom( viewElement, domDocument, options = {} ) {
-		const fillerPositionOffset = viewElement.getFillerOffset && viewElement.getFillerOffset();
+		const blockFillerOffset = viewElement.getFillerOffset && viewElement.getFillerOffset();
+		const inlineFillerOffset = options.inlineFiller && options.inlineFiller.parent == viewElement ? options.inlineFiller.offset : null;
 		let offset = 0;
 
 		for ( const childView of viewElement.getChildren() ) {
-			if ( fillerPositionOffset === offset ) {
+			if ( blockFillerOffset === offset ) {
 				yield this.blockFiller( domDocument );
 			}
 
-			yield this.viewToDom( childView, domDocument, options );
+			const domNode = this.viewToDom( childView, domDocument, options );
+
+			// We need to insert inline filler before the dom node.
+			if ( inlineFillerOffset === offset ) {
+				// If dom node that was about to return is a text node, just add inline filler to that text node.
+				if ( this.isText( domNode ) ) {
+					domNode.data = INLINE_FILLER + domNode.data;
+				}
+				// Otherwise, return text node with inline filler.
+				else {
+					yield domDocument.createTextNode( INLINE_FILLER );
+				}
+			}
+
+			yield domNode;
 
 			offset++;
 		}
 
-		if ( fillerPositionOffset === offset ) {
+		if ( blockFillerOffset === offset ) {
 			yield this.blockFiller( domDocument );
+		}
+
+		if ( inlineFillerOffset === offset ) {
+			yield domDocument.createTextNode( INLINE_FILLER );
 		}
 	}
 
