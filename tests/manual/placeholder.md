@@ -7,3 +7,4 @@
 * Clicking outside the editor should show both placeholders.
 * Type some text into paragraph, and click outside. Paragraph placeholder should be hidden.
 * Remove added text and click outside - paragraph placeholder should now be visible again.
+* UIElement (red square) should behave correctly.
