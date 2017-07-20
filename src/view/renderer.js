@@ -602,24 +602,27 @@ export default class Renderer {
 	 */
 	_updateDomSelection( domRoot ) {
 		const domSelection = domRoot.ownerDocument.defaultView.getSelection();
-		const oldViewSelection = domSelection && this.domConverter.domSelectionToView( domSelection );
 
-		if ( oldViewSelection && this.selection.isEqual( oldViewSelection ) ) {
-			return;
-		}
+		// Check whether dom selection needs fixing. If it does not need fixing maybe w don't have to update it at all.
+		if ( this.domConverter.isCorrectDomSelection( domSelection ) ) {
+			const viewSelectionFromDom = this.domConverter.domSelectionToView( domSelection );
 
-		if ( oldViewSelection && areSimilarSelections( oldViewSelection, this.selection ) ) {
-			const data = {
-				oldSelection: oldViewSelection,
-				currentSelection: this.selection
-			};
+			// Compare view selection assumed from dom with current view selection.
+			if ( this.selection.isCollapsed && this.selection.isEqual( viewSelectionFromDom ) ) {
+				return;
+			} else if ( areSimilarSelections( viewSelectionFromDom, this.selection ) ) {
+				const data = {
+					oldSelection: viewSelectionFromDom,
+					currentSelection: this.selection
+				};
 
-			log.warn(
-				'renderer-skipped-selection-rendering: The selection was not rendered due to its similarity to the current one.',
-				data
-			);
+				log.warn(
+					'renderer-skipped-selection-rendering: The selection was not rendered due to its similarity to the current one.',
+					data
+				);
 
-			return;
+				return;
+			}
 		}
 
 		// Multi-range selection is not available in most browsers, and, at least in Chrome, trying to
