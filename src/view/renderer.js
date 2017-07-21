@@ -603,12 +603,17 @@ export default class Renderer {
 	_updateDomSelection( domRoot ) {
 		const domSelection = domRoot.ownerDocument.defaultView.getSelection();
 
-		// Check whether dom selection needs fixing. If it does not need fixing maybe w don't have to update it at all.
+		// Below we will check whether DOM Selection needs updating at all.
+		// We need to update DOM Selection if either:
+		// * it is at incorrect position, or
+		// * it has changed (when compared to view selection).
 		if ( this.domConverter.isCorrectDomSelection( domSelection ) ) {
+			// DOM Selection is at correct position. Check whether it has changed.
 			const viewSelectionFromDom = this.domConverter.domSelectionToView( domSelection );
 
 			// Compare view selection assumed from dom with current view selection.
 			if ( this.selection.isCollapsed && this.selection.isEqual( viewSelectionFromDom ) ) {
+				// Selection did not changed and is correct, do not update.
 				return;
 			} else if ( areSimilarSelections( viewSelectionFromDom, this.selection ) ) {
 				const data = {
@@ -621,6 +626,7 @@ export default class Renderer {
 					data
 				);
 
+				// Selection did not changed and is correct, do not update.
 				return;
 			}
 		}
