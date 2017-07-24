@@ -749,6 +749,16 @@ describe( 'DataController', () => {
 				expect( getData( doc, { rootName: 'paragraphRoot' } ) )
 					.to.equal( 'x[]z' );
 			} );
+
+			it( 'when single element is selected and set the "skipParentsCheck" option', () => {
+				doc.createRoot( 'paragraph', 'paragraphRoot' );
+
+				setData( doc, '<heading1>[<image></image>xx]</heading1>' );
+
+				deleteContent( doc.selection, doc.batch(), { skipParentsCheck: true } );
+
+				expect( getData( doc ) ).to.equal( '<paragraph>[]</paragraph>' );
+			} );
 		} );
 
 		function test( title, input, output, options ) {

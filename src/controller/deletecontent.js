@@ -19,6 +19,7 @@ import Element from '../model/element';
  * @param {module:engine/model/batch~Batch} batch Batch to which the deltas will be added.
  * @param {Object} [options]
  * @param {Boolean} [options.leaveUnmerged=false] Whether to merge elements after removing the content of the selection.
+ * @param {Boolean} [options.skipParentsCheck=false] Whether to skip parents check for replacing the entire content with paragraph.
  *
  * For example `<h>x[x</h><p>y]y</p>` will become:
  * * `<h>x^y</h>` with the option disabled (`leaveUnmerged == false`)
@@ -34,7 +35,7 @@ export default function deleteContent( selection, batch, options = {} ) {
 
 	// 1. Replace the entire content with paragraph.
 	// See: https://github.com/ckeditor/ckeditor5-engine/issues/1012#issuecomment-315017594.
-	if ( shouldEntireContentBeReplacedWithParagraph( batch.document.schema, selection ) ) {
+	if ( shouldEntireContentBeReplacedWithParagraph( batch.document.schema, selection, options.skipParentsCheck ) ) {
 		replaceEntireContentWithParagraph( batch, selection );
 
 		return;
@@ -201,7 +202,7 @@ function replaceEntireContentWithParagraph( batch, selection ) {
 // * the entire content is selected,
 // * selection contains at least two elements,
 // * whether the paragraph is allowed in schema in the common ancestor.
-function shouldEntireContentBeReplacedWithParagraph( schema, selection ) {
+function shouldEntireContentBeReplacedWithParagraph( schema, selection, skipParentsCheck = false ) {
 	const limitElement = getLimitElement( schema, selection );
 	const limitStartPosition = Position.createAt( limitElement );
 	const limitEndPosition = Position.createAt( limitElement, 'end' );
@@ -215,7 +216,7 @@ function shouldEntireContentBeReplacedWithParagraph( schema, selection ) {
 
 	const range = selection.getFirstRange();
 
-	if ( range.start.parent == range.end.parent ) {
+	if ( !skipParentsCheck && range.start.parent == range.end.parent ) {
 		return false;
 	}
 
