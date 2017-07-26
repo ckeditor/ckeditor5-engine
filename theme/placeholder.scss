@@ -2,8 +2,15 @@
 // For licensing, see LICENSE.md or http://ckeditor.com/license
 
 .ck-placeholder::before {
+	position: absolute;
+	top: 0;
+	left: 0;
 	content: attr( data-placeholder );
 	cursor: text;
 	color: #c2c2c2;
 	pointer-events: none; // See ckeditor/ckeditor5#469.
+}
+
+.ck-placeholder {
+	position: relative;
 }
