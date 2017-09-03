@@ -12,8 +12,11 @@ import buildModelConverter from '../../src/conversion/buildmodelconverter';
 
 import ModelDocumentFragment from '../../src/model/documentfragment';
 import ModelText from '../../src/model/text';
+import ModelElement from '../../src/model/element';
 import ModelRange from '../../src/model/range';
+import ModelPosition from '../../src/model/position';
 import ModelSelection from '../../src/model/selection';
+import AttributeDelta from '../../src/model/delta/attributedelta';
 
 import ViewDocumentFragment from '../../src/view/documentfragment';
 
@@ -521,6 +524,160 @@ describe( 'DataController', () => {
 			const range = ModelRange.createFromParentsAndOffsets( root, 0, root, 1 );
 
 			expect( data.hasContent( range ) ).to.be.false;
+		} );
+	} );
+
+	describe( 'removeDisallowedAttributes()', () => {
+		beforeEach( () => {
+			schema.registerItem( 'paragraph', '$block' );
+			schema.registerItem( 'div', '$block' );
+			schema.registerItem( 'image' );
+			schema.objects.add( 'image' );
+			schema.allow( { name: '$block', inside: 'div' } );
+		} );
+
+		describe( 'filtering attributes from nodes', () => {
+			let text, image;
+
+			beforeEach( () => {
+				schema.allow( { name: '$text', attributes: [ 'a' ], inside: '$root' } );
+				schema.allow( { name: 'image', attributes: [ 'b' ], inside: '$root' } );
+
+				text = new ModelText( 'foo', { a: 1, b: 1 } );
+				image = new ModelElement( 'image', { a: 1, b: 1 } );
+			} );
+
+			it( 'should filter out disallowed attributes from given nodes', () => {
+				data.removeDisallowedAttributes( [ text, image ], '$root' );
+
+				expect( Array.from( text.getAttributeKeys() ) ).to.deep.equal( [ 'a' ] );
+				expect( Array.from( image.getAttributeKeys() ) ).to.deep.equal( [ 'b' ] );
+			} );
+
+			it( 'should filter out disallowed attributes from given nodes (batch)', () => {
+				const root = modelDocument.getRoot();
+				const batch = modelDocument.batch();
+
+				root.appendChildren( [ text, image ] );
+
+				data.removeDisallowedAttributes( [ text, image ], '$root', batch );
+
+				expect( Array.from( text.getAttributeKeys() ) ).to.deep.equal( [ 'a' ] );
+				expect( Array.from( image.getAttributeKeys() ) ).to.deep.equal( [ 'b' ] );
+
+				expect( batch.deltas ).to.length( 2 );
+				expect( batch.deltas[ 0 ] ).to.instanceof( AttributeDelta );
+				expect( batch.deltas[ 1 ] ).to.instanceof( AttributeDelta );
+			} );
+		} );
+
+		describe( 'filtering attributes from child nodes', () => {
+			let div;
+
+			beforeEach( () => {
+				schema.allow( { name: '$text', attributes: [ 'a' ], inside: 'div' } );
+				schema.allow( { name: '$text', attributes: [ 'b' ], inside: 'div paragraph' } );
+				schema.allow( { name: 'image', attributes: [ 'a' ], inside: 'div' } );
+				schema.allow( { name: 'image', attributes: [ 'b' ], inside: 'div paragraph' } );
+
+				const foo = new ModelText( 'foo', { a: 1, b: 1 } );
+				const bar = new ModelText( 'bar', { a: 1, b: 1 } );
+				const imageInDiv = new ModelElement( 'image', { a: 1, b: 1 } );
+				const imageInParagraph = new ModelElement( 'image', { a: 1, b: 1 } );
+				const paragraph = new ModelElement( 'paragraph', [], [ foo, imageInParagraph ] );
+
+				div = new ModelElement( 'div', [], [ paragraph, bar, imageInDiv ] );
+			} );
+
+			it( 'should filter out disallowed attributes from child nodes', () => {
+				data.removeDisallowedAttributes( [ div ], '$root' );
+
+				expect( stringify( div ) )
+					.to.equal(
+						'<div>' +
+							'<paragraph>' +
+								'<$text b="1">foo</$text>' +
+								'<image b="1"></image>' +
+							'</paragraph>' +
+							'<$text a="1">bar</$text>' +
+							'<image a="1"></image>' +
+						'</div>'
+					);
+			} );
+
+			it( 'should filter out disallowed attributes from child nodes (batch)', () => {
+				const root = modelDocument.getRoot();
+				const batch = modelDocument.batch();
+
+				root.appendChildren( [ div ] );
+
+				data.removeDisallowedAttributes( [ div ], '$root', batch );
+
+				expect( batch.deltas ).to.length( 4 );
+				expect( batch.deltas[ 0 ] ).to.instanceof( AttributeDelta );
+				expect( batch.deltas[ 1 ] ).to.instanceof( AttributeDelta );
+				expect( batch.deltas[ 2 ] ).to.instanceof( AttributeDelta );
+				expect( batch.deltas[ 3 ] ).to.instanceof( AttributeDelta );
+
+				expect( getData( modelDocument, { withoutSelection: true } ) )
+					.to.equal(
+						'<div>' +
+							'<paragraph>' +
+								'<$text b="1">foo</$text>' +
+								'<image b="1"></image>' +
+							'</paragraph>' +
+							'<$text a="1">bar</$text>' +
+							'<image a="1"></image>' +
+						'</div>'
+					);
+			} );
+		} );
+
+		describe( 'allowed parameters', () => {
+			let frag;
+
+			beforeEach( () => {
+				schema.allow( { name: '$text', attributes: [ 'a' ], inside: '$root' } );
+				schema.allow( { name: '$text', attributes: [ 'b' ], inside: 'paragraph' } );
+
+				frag = new ModelDocumentFragment( [
+					new ModelText( 'foo', { a: 1 } ),
+					new ModelElement( 'paragraph', [], [ new ModelText( 'bar', { a: 1, b: 1 } ) ] ),
+					new ModelText( 'biz', { b: 1 } )
+				] );
+			} );
+
+			it( 'should accept iterable as nodes', () => {
+				data.removeDisallowedAttributes( frag.getChildren(), '$root' );
+
+				expect( stringify( frag ) )
+					.to.equal( '<$text a="1">foo</$text><paragraph><$text b="1">bar</$text></paragraph>biz' );
+			} );
+
+			it( 'should accept Position as inside', () => {
+				data.removeDisallowedAttributes( frag.getChildren(), ModelPosition.createAt( modelDocument.getRoot() ) );
+
+				expect( stringify( frag ) )
+					.to.equal( '<$text a="1">foo</$text><paragraph><$text b="1">bar</$text></paragraph>biz' );
+			} );
+
+			it( 'should accept Node as inside', () => {
+				data.removeDisallowedAttributes( frag.getChildren(), [ modelDocument.getRoot() ] );
+
+				expect( stringify( frag ) )
+					.to.equal( '<$text a="1">foo</$text><paragraph><$text b="1">bar</$text></paragraph>biz' );
+			} );
+		} );
+
+		it( 'should not filter out allowed combination of attributes', () => {
+			schema.allow( { name: 'image', attributes: [ 'a', 'b' ] } );
+			schema.requireAttributes( 'image', [ 'a', 'b' ] );
+
+			const image = new ModelElement( 'image', { a: 1, b: 1 } );
+
+			data.removeDisallowedAttributes( [ image ], '$root' );
+
+			expect( Array.from( image.getAttributeKeys() ) ).to.deep.equal( [ 'a', 'b' ] );
 		} );
 	} );
 } );
