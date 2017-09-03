@@ -45,7 +45,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'parse', () => {
+	describe( 'parse()', () => {
 		it( 'should set text', () => {
 			schema.allow( { name: '$text', inside: '$root' } );
 			const model = data.parse( '<p>foo<b>bar</b></p>' );
@@ -102,7 +102,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'toModel', () => {
+	describe( 'toModel()', () => {
 		beforeEach( () => {
 			schema.registerItem( 'paragraph', '$block' );
 
@@ -141,7 +141,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'set', () => {
+	describe( 'set()', () => {
 		it( 'should set data to root', () => {
 			schema.allow( { name: '$text', inside: '$root' } );
 			data.set( 'foo' );
@@ -193,7 +193,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'get', () => {
+	describe( 'get()', () => {
 		it( 'should get paragraph with text', () => {
 			modelDocument.schema.registerItem( 'paragraph', '$block' );
 			setData( modelDocument, '<paragraph>foo</paragraph>' );
@@ -263,7 +263,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'stringify', () => {
+	describe( 'stringify()', () => {
 		beforeEach( () => {
 			modelDocument.schema.registerItem( 'paragraph', '$block' );
 			modelDocument.schema.registerItem( 'div' );
@@ -287,7 +287,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'toView', () => {
+	describe( 'toView()', () => {
 		beforeEach( () => {
 			modelDocument.schema.registerItem( 'paragraph', '$block' );
 			modelDocument.schema.registerItem( 'div' );
@@ -328,7 +328,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'destroy', () => {
+	describe( 'destroy()', () => {
 		it( 'should be there for you', () => {
 			// Should not throw.
 			data.destroy();
@@ -337,7 +337,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'insertContent', () => {
+	describe( 'insertContent()', () => {
 		it( 'should be decorated', () => {
 			schema.allow( { name: '$text', inside: '$root' } ); // To surpress warnings.
 
@@ -371,7 +371,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'deleteContent', () => {
+	describe( 'deleteContent()', () => {
 		it( 'should be decorated', () => {
 			const spy = sinon.spy();
 
@@ -393,7 +393,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'modifySelection', () => {
+	describe( 'modifySelection()', () => {
 		it( 'should be decorated', () => {
 			schema.registerItem( 'paragraph', '$block' );
 			setData( modelDocument, '<paragraph>fo[ob]ar</paragraph>' );
@@ -418,7 +418,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'getSelectedContent', () => {
+	describe( 'getSelectedContent()', () => {
 		it( 'should be decorated', () => {
 			const spy = sinon.spy();
 			const sel = new ModelSelection();
@@ -441,7 +441,7 @@ describe( 'DataController', () => {
 		} );
 	} );
 
-	describe( 'hasContent', () => {
+	describe( 'hasContent()', () => {
 		let root;
 
 		beforeEach( () => {
