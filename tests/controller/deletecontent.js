@@ -4,6 +4,7 @@
  */
 
 import Document from '../../src/model/document';
+import DataController from '../../src/controller/datacontroller';
 import Position from '../../src/model/position';
 import Range from '../../src/model/range';
 import Element from '../../src/model/element';
@@ -11,13 +12,15 @@ import deleteContent from '../../src/controller/deletecontent';
 import { setData, getData } from '../../src/dev-utils/model';
 
 describe( 'DataController', () => {
-	let doc;
+	let doc, dataController;
 
 	describe( 'deleteContent', () => {
 		describe( 'in simple scenarios', () => {
 			beforeEach( () => {
 				doc = new Document();
 				doc.createRoot();
+
+				dataController = new DataController( doc );
 
 				const schema = doc.schema;
 
@@ -42,7 +45,7 @@ describe( 'DataController', () => {
 			it( 'deletes single character (backward selection)', () => {
 				setData( doc, 'f[o]o', { lastRangeBackward: true } );
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc ) ).to.equal( 'f[]o' );
 			} );
@@ -83,6 +86,8 @@ describe( 'DataController', () => {
 				doc = new Document();
 				doc.createRoot();
 
+				dataController = new DataController( doc );
+
 				const schema = doc.schema;
 
 				schema.registerItem( 'image', '$inline' );
@@ -95,7 +100,7 @@ describe( 'DataController', () => {
 			it( 'deletes characters (first half has attrs)', () => {
 				setData( doc, '<$text bold="true">fo[o</$text>b]ar' );
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc ) ).to.equal( '<$text bold="true">fo[]</$text>ar' );
 				expect( doc.selection.getAttribute( 'bold' ) ).to.equal( true );
@@ -104,7 +109,7 @@ describe( 'DataController', () => {
 			it( 'deletes characters (2nd half has attrs)', () => {
 				setData( doc, 'fo[o<$text bold="true">b]ar</$text>' );
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc ) ).to.equal( 'fo[]<$text bold="true">ar</$text>' );
 				expect( doc.selection.getAttribute( 'bold' ) ).to.undefined;
@@ -113,7 +118,7 @@ describe( 'DataController', () => {
 			it( 'clears selection attrs when emptied content', () => {
 				setData( doc, '<paragraph>x</paragraph><paragraph>[<$text bold="true">foo</$text>]</paragraph><paragraph>y</paragraph>' );
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc ) ).to.equal( '<paragraph>x</paragraph><paragraph>[]</paragraph><paragraph>y</paragraph>' );
 				expect( doc.selection.getAttribute( 'bold' ) ).to.undefined;
@@ -130,7 +135,7 @@ describe( 'DataController', () => {
 					}
 				);
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc ) ).to.equal( '<paragraph>x<$text bold="true">a[]b</$text>y</paragraph>' );
 				expect( doc.selection.getAttribute( 'bold' ) ).to.equal( true );
@@ -150,6 +155,8 @@ describe( 'DataController', () => {
 			beforeEach( () => {
 				doc = new Document();
 				doc.createRoot();
+
+				dataController = new DataController( doc );
 
 				const schema = doc.schema;
 
@@ -204,7 +211,7 @@ describe( 'DataController', () => {
 					{ lastRangeBackward: true }
 				);
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc ) ).to.equal( '<paragraph>x</paragraph><heading1>fo[]ar</heading1><paragraph>y</paragraph>' );
 			} );
@@ -240,7 +247,7 @@ describe( 'DataController', () => {
 				const spyMerge = sinon.spy( batch, 'merge' );
 				const spyRemove = sinon.spy( batch, 'remove' );
 
-				deleteContent( doc.selection, batch );
+				deleteContent( dataController, doc.selection, batch );
 
 				expect( getData( doc ) ).to.equal( '<paragraph>ab[]</paragraph>' );
 
@@ -255,7 +262,7 @@ describe( 'DataController', () => {
 				const spyMerge = sinon.spy( batch, 'merge' );
 				const spyMove = sinon.spy( batch, 'move' );
 
-				deleteContent( doc.selection, batch );
+				deleteContent( dataController, doc.selection, batch );
 
 				expect( getData( doc ) ).to.equal( '<paragraph>ab[]gh</paragraph>' );
 
@@ -307,7 +314,7 @@ describe( 'DataController', () => {
 
 					doc.selection.setRanges( [ range ] );
 
-					deleteContent( doc.selection, doc.batch() );
+					deleteContent( dataController, doc.selection, doc.batch() );
 
 					expect( getData( doc ) )
 						.to.equal( '<pparent>x<paragraph>x<pchild>fo[]ar</pchild>y</paragraph>y</pparent>' );
@@ -352,7 +359,7 @@ describe( 'DataController', () => {
 
 					doc.selection.setRanges( [ range ] );
 
-					deleteContent( doc.selection, doc.batch() );
+					deleteContent( dataController, doc.selection, doc.batch() );
 
 					expect( getData( doc ) )
 						.to.equal( '<pparent>x<paragraph>foo<pchild>ba[]om</pchild></paragraph></pparent>' );
@@ -395,7 +402,7 @@ describe( 'DataController', () => {
 
 					doc.selection.setRanges( [ range ] );
 
-					deleteContent( doc.selection, doc.batch() );
+					deleteContent( dataController, doc.selection, doc.batch() );
 
 					expect( getData( doc ) )
 						.to.equal( '<paragraph>fo[]</paragraph>' );
@@ -487,6 +494,8 @@ describe( 'DataController', () => {
 				// Special root which allows only blockWidgets inside itself.
 				doc.createRoot( 'restrictedRoot', 'restrictedRoot' );
 
+				dataController = new DataController( doc );
+
 				const schema = doc.schema;
 
 				schema.limits.add( 'restrictedRoot' );
@@ -514,7 +523,7 @@ describe( 'DataController', () => {
 					{ rootName: 'paragraphRoot' }
 				);
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc, { rootName: 'paragraphRoot' } ) )
 					.to.equal( 'x[]z' );
@@ -527,7 +536,7 @@ describe( 'DataController', () => {
 					{ rootName: 'bodyRoot' }
 				);
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc, { rootName: 'bodyRoot' } ) )
 					.to.equal( '<paragraph>x</paragraph><paragraph>[]</paragraph><paragraph>z</paragraph>' );
@@ -540,7 +549,7 @@ describe( 'DataController', () => {
 					{ rootName: 'bodyRoot' }
 				);
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc, { rootName: 'bodyRoot' } ) )
 					.to.equal( '<paragraph>x</paragraph><paragraph>[]</paragraph><paragraph>z</paragraph>' );
@@ -553,7 +562,7 @@ describe( 'DataController', () => {
 					{ rootName: 'bodyRoot' }
 				);
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc, { rootName: 'bodyRoot' } ) )
 					.to.equal( '<paragraph>x</paragraph><paragraph>[]</paragraph><paragraph>z</paragraph>' );
@@ -566,7 +575,7 @@ describe( 'DataController', () => {
 					{ rootName: 'bodyRoot' }
 				);
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc, { rootName: 'bodyRoot' } ) )
 					.to.equal( '<paragraph>x</paragraph><paragraph>[]</paragraph><paragraph>z</paragraph>' );
@@ -579,7 +588,7 @@ describe( 'DataController', () => {
 					{ rootName: 'bodyRoot' }
 				);
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc, { rootName: 'bodyRoot' } ) )
 					.to.equal( '<paragraph>[]</paragraph>' );
@@ -592,7 +601,7 @@ describe( 'DataController', () => {
 					{ rootName: 'restrictedRoot' }
 				);
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc, { rootName: 'restrictedRoot' } ) )
 					.to.equal( '<blockWidget></blockWidget>[]<blockWidget></blockWidget>' );
@@ -603,6 +612,8 @@ describe( 'DataController', () => {
 			beforeEach( () => {
 				doc = new Document();
 				doc.createRoot();
+
+				dataController = new DataController( doc );
 
 				const schema = doc.schema;
 
@@ -660,6 +671,8 @@ describe( 'DataController', () => {
 				doc = new Document();
 				doc.createRoot();
 
+				dataController = new DataController( doc );
+
 				const schema = doc.schema;
 
 				schema.registerItem( 'blockLimit' );
@@ -706,6 +719,8 @@ describe( 'DataController', () => {
 			beforeEach( () => {
 				doc = new Document();
 				doc.createRoot();
+
+				dataController = new DataController( doc );
 
 				const schema = doc.schema;
 
@@ -783,7 +798,7 @@ describe( 'DataController', () => {
 					{ rootName: 'paragraphRoot' }
 				);
 
-				deleteContent( doc.selection, doc.batch() );
+				deleteContent( dataController, doc.selection, doc.batch() );
 
 				expect( getData( doc, { rootName: 'paragraphRoot' } ) )
 					.to.equal( 'x[]z' );
@@ -803,7 +818,7 @@ describe( 'DataController', () => {
 			it( title, () => {
 				setData( doc, input );
 
-				deleteContent( doc.selection, doc.batch(), options );
+				deleteContent( dataController, doc.selection, doc.batch(), options );
 
 				expect( getData( doc ) ).to.equal( output );
 			} );
