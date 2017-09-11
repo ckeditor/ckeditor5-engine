@@ -286,25 +286,49 @@ export default class Document {
 	}
 
 	/**
-	 * Basing on given `position`, finds and returns a {@link module:engine/model/range~Range Range} instance that is
-	 * nearest to that `position` and is a correct range for selection.
+	 * Basing on given {@link module:engine/model/position~Position} or {@link module:engine/model/range~Range} instance,
+	 * returns nearest {@link module:engine/model/range~Range Range} that is a correct range for selection.
 	 *
-	 * Correct selection range might be collapsed - when it's located in position where text node can be placed.
-	 * Non-collapsed range is returned when selection can be placed around element marked as "object" in
-	 * {@link module:engine/model/schema~Schema schema}.
-	 *
-	 * Direction of searching for nearest correct selection range can be specified as:
+	 * If `Position` has been passed, you may specify search direction:
 	 * * `both` - searching will be performed in both ways,
 	 * * `forward` - searching will be performed only forward,
 	 * * `backward` - searching will be performed only backward.
 	 *
 	 * When valid selection range cannot be found, `null` is returned.
 	 *
+	 * @param {module:engine/model/position~Position|module:engine/model/range~Range} rangeOrPosition Reference range or position
+	 * where selection range should be looked for.
+	 * @param {'both'|'forward'|'backward'} [direction='both'] Search direction. Used only when `rangeOrPosition` is `Position` instance.
+	 * @returns {module:engine/model/range~Range|null} Nearest selection range or `null` if one cannot be found.
+	 */
+	getNearestSelectionRange( rangeOrPosition, direction = 'both' ) {
+		if ( rangeOrPosition instanceof Position ) {
+			return this._getNearestSelectionRangeFromPosition( rangeOrPosition, direction );
+		} else {
+			const startRange = this._getNearestSelectionRangeFromPosition( rangeOrPosition.start );
+			const endRange = this._getNearestSelectionRangeFromPosition( rangeOrPosition.end );
+
+			// If `startRange` is `null` then `endRange` is also `null`.
+			if ( startRange === null ) {
+				return null;
+			}
+			// If `startRange` is not `null`, in "corner case" scenario, `endRange` will be at least same as `startRange`.
+			else {
+				return new Range( startRange.start, endRange.end );
+			}
+		}
+	}
+
+	/**
+	 * Helper function for {@link ~Document#getNearestSelectionRange}. Basing on given `position`, finds and returns a
+	 * {@link module:engine/model/range~Range Range} instance that is nearest to that `position` and is a correct range for selection.
+	 *
+	 * @private
 	 * @param {module:engine/model/position~Position} position Reference position where new selection range should be looked for.
 	 * @param {'both'|'forward'|'backward'} [direction='both'] Search direction.
 	 * @returns {module:engine/model/range~Range|null} Nearest selection range or `null` if one cannot be found.
 	 */
-	getNearestSelectionRange( position, direction = 'both' ) {
+	_getNearestSelectionRangeFromPosition( position, direction = 'both' ) {
 		// Return collapsed range if provided position is valid.
 		if ( this.schema.check( { name: '$text', inside: position } ) ) {
 			return new Range( position );
