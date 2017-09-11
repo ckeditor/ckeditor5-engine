@@ -354,6 +354,11 @@ class Insertion {
 			}
 
 			if ( this._checkIsAllowed( node, [ paragraph ] ) ) {
+				// Prevent having same node in two parents.
+				if ( node.parent ) {
+					node.remove();
+				}
+
 				paragraph.appendChildren( node );
 				this._handleNode( paragraph, context );
 			}

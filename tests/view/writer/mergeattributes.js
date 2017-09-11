@@ -143,5 +143,18 @@ describe( 'writer', () => {
 				'<container:p><ui:span></ui:span>[]<ui:span></ui:span></container:p>'
 			);
 		} );
+
+		it( 'should correctly move nodes when merging', () => {
+			// Check if nodes has been removed from old parent before adding to new parent.
+			const { view, selection } = parse(
+				'<container:p><attribute:b>foo</attribute:b>[]<attribute:b>bar</attribute:b></container:p>'
+			);
+
+			const b = view.getChild( 1 );
+
+			mergeAttributes( selection.getFirstPosition() );
+
+			expect( b.childCount ).to.equal( 0 );
+		} );
 	} );
 } );

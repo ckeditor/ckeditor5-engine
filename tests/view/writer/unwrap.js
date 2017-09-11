@@ -83,6 +83,16 @@ describe( 'writer', () => {
 			} ).to.throw( CKEditorError, 'view-writer-invalid-range-container' );
 		} );
 
+		it( 'should correctly move unwrapped nodes', () => {
+			// Check if nodes has been removed from old parent before adding to new parent.
+			const { view, selection } = parse( '<container:p>[<attribute:b>x</attribute:b>]</container:p>' );
+			const b = view.getChild( 0 );
+
+			unwrap( selection.getFirstRange(), parse( '<attribute:b></attribute:b>' ) );
+
+			expect( b.childCount ).to.equal( 0 );
+		} );
+
 		it( 'should unwrap single node', () => {
 			test(
 				'<container:p>[<attribute:b view-priority="1">foobar</attribute:b>]</container:p>',

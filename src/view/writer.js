@@ -212,7 +212,7 @@ export function mergeAttributes( position ) {
 	else if ( nodeBefore.is( 'attributeElement' ) && nodeAfter.is( 'attributeElement' ) && nodeBefore.isSimilar( nodeAfter ) ) {
 		// Move all children nodes from node placed after selection and remove that node.
 		const count = nodeBefore.childCount;
-		nodeBefore.appendChildren( nodeAfter.getChildren() );
+		nodeBefore.appendChildren( nodeAfter.removeChildren( 0, nodeAfter.childCount ) );
 		nodeAfter.remove();
 
 		// New position is located inside the first node, before new nodes.
@@ -831,8 +831,8 @@ function unwrapChildren( parent, startOffset, endOffset, attribute ) {
 
 		// If attributes are the similar, then unwrap.
 		if ( child.isSimilar( attribute ) ) {
-			const unwrapped = child.getChildren();
 			const count = child.childCount;
+			const unwrapped = child.removeChildren( 0, count );
 
 			// Replace wrapper element with its children
 			child.remove();
@@ -904,7 +904,7 @@ function wrapChildren( parent, startOffset, endOffset, attribute ) {
 			// Clone attribute.
 			const newAttribute = attribute.clone();
 
-			// Wrap current node with new attribute;
+			// Wrap current node with new attribute.
 			child.remove();
 			newAttribute.appendChildren( child );
 			parent.insertChildren( i, newAttribute );
