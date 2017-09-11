@@ -298,211 +298,367 @@ describe( 'Document', () => {
 			selection = doc.selection;
 		} );
 
-		test(
-			'should return collapsed range if text node can be placed at that position - both',
-			'<paragraph>[]</paragraph>',
-			'both',
-			'<paragraph>[]</paragraph>'
-		);
-
-		test(
-			'should return collapsed range if text node can be placed at that position - forward',
-			'<paragraph>[]</paragraph>',
-			'forward',
-			'<paragraph>[]</paragraph>'
-		);
-
-		test(
-			'should return collapsed range if text node can be placed at that position - backward',
-			'<paragraph>[]</paragraph>',
-			'backward',
-			'<paragraph>[]</paragraph>'
-		);
-
-		test( 'should return null in empty document - both', '', 'both', null );
-
-		test( 'should return null in empty document - backward', '', 'backward', null );
-
-		test( 'should return null in empty document - forward', '', 'forward', null );
-
-		test(
-			'should find range before when searching both ways',
-			'<paragraph></paragraph>[]<paragraph></paragraph>',
-			'both',
-			'<paragraph>[]</paragraph><paragraph></paragraph>'
-		);
-
-		test(
-			'should find range before when searching backward',
-			'<paragraph></paragraph>[]<paragraph></paragraph>',
-			'backward',
-			'<paragraph>[]</paragraph><paragraph></paragraph>'
-		);
-
-		test(
-			'should find range after when searching forward',
-			'<paragraph></paragraph>[]<paragraph></paragraph>',
-			'forward',
-			'<paragraph></paragraph><paragraph>[]</paragraph>'
-		);
-
-		test(
-			'should find range after when searching both ways when it is closer',
-			'<paragraph></paragraph><emptyBlock></emptyBlock>[]<paragraph></paragraph>',
-			'both',
-			'<paragraph></paragraph><emptyBlock></emptyBlock><paragraph>[]</paragraph>'
-		);
-
-		test(
-			'should find range before when searching both ways when it is closer',
-			'<paragraph></paragraph><emptyBlock></emptyBlock>[]<emptyBlock></emptyBlock><emptyBlock></emptyBlock><paragraph></paragraph>',
-			'both',
-			'<paragraph>[]</paragraph><emptyBlock></emptyBlock><emptyBlock></emptyBlock><emptyBlock></emptyBlock><paragraph></paragraph>'
-		);
-
-		test(
-			'should return null if there is no valid range',
-			'[]<emptyBlock></emptyBlock>',
-			'both',
-			null
-		);
-
-		test(
-			'should return null if there is no valid range in given direction - backward',
-			'[]<paragraph></paragraph>',
-			'backward',
-			null
-		);
-
-		test(
-			'should return null if there is no valid range in given direction - forward',
-			'<paragraph></paragraph>[]',
-			'forward',
-			null
-		);
-
-		test(
-			'should move forward when placed at root start',
-			'[]<paragraph></paragraph><paragraph></paragraph>',
-			'both',
-			'<paragraph>[]</paragraph><paragraph></paragraph>'
-		);
-
-		test(
-			'should move backward when placed at root end',
-			'<paragraph></paragraph><paragraph></paragraph>[]',
-			'both',
-			'<paragraph></paragraph><paragraph>[]</paragraph>'
-		);
-
-		describe( 'in case of objects which do not allow text inside', () => {
+		describe( 'from position', () => {
 			test(
-				'should select nearest object (o[]o) - both',
-				'<widget></widget>[]<widget></widget>',
+				'should return collapsed range if text node can be placed at that position - both',
+				'<paragraph>[]</paragraph>',
 				'both',
-				'[<widget></widget>]<widget></widget>'
+				'<paragraph>[]</paragraph>'
 			);
 
 			test(
-				'should select nearest object (o[]o) - forward',
-				'<widget></widget>[]<widget></widget>',
+				'should return collapsed range if text node can be placed at that position - forward',
+				'<paragraph>[]</paragraph>',
 				'forward',
-				'<widget></widget>[<widget></widget>]'
+				'<paragraph>[]</paragraph>'
 			);
 
 			test(
-				'should select nearest object (o[]o) - backward',
-				'<widget></widget>[]<widget></widget>',
-				'both',
-				'[<widget></widget>]<widget></widget>'
-			);
-
-			test(
-				'should select nearest object (p[]o) - forward',
-				'<paragraph></paragraph>[]<widget></widget>',
-				'forward',
-				'<paragraph></paragraph>[<widget></widget>]'
-			);
-
-			test(
-				'should select nearest object (o[]p) - both',
-				'<widget></widget>[]<paragraph></paragraph>',
-				'both',
-				'[<widget></widget>]<paragraph></paragraph>'
-			);
-
-			test(
-				'should select nearest object (o[]p) - backward',
-				'<widget></widget>[]<paragraph></paragraph>',
+				'should return collapsed range if text node can be placed at that position - backward',
+				'<paragraph>[]</paragraph>',
 				'backward',
-				'[<widget></widget>]<paragraph></paragraph>'
+				'<paragraph>[]</paragraph>'
 			);
 
+			test( 'should return null in empty document - both', '', 'both', null );
+
+			test( 'should return null in empty document - backward', '', 'backward', null );
+
+			test( 'should return null in empty document - forward', '', 'forward', null );
+
 			test(
-				'should select nearest object ([]o) - both',
-				'[]<widget></widget><paragraph></paragraph>',
+				'should find range before when searching both ways',
+				'<paragraph></paragraph>[]<paragraph></paragraph>',
 				'both',
-				'[<widget></widget>]<paragraph></paragraph>'
+				'<paragraph>[]</paragraph><paragraph></paragraph>'
 			);
 
 			test(
-				'should select nearest object ([]o) - forward',
-				'[]<widget></widget><paragraph></paragraph>',
+				'should find range before when searching backward',
+				'<paragraph></paragraph>[]<paragraph></paragraph>',
+				'backward',
+				'<paragraph>[]</paragraph><paragraph></paragraph>'
+			);
+
+			test(
+				'should find range after when searching forward',
+				'<paragraph></paragraph>[]<paragraph></paragraph>',
 				'forward',
+				'<paragraph></paragraph><paragraph>[]</paragraph>'
+			);
+
+			test(
+				'should find range after when searching both ways when it is closer',
+				'<paragraph></paragraph><emptyBlock></emptyBlock>[]<paragraph></paragraph>',
+				'both',
+				'<paragraph></paragraph><emptyBlock></emptyBlock><paragraph>[]</paragraph>'
+			);
+
+			test(
+				'should find range before when searching both ways when it is closer',
+				'<paragraph></paragraph><emptyBlock></emptyBlock>[]' +
+				'<emptyBlock></emptyBlock><emptyBlock></emptyBlock><paragraph></paragraph>',
+				'both',
+				'<paragraph>[]</paragraph><emptyBlock></emptyBlock>' +
+				'<emptyBlock></emptyBlock><emptyBlock></emptyBlock><paragraph></paragraph>'
+			);
+
+			test(
+				'should return null if there is no valid range',
+				'[]<emptyBlock></emptyBlock>',
+				'both',
+				null
+			);
+
+			test(
+				'should return null if there is no valid range in given direction - backward',
+				'[]<paragraph></paragraph>',
+				'backward',
+				null
+			);
+
+			test(
+				'should return null if there is no valid range in given direction - forward',
+				'<paragraph></paragraph>[]',
+				'forward',
+				null
+			);
+
+			test(
+				'should move forward when placed at root start',
+				'[]<paragraph></paragraph><paragraph></paragraph>',
+				'both',
+				'<paragraph>[]</paragraph><paragraph></paragraph>'
+			);
+
+			test(
+				'should move backward when placed at root end',
+				'<paragraph></paragraph><paragraph></paragraph>[]',
+				'both',
+				'<paragraph></paragraph><paragraph>[]</paragraph>'
+			);
+
+			describe( 'in case of objects which do not allow text inside', () => {
+				test(
+					'should select nearest object (o[]o) - both',
+					'<widget></widget>[]<widget></widget>',
+					'both',
+					'[<widget></widget>]<widget></widget>'
+				);
+
+				test(
+					'should select nearest object (o[]o) - forward',
+					'<widget></widget>[]<widget></widget>',
+					'forward',
+					'<widget></widget>[<widget></widget>]'
+				);
+
+				test(
+					'should select nearest object (o[]o) - backward',
+					'<widget></widget>[]<widget></widget>',
+					'both',
+					'[<widget></widget>]<widget></widget>'
+				);
+
+				test(
+					'should select nearest object (p[]o) - forward',
+					'<paragraph></paragraph>[]<widget></widget>',
+					'forward',
+					'<paragraph></paragraph>[<widget></widget>]'
+				);
+
+				test(
+					'should select nearest object (o[]p) - both',
+					'<widget></widget>[]<paragraph></paragraph>',
+					'both',
+					'[<widget></widget>]<paragraph></paragraph>'
+				);
+
+				test(
+					'should select nearest object (o[]p) - backward',
+					'<widget></widget>[]<paragraph></paragraph>',
+					'backward',
+					'[<widget></widget>]<paragraph></paragraph>'
+				);
+
+				test(
+					'should select nearest object ([]o) - both',
+					'[]<widget></widget><paragraph></paragraph>',
+					'both',
+					'[<widget></widget>]<paragraph></paragraph>'
+				);
+
+				test(
+					'should select nearest object ([]o) - forward',
+					'[]<widget></widget><paragraph></paragraph>',
+					'forward',
+					'[<widget></widget>]<paragraph></paragraph>'
+				);
+
+				test(
+					'should select nearest object (o[]) - both',
+					'<paragraph></paragraph><widget></widget>[]',
+					'both',
+					'<paragraph></paragraph>[<widget></widget>]'
+				);
+
+				test(
+					'should select nearest object (o[]) - backward',
+					'<paragraph></paragraph><widget></widget>[]',
+					'both',
+					'<paragraph></paragraph>[<widget></widget>]'
+				);
+			} );
+
+			describe( 'in case of objects which allow text inside', () => {
+				test(
+					'should select nearest object which allows text (o[]o) - both',
+					'<blockWidget></blockWidget>[]<blockWidget></blockWidget>',
+					'both',
+					'[<blockWidget></blockWidget>]<blockWidget></blockWidget>'
+				);
+
+				test(
+					'should select nearest object (o[]p) - both',
+					'<blockWidget></blockWidget>[]<paragraph></paragraph>',
+					'both',
+					'[<blockWidget></blockWidget>]<paragraph></paragraph>'
+				);
+
+				test(
+					'should select nearest object which allows text ([]o) - both',
+					'[]<blockWidget></blockWidget><paragraph></paragraph>',
+					'both',
+					'[<blockWidget></blockWidget>]<paragraph></paragraph>'
+				);
+			} );
+
+			function test( testName, data, direction, expected ) {
+				it( testName, () => {
+					setData( doc, data );
+					const range = doc.getNearestSelectionRange( selection.anchor, direction );
+
+					if ( expected === null ) {
+						expect( range ).to.be.null;
+					} else {
+						selection.setRanges( [ range ] );
+						expect( getData( doc ) ).to.equal( expected );
+					}
+				} );
+			}
+		} );
+
+		describe( 'from collapsed range', () => {
+			test(
+				'should return collapsed range if text node can be placed at that position',
+				'<paragraph>[]</paragraph>',
+				'<paragraph>[]</paragraph>'
+			);
+
+			test( 'should return null in empty document', '', null );
+
+			test(
+				'should return null if there is no valid range',
+				'[]<emptyBlock></emptyBlock>',
+				null
+			);
+
+			test(
+				'should find correct range when it is available on the left',
+				'<paragraph></paragraph>[]<paragraph></paragraph>',
+				'<paragraph>[]</paragraph><paragraph></paragraph>'
+			);
+
+			test(
+				'should find correct range when it is available on the right',
+				'[]<paragraph></paragraph>',
+				'<paragraph>[]</paragraph>'
+			);
+
+			test(
+				'should find the closest correct range',
+				'<paragraph></paragraph><emptyBlock></emptyBlock>[]<paragraph></paragraph>',
+				'<paragraph></paragraph><emptyBlock></emptyBlock><paragraph>[]</paragraph>'
+			);
+
+			describe( 'in case of objects which do not allow text inside', () => {
+				test(
+					'should select nearest object (o[]o)',
+					'<widget></widget>[]<widget></widget>',
+					'[<widget></widget>]<widget></widget>'
+				);
+
+				test(
+					'should select nearest object (o[]p)',
+					'<widget></widget>[]<paragraph></paragraph>',
+					'[<widget></widget>]<paragraph></paragraph>'
+				);
+
+				test(
+					'should select nearest object ([]op)',
+					'[]<widget></widget><paragraph></paragraph>',
+					'[<widget></widget>]<paragraph></paragraph>'
+				);
+
+				test(
+					'should select nearest object (po[])',
+					'<paragraph></paragraph><widget></widget>[]',
+					'<paragraph></paragraph>[<widget></widget>]'
+				);
+			} );
+
+			describe( 'in case of objects which allow text inside', () => {
+				test(
+					'should select nearest object which allows text (o[]o)',
+					'<blockWidget></blockWidget>[]<blockWidget></blockWidget>',
+					'[<blockWidget></blockWidget>]<blockWidget></blockWidget>'
+				);
+
+				test(
+					'should select nearest object (o[]p)',
+					'<blockWidget></blockWidget>[]<paragraph></paragraph>',
+					'[<blockWidget></blockWidget>]<paragraph></paragraph>'
+				);
+
+				test(
+					'should select nearest object which allows text ([]op)',
+					'[]<blockWidget></blockWidget><paragraph></paragraph>',
+					'[<blockWidget></blockWidget>]<paragraph></paragraph>'
+				);
+			} );
+
+			function test( testName, data, expected ) {
+				it( testName, () => {
+					setData( doc, data );
+					const range = doc.getNearestSelectionRange( selection.getFirstRange() );
+
+					if ( expected === null ) {
+						expect( range ).to.be.null;
+					} else {
+						selection.setRanges( [ range ] );
+						expect( getData( doc ) ).to.equal( expected );
+					}
+				} );
+			}
+		} );
+
+		describe( 'from non-collapsed range', () => {
+			test(
+				'should not change range if it is correct - range in text',
+				'<paragraph>fo[ob]ar</paragraph>',
+				'<paragraph>fo[ob]ar</paragraph>'
+			);
+
+			test(
+				'should not change range if it is correct - range on widget',
+				'[<widget></widget>]<paragraph></paragraph>',
 				'[<widget></widget>]<paragraph></paragraph>'
 			);
 
 			test(
-				'should select nearest object (o[]) - both',
-				'<paragraph></paragraph><widget></widget>[]',
-				'both',
-				'<paragraph></paragraph>[<widget></widget>]'
+				'should not change range if it is correct - range on multiple widgets',
+				'[<widget></widget><widget></widget>]<paragraph></paragraph>',
+				'[<widget></widget><widget></widget>]<paragraph></paragraph>'
 			);
 
 			test(
-				'should select nearest object (o[]) - backward',
-				'<paragraph></paragraph><widget></widget>[]',
-				'both',
-				'<paragraph></paragraph>[<widget></widget>]'
+				'should correct only start position if only start position was wrong',
+				'<paragraph>foo</paragraph>[<paragraph>b]ar</paragraph>',
+				'<paragraph>foo[</paragraph><paragraph>b]ar</paragraph>'
 			);
+
+			test(
+				'should correct only end position if only end position was wrong',
+				'<paragraph>fo[o</paragraph>]<paragraph>bar</paragraph>',
+				'<paragraph>fo[o]</paragraph><paragraph>bar</paragraph>'
+			);
+
+			test(
+				'select all content case',
+				'[<paragraph>foo</paragraph><paragraph>bar</paragraph>]',
+				'<paragraph>[foo</paragraph><paragraph>bar]</paragraph>'
+			);
+
+			test(
+				'should find the closest correct range',
+				'<paragraph></paragraph><emptyBlock></emptyBlock>[<paragraph>fo]o</paragraph>',
+				'<paragraph></paragraph><emptyBlock></emptyBlock><paragraph>[fo]o</paragraph>'
+			);
+
+			function test( testName, data, expected ) {
+				it( testName, () => {
+					setData( doc, data );
+					const range = doc.getNearestSelectionRange( selection.getFirstRange() );
+
+					if ( expected === null ) {
+						expect( range ).to.be.null;
+					} else {
+						selection.setRanges( [ range ] );
+						expect( getData( doc ) ).to.equal( expected );
+					}
+				} );
+			}
 		} );
-
-		describe( 'in case of objects which allow text inside', () => {
-			test(
-				'should select nearest object which allows text (o[]o) - both',
-				'<blockWidget></blockWidget>[]<blockWidget></blockWidget>',
-				'both',
-				'[<blockWidget></blockWidget>]<blockWidget></blockWidget>'
-			);
-
-			test(
-				'should select nearest object (o[]p) - both',
-				'<blockWidget></blockWidget>[]<paragraph></paragraph>',
-				'both',
-				'[<blockWidget></blockWidget>]<paragraph></paragraph>'
-			);
-
-			test(
-				'should select nearest object which allows text ([]o) - both',
-				'[]<blockWidget></blockWidget><paragraph></paragraph>',
-				'both',
-				'[<blockWidget></blockWidget>]<paragraph></paragraph>'
-			);
-		} );
-
-		function test( testName, data, direction, expected ) {
-			it( testName, () => {
-				setData( doc, data );
-				const range = doc.getNearestSelectionRange( selection.anchor, direction );
-
-				if ( expected === null ) {
-					expect( range ).to.be.null;
-				} else {
-					selection.setRanges( [ range ] );
-					expect( getData( doc ) ).to.equal( expected );
-				}
-			} );
-		}
 	} );
 
 	describe( 'transformDeltas', () => {
