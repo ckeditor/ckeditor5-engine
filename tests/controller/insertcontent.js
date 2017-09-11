@@ -294,6 +294,16 @@ describe( 'DataController', () => {
 				expect( getData( doc ) ).to.equal( '<heading1>bar[]</heading1>' );
 			} );
 
+			it( 'autoparagraphs when just text is inserted', () => {
+				doc.schema.disallow( { name: '$text', inside: 'blockWidget' } );
+				doc.schema.allow( { name: 'paragraph', inside: 'blockWidget' } );
+
+				setData( doc, '<blockWidget>[]</blockWidget>' );
+				insertContent( dataController, new Text( 'foo' ), doc.selection );
+
+				expect( getData( doc ) ).to.equal( '<blockWidget><paragraph>foo[]</paragraph></blockWidget>' );
+			} );
+
 			describe( 'block to block handling', () => {
 				it( 'inserts one paragraph', () => {
 					setData( doc, '<paragraph>f[]oo</paragraph>' );
