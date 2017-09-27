@@ -9,6 +9,7 @@
  */
 
 import Delta from './delta';
+import InsertDelta from './insertdelta';
 import MoveDelta from './movedelta';
 import RemoveDelta from './removedelta';
 import MergeDelta from './mergedelta';
@@ -21,6 +22,7 @@ import operationTransform from '../operation/transform';
 import NoOperation from '../operation/nooperation';
 import MoveOperation from '../operation/moveoperation';
 import RemoveOperation from '../operation/removeoperation';
+import Range from '../range';
 import arrayUtils from '@ckeditor/ckeditor5-utils/src/lib/lodash/array';
 import compareArrays from '@ckeditor/ckeditor5-utils/src/comparearrays';
 
@@ -57,6 +59,12 @@ const transform = {
 
 		// Make new instance of context object, so all changes done during transformation are not saved in original object.
 		const transformed = transformAlgorithm( a, b, Object.assign( {}, context ) );
+
+		// Save original delta in transformed deltas.
+		for ( const delta of transformed ) {
+			delta.originalDelta = a.originalDelta;
+		}
+
 		const baseVersion = arrayUtils.last( b.operations ).baseVersion;
 
 		return updateBaseVersion( baseVersion, transformed );
@@ -238,12 +246,15 @@ const transform = {
 
 		if ( useAdditionalContext ) {
 			contextAB.wasAffected = new Map();
-			contextAB.originalDelta = new Map();
 			contextAB.document = document;
+		}
 
-			for ( const delta of transformedDeltasB ) {
-				contextAB.originalDelta.set( delta, delta );
-			}
+		for ( const delta of deltasA ) {
+			delta.originalDelta = delta;
+		}
+
+		for ( const delta of deltasB ) {
+			delta.originalDelta = delta;
 		}
 
 		for ( let i = 0; i < transformedDeltasA.length; i++ ) {
@@ -278,12 +289,6 @@ const transform = {
 
 						if ( useAdditionalContext ) {
 							_updateContext( deltaA[ k ], resultAB, contextAB );
-
-							const originalDelta = contextAB.originalDelta.get( deltaB[ l ] );
-
-							for ( const deltaBA of resultBA ) {
-								contextAB.originalDelta.set( deltaBA, originalDelta );
-							}
 						}
 
 						deltaA.splice( k, 1, ...resultAB );
@@ -365,10 +370,9 @@ function _setContext( a, b, context ) {
 //
 // `context.bWasUndone` is set to `true` if the (originally transformed) `b` delta was undone or was undoing delta.
 function _setBWasUndone( b, context ) {
-	const originalDelta = context.originalDelta.get( b );
 	const history = context.document.history;
 
-	context.bWasUndone = history.isUndoneDelta( originalDelta ) || history.isUndoingDelta( originalDelta );
+	context.bWasUndone = history.isUndoneDelta( b.originalDelta ) || history.isUndoingDelta( b.originalDelta );
 }
 
 // Sets `context.insertBefore` basing on `context.document` history for `a` by `b` transformation.
@@ -401,25 +405,55 @@ function _setBWasUndone( b, context ) {
 // known (deltas are related and `a` should insert nodes before or after `b`). However, if deltas were not related,
 // `context.isBefore` is `undefined` and other factors will be taken into consideration when resolving the order
 // (this, however, happens in operational transformation algorithms).
-//
-// This affects both `MoveOperation` (and its derivatives) and `InsertOperation`.
 function _setInsertBeforeContext( a, b, context ) {
+	if ( !( a instanceof MoveDelta ) || !( b instanceof MoveDelta ) ) {
+		return;
+	}
+
 	// If `b` is a delta that undoes other delta...
-	const originalDelta = context.originalDelta.get( b );
-
-	if ( context.document.history.isUndoingDelta( originalDelta ) ) {
+	if ( context.document.history.isUndoingDelta( b.originalDelta ) ) {
 		// Get the undone delta...
-		const undoneDelta = context.document.history.getUndoneDelta( originalDelta );
-		// Get a map with deltas related to `a` delta...
-		const aWasAffectedBy = context.wasAffected.get( a );
-		// And check if the undone delta is related with delta `a`.
-		const affected = aWasAffectedBy.get( undoneDelta );
+		const undoneDelta = context.document.history.getUndoneDelta( b.originalDelta );
 
-		if ( affected !== undefined ) {
-			// If deltas are related, set `context.insertBefore` basing on whether `a` was affected by the undone delta.
-			context.insertBefore = affected;
+		if ( undoneDelta instanceof InsertDelta ) {
+			return;
+		}
+
+		if ( undoneDelta.baseVersion >= a.originalDelta.baseVersion ) {
+			_setInsertBeforeContextBasingOnAffected( a, undoneDelta, context );
+		} else {
+			_setInsertBeforeContextTransformingBack( a, undoneDelta, context );
 		}
 	}
+}
+
+function _setInsertBeforeContextBasingOnAffected( a, undoneDelta, context ) {
+	// Get a map with deltas related to `a` delta...
+	const aWasAffectedBy = context.wasAffected.get( a );
+	// And check if the undone delta is related with delta `a`.
+	const affected = aWasAffectedBy.get( undoneDelta );
+
+	if ( affected !== undefined ) {
+		// If deltas are related, set `context.insertBefore` basing on whether `a` was affected by the undone delta.
+		context.insertBefore = affected;
+	}
+}
+
+function _setInsertBeforeContextTransformingBack( a, undoneDelta, context ) {
+	debugger;
+	const deltas = [ ...context.document.history.getDeltas( undoneDelta.baseVersion, a.baseVersion ) ];
+	deltas.reverse();
+
+	const reversedDeltas = deltas.map( delta => delta.getReversed() );
+
+	const op = a.originalDelta.operations[ 0 ];
+	const range = Range.createFromPositionAndShift( op.sourcePosition, op.howMany );
+
+	range.getTransformedByDeltas( reversedDeltas );
+
+	const undoneStartPosition = undoneDelta.operations[ 0 ].sourcePosition;
+
+	context.insertBefore = range.start.isBefore( undoneStartPosition );
 }
 
 // Sets `context.forceNotSticky` basing on `context.document` history for transformation by `b` delta.
@@ -454,11 +488,10 @@ function _setForceNotSticky( context ) {
 // not been undone, we set `context.forceWeakRemove` to `false` because we want the operation to be "dominating".
 function _setForceWeakRemove( b, context ) {
 	const history = context.document.history;
-	const originalB = context.originalDelta.get( b );
 
 	// If `b` delta has not been undone yet, forceWeakRemove should be `false`.
 	// It should be `true`, in any other case, if additional context is used.
-	context.forceWeakRemove = history.isUndoneDelta( originalB );
+	context.forceWeakRemove = history.isUndoneDelta( b.originalDelta );
 }
 
 // Sets `context.wasAffected` which holds context information about how transformed deltas are related. `context.wasAffected`
@@ -469,8 +502,7 @@ function _setWasAffected( a, b, context ) {
 		context.wasAffected.set( a, new Map() );
 	}
 
-	const originalDelta = context.originalDelta.get( b );
-	let wasAffected = !!context.wasAffected.get( a ).get( originalDelta );
+	let wasAffected = !!context.wasAffected.get( a ).get( b.originalDelta );
 
 	// Cross-check all operations from both deltas...
 	for ( const opA of a.operations ) {
@@ -491,7 +523,7 @@ function _setWasAffected( a, b, context ) {
 		}
 	}
 
-	context.wasAffected.get( a ).set( originalDelta, wasAffected );
+	context.wasAffected.get( a ).set( b.originalDelta, wasAffected );
 }
 
 // Checks whether `opA` is affected by `opB`. It is assumed that both operations are `MoveOperation`.
@@ -500,11 +532,11 @@ function _isOperationAffected( opA, opB ) {
 	const target = opA.targetPosition;
 	const source = opB.sourcePosition;
 
-	const cmpResult = compareArrays( source.getParentPath(), target.getParentPath() );
-
 	if ( target.root != source.root ) {
 		return false;
 	}
+
+	const cmpResult = compareArrays( source.getParentPath(), target.getParentPath() );
 
 	return cmpResult == 'same' && source.offset < target.offset;
 }

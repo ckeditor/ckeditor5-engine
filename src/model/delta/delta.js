@@ -149,6 +149,9 @@ export default class Delta {
 		// Remove parent batch to avoid circular dependencies.
 		delete json.batch;
 
+		// Remove original delta to avoid circular dependencies.
+		delete json.originalDelta;
+
 		return json;
 	}
 
