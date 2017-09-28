@@ -197,6 +197,16 @@ export default class Renderer {
 			this.markedChildren.add( inlineFillerPosition.parent );
 		}
 
+		for ( const element of this.markedChildren ) {
+			this._updateChildren( element, { inlineFillerPosition } );
+
+			for ( const child of element.getChildren() ) {
+				if ( child.is( 'element' ) ) {
+					this._addTextDescendantsToUpdate( child );
+				}
+			}
+		}
+
 		for ( const node of this.markedTexts ) {
 			if ( !this.markedChildren.has( node.parent ) && this.domConverter.mapViewToDom( node.parent ) ) {
 				this._updateText( node, { inlineFillerPosition } );
@@ -205,10 +215,6 @@ export default class Renderer {
 
 		for ( const element of this.markedAttributes ) {
 			this._updateAttrs( element );
-		}
-
-		for ( const element of this.markedChildren ) {
-			this._updateChildren( element, { inlineFillerPosition } );
 		}
 
 		// Check whether the inline filler is required and where it really is in the DOM.
@@ -239,6 +245,16 @@ export default class Renderer {
 		this.markedTexts.clear();
 		this.markedAttributes.clear();
 		this.markedChildren.clear();
+	}
+
+	_addTextDescendantsToUpdate( element ) {
+		for ( const child of element.getChildren() ) {
+			if ( child.is( 'text' ) ) {
+				this.markedTexts.add( child );
+			} else {
+				this._addTextDescendantsToUpdate( child );
+			}
+		}
 	}
 
 	/**
