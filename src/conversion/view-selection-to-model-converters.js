@@ -11,6 +11,7 @@
  */
 
 import ModelSelection from '../model/selection';
+import ModelRange from '../model/range';
 
 /**
  * Function factory, creates a callback function which converts a {@link module:engine/view/selection~Selection view selection} taken
@@ -34,7 +35,12 @@ export function convertSelectionChange( modelDocument, mapper ) {
 		const ranges = [];
 
 		for ( const viewRange of viewSelection.getRanges() ) {
-			ranges.push( mapper.toModelRange( viewRange ) );
+			const mappedRange = mapper.toModelRange( viewRange );
+
+			const correctModelRangeStart = modelDocument.getNearestSelectionRange( mappedRange.start ).start;
+			const correctModelRangeEnd = modelDocument.getNearestSelectionRange( mappedRange.end ).end;
+
+			ranges.push( new ModelRange( correctModelRangeStart, correctModelRangeEnd ) );
 		}
 
 		modelSelection.setRanges( ranges, viewSelection.isBackward );

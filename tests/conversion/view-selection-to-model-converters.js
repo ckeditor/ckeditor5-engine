@@ -124,4 +124,14 @@ describe( 'convertSelectionChange', () => {
 
 		expect( spy.called ).to.be.false;
 	} );
+
+	it( 'should handle incorrect view selection and convert it to correct model selection', () => {
+		const viewSelection = new ViewSelection();
+
+		viewSelection.addRange( ViewRange.createFromParentsAndOffsets( viewRoot, 0, viewRoot, 0 ) );
+
+		convertSelection( null, { newSelection: viewSelection } );
+
+		expect( modelGetData( model ) ).to.equal( '<paragraph>[]foo</paragraph><paragraph>bar</paragraph>' );
+	} );
 } );
