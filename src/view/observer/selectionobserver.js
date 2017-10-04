@@ -94,6 +94,17 @@ export default class SelectionObserver extends Observer {
 		 * @member {Number} module:engine/view/observer/selectionobserver~SelectionObserver#_loopbackCounter
 		 */
 		this._loopbackCounter = 0;
+
+		/**
+		 * Property used to force view render after the next `selectionchange` event.
+		 *
+		 * Because `selectionchange` is an asynchronous event, other parts of code may use this property to
+		 * force rendering view document after DOM selection is changed.
+		 *
+		 * @protected
+		 * @member {Boolean} module:engine/view/observer/selectionobserver~SelectionObserver#_forceRenderAfterNextChange
+		 */
+		this._forceRenderAfterNextChange = false;
 	}
 
 	/**
@@ -109,6 +120,11 @@ export default class SelectionObserver extends Observer {
 
 		this.listenTo( domDocument, 'selectionchange', () => {
 			this._handleSelectionChange( domDocument );
+
+			if ( this._forceRenderAfterNextChange ) {
+				this._forceRenderAfterNextChange = false;
+				this.document.render();
+			}
 		} );
 
 		this._documents.add( domDocument );
