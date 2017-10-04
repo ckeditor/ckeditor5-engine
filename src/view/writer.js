@@ -540,6 +540,16 @@ export function wrapPosition( position, attribute ) {
 		return movePositionToTextNode( Position.createFromPosition( position ) );
 	}
 
+	// Put position inside node, at the end of it, if previous node is similar.
+	if ( position.nodeBefore && position.nodeBefore.isSimilar( attribute ) ) {
+		return movePositionToTextNode( Position.createAt( position.nodeBefore, 'end' ) );
+	}
+
+	// Put position inside node, at the beginning of it, if next node is similar.
+	if ( position.nodeAfter && position.nodeAfter.isSimilar( attribute ) ) {
+		return movePositionToTextNode( Position.createAt( position.nodeAfter, 0 ) );
+	}
+
 	// When position is inside text node - break it and place new position between two text nodes.
 	if ( position.parent.is( 'text' ) ) {
 		position = breakTextNode( position );

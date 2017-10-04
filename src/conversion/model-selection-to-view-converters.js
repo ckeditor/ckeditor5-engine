@@ -83,11 +83,14 @@ export function convertCollapsedSelection() {
 		}
 
 		const modelPosition = selection.getFirstPosition();
-		const viewPosition = conversionApi.mapper.toViewPosition( modelPosition );
-		const brokenPosition = viewWriter.breakAttributes( viewPosition );
+		let viewPosition = conversionApi.mapper.toViewPosition( modelPosition );
+
+		if ( !modelPosition.parent.isEmpty ) {
+			viewPosition = viewWriter.breakAttributes( viewPosition );
+		}
 
 		conversionApi.viewSelection.removeAllRanges();
-		conversionApi.viewSelection.addRange( new ViewRange( brokenPosition, brokenPosition ) );
+		conversionApi.viewSelection.addRange( new ViewRange( viewPosition, viewPosition ) );
 	};
 }
 
@@ -257,9 +260,14 @@ export function clearAttributes() {
 		for ( const range of conversionApi.viewSelection.getRanges() ) {
 			// Not collapsed selection should not have artifacts.
 			if ( range.isCollapsed ) {
+				const viewPosition = range.start;
+				const modelPosition = conversionApi.mapper.toModelPosition( viewPosition );
+
 				// Position might be in the node removed by the view writer.
-				if ( range.end.parent.document ) {
-					viewWriter.mergeAttributes( range.start );
+				if ( viewPosition.parent.document && modelPosition ) {
+					if ( !modelPosition.parent.isEmpty ) {
+						viewWriter.mergeAttributes( viewPosition );
+					}
 				}
 			}
 		}
