@@ -37,10 +37,17 @@ export function convertSelectionChange( modelDocument, mapper ) {
 		for ( const viewRange of viewSelection.getRanges() ) {
 			const mappedRange = mapper.toModelRange( viewRange );
 
-			const correctModelRangeStart = modelDocument.getNearestSelectionRange( mappedRange.start ).start;
-			const correctModelRangeEnd = modelDocument.getNearestSelectionRange( mappedRange.end ).end;
+			const correctModelRangeStart = modelDocument.getNearestSelectionRange( mappedRange.start );
+			const correctModelRangeEnd = modelDocument.getNearestSelectionRange( mappedRange.end );
 
-			ranges.push( new ModelRange( correctModelRangeStart, correctModelRangeEnd ) );
+			// If the mapped range is incorrect. Skip it.
+			// Both `correctModelRangeStart` and `correctModelRangeEnd` are checked, although it seems that if
+			// one is `null` (incorrect) the other always should be `null` too. But to be safe, both are checked.
+			if ( !correctModelRangeStart || !correctModelRangeEnd ) {
+				continue;
+			}
+
+			ranges.push( new ModelRange( correctModelRangeStart.start, correctModelRangeEnd.end ) );
 		}
 
 		modelSelection.setRanges( ranges, viewSelection.isBackward );
