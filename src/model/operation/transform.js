@@ -462,12 +462,20 @@ const ot = {
 			// two separate ranges. Also we have to discard two difference parts.
 			const aCompB = compareArrays( a.sourcePosition.getParentPath(), b.sourcePosition.getParentPath() );
 
-			if ( aCompB == 'prefix' || aCompB == 'extension' ) {
+			if ( aCompB == 'prefix' || aCompB == 'extension' && a.sourcePosition.root == b.sourcePosition.root ) {
 				// Transform `rangeA` by `b` operation and make operation out of it, and that's all.
 				// Note that this is a simplified version of default case, but here we treat the common part (whole `rangeA`)
 				// like a one difference part.
+				//
+				// On a rare occasion, `rangeA` may be collapsed. This means that the move operation moves 0 nodes.
+				// When this happens, be sure to transform positions accordingly, avoiding situation where range start
+				// is moved past the range start.
+				//
+				// Cache the value, because range's start position will soon change.
+				const isCollapsed = rangeA.isCollapsed;
+
 				rangeA.start = rangeA.start._getTransformedByMove( b.sourcePosition, b.targetPosition, b.howMany, !includeB );
-				rangeA.end = rangeA.end._getTransformedByMove( b.sourcePosition, b.targetPosition, b.howMany, includeB );
+				rangeA.end = rangeA.end._getTransformedByMove( b.sourcePosition, b.targetPosition, b.howMany, isCollapsed || includeB );
 
 				return makeMoveOperationsFromRanges( [ rangeA ], newTargetPosition, a );
 			}
