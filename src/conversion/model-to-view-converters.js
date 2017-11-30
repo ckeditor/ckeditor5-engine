@@ -10,10 +10,9 @@ import ViewRange from '../view/range';
 import ViewPosition from '../view/position';
 import ViewTreeWalker from '../view/treewalker';
 import viewWriter from '../view/writer';
-import ModelRange from '../model/range';
 
 /**
- * Contains {@link module:engine/model/model model} to {@link module:engine/view/view view} converters for
+ * Contains model to view converters for
  * {@link module:engine/conversion/modelconversiondispatcher~ModelConversionDispatcher}.
  *
  * @module engine/conversion/model-to-view-converters
@@ -92,6 +91,35 @@ export function insertText() {
 }
 
 /**
+ * Function factory, creates a default model-to-view converter for node remove changes.
+ *
+ *		modelDispatcher.on( 'remove', remove() );
+ *
+ * @returns {Function} Remove event converter.
+ */
+export function remove() {
+	return ( evt, data, conversionApi ) => {
+		// Find view range start position by mapping model position at which the remove happened.
+		const viewStart = conversionApi.mapper.toViewPosition( data.position );
+
+		// Find view range end by providing to mapper view container and expected model offset.
+		// Get the offset from passed model position and passed length of removed content.
+		const viewContainer = conversionApi.mapper.toViewElement( data.position.parent );
+		const viewEnd = conversionApi.mapper._findPositionIn( viewContainer, data.position.offset + data.length );
+
+		const viewRange = new ViewRange( viewStart, viewEnd );
+
+		// Trim the range to remove in case some UI elements are on the view range boundaries.
+		const removed = viewWriter.remove( viewRange.getTrimmed() );
+
+		// After the range is removed, unbind all view elements from the model.
+		for ( const child of ViewRange.createIn( removed ).getItems() ) {
+			conversionApi.mapper.unbindViewElement( child );
+		}
+	};
+}
+
+/**
  * Function factory, creates a converter that converts marker adding change to the view ui element.
  * The view ui element that will be added to the view depends on passed parameter. See {@link ~insertElement}.
  * In a case of collapsed range element will not wrap range but separate elements will be placed at the beginning
@@ -105,18 +133,20 @@ export function insertText() {
  * @returns {Function} Insert element event converter.
  */
 export function insertUIElement( elementCreator ) {
-	return ( evt, data, consumable, conversionApi ) => {
+	return ( evt, data, conversionApi ) => {
 		let viewStartElement, viewEndElement;
 
+		// Create two view elements. One will be inserted at the beginning of marker, one at the end.
+		// If marker is collapsed, only "opening" element will be inserted.
 		if ( elementCreator instanceof ViewElement ) {
 			viewStartElement = elementCreator.clone( true );
 			viewEndElement = elementCreator.clone( true );
 		} else {
 			data.isOpening = true;
-			viewStartElement = elementCreator( data, consumable, conversionApi );
+			viewStartElement = elementCreator( data, conversionApi );
 
 			data.isOpening = false;
-			viewEndElement = elementCreator( data, consumable, conversionApi );
+			viewEndElement = elementCreator( data, conversionApi );
 		}
 
 		if ( !viewStartElement || !viewEndElement ) {
@@ -124,44 +154,77 @@ export function insertUIElement( elementCreator ) {
 		}
 
 		const markerRange = data.markerRange;
-		const eventName = evt.name;
-
-		// Marker that is collapsed has consumable build differently that non-collapsed one.
-		// For more information see `addMarker` and `removeMarker` events description.
-		// If marker's range is collapsed - check if it can be consumed.
-		if ( markerRange.isCollapsed && !consumable.consume( markerRange, eventName ) ) {
-			return;
-		}
-
-		// If marker's range is not collapsed - consume all items inside.
-		for ( const value of markerRange ) {
-			if ( !consumable.consume( value.item, eventName ) ) {
-				return;
-			}
-		}
-
 		const mapper = conversionApi.mapper;
 
+		// Add "opening" element.
 		viewWriter.insert( mapper.toViewPosition( markerRange.start ), viewStartElement );
 
+		// Add "closing" element only if range is not collapsed.
 		if ( !markerRange.isCollapsed ) {
 			viewWriter.insert( mapper.toViewPosition( markerRange.end ), viewEndElement );
 		}
+
+		evt.stop();
 	};
 }
 
 /**
- * Function factory, creates a converter that converts set/change attribute changes from the model to the view. Attributes
- * from model are converted to the view element attributes in the view. You may provide a custom function to generate a
- * key-value attribute pair to add/change. If not provided, model attributes will be converted to view elements attributes
- * on 1-to-1 basis.
+ * Function factory, creates a default model-to-view converter for removing {@link module:engine/view/uielement~UIElement ui element}
+ * basing on marker remove change.
+ *
+ * @param {module:engine/view/uielement~UIElement|Function} elementCreator View ui element, or function returning
+ * a view ui element, which will be used as a pattern when look for element to remove at the marker start position.
+ * @returns {Function} Remove ui element converter.
+ */
+export function removeUIElement( elementCreator ) {
+	return ( evt, data, conversionApi ) => {
+		let viewStartElement, viewEndElement;
+
+		// Create two view elements. One will be used to remove "opening element", the other for "closing element".
+		// If marker was collapsed, only "opening" element will be removed.
+		if ( elementCreator instanceof ViewElement ) {
+			viewStartElement = elementCreator.clone( true );
+			viewEndElement = elementCreator.clone( true );
+		} else {
+			data.isOpening = true;
+			viewStartElement = elementCreator( data, conversionApi );
+
+			data.isOpening = false;
+			viewEndElement = elementCreator( data, conversionApi );
+		}
+
+		if ( !viewStartElement || !viewEndElement ) {
+			return;
+		}
+
+		const markerRange = data.markerRange;
+
+		// When removing the ui elements, we map the model range to view twice, because that view range
+		// may change after the first clearing.
+		if ( !markerRange.isCollapsed ) {
+			viewWriter.clear( conversionApi.mapper.toViewRange( markerRange ).getEnlarged(), viewEndElement );
+		}
+
+		// Remove "opening" element.
+		viewWriter.clear( conversionApi.mapper.toViewRange( markerRange ).getEnlarged(), viewStartElement );
+
+		evt.stop();
+	};
+}
+
+/**
+ * Function factory, creates a converter that converts set/change/remove attribute changes from the model to the view.
+ *
+ * Attributes from model are converted to the view element attributes in the view. You may provide a custom function to generate
+ * a key-value attribute pair to add/change/remove. If not provided, model attributes will be converted to view elements
+ * attributes on 1-to-1 basis.
  *
  * **Note:** Provided attribute creator should always return the same `key` for given attribute from the model.
  *
  * The converter automatically consumes corresponding value from consumables list and stops the event (see
  * {@link module:engine/conversion/modelconversiondispatcher~ModelConversionDispatcher}).
  *
- *		modelDispatcher.on( 'addAttribute:customAttr:myElem', setAttribute( ( data ) => {
+ *		modelDispatcher.on( 'attribute:customAttr:myElem', setAttribute( ( data ) => {
  *			// Change attribute key from `customAttr` to `class` in view.
  *			const key = 'class';
  *			let value = data.attributeNewValue;
@@ -192,62 +255,20 @@ export function setAttribute( attributeCreator ) {
 
 		const { key, value } = attributeCreator( data.attributeNewValue, data.attributeKey, data, consumable, conversionApi );
 
-		conversionApi.mapper.toViewElement( data.item ).setAttribute( key, value );
-	};
-}
-
-/**
- * Function factory, creates a converter that converts remove attribute changes from the model to the view. Removes attributes
- * that were converted to the view element attributes in the view. You may provide a custom function to generate a
- * key-value attribute pair to remove. If not provided, model attributes will be removed from view elements on 1-to-1 basis.
- *
- * **Note:** Provided attribute creator should always return the same `key` for given attribute from the model.
- *
- * **Note:** You can use the same attribute creator as in {@link module:engine/conversion/model-to-view-converters~setAttribute}.
- *
- * The converter automatically consumes corresponding value from consumables list and stops the event (see
- * {@link module:engine/conversion/modelconversiondispatcher~ModelConversionDispatcher}).
- *
- *		modelDispatcher.on( 'removeAttribute:customAttr:myElem', removeAttribute( ( data ) => {
- *			// Change attribute key from `customAttr` to `class` in view.
- *			const key = 'class';
- *			let value = data.attributeNewValue;
- *
- *			// Force attribute value to 'empty' if the model element is empty.
- *			if ( data.item.childCount === 0 ) {
- *				value = 'empty';
- *			}
- *
- *			// Return key-value pair.
- *			return { key, value };
- *		} ) );
- *
- * @param {Function} [attributeCreator] Function returning an object with two properties: `key` and `value`, which
- * represents attribute key and attribute value to be removed from {@link module:engine/view/element~Element view element}.
- * The function is passed all the parameters of the
- * {@link module:engine/conversion/modelconversiondispatcher~ModelConversionDispatcher#event:addAttribute addAttribute event}
- * or {@link module:engine/conversion/modelconversiondispatcher~ModelConversionDispatcher#event:changeAttribute changeAttribute event}.
- * @returns {Function} Remove attribute converter.
- */
-export function removeAttribute( attributeCreator ) {
-	attributeCreator = attributeCreator || ( ( value, key ) => ( { key } ) );
-
-	return ( evt, data, consumable, conversionApi ) => {
-		if ( !consumable.consume( data.item, eventNameToConsumableType( evt.name ) ) ) {
-			return;
+		if ( data.attributeNewValue !== null ) {
+			conversionApi.mapper.toViewElement( data.item ).setAttribute( key, value );
+		} else {
+			conversionApi.mapper.toViewElement( data.item ).removeAttribute( key );
 		}
-
-		const { key } = attributeCreator( data.attributeOldValue, data.attributeKey, data, consumable, conversionApi );
-
-		conversionApi.mapper.toViewElement( data.item ).removeAttribute( key );
 	};
 }
 
 /**
- * Function factory, creates a converter that converts set/change attribute changes from the model to the view. In this case,
- * model attributes are converted to a view element that will be wrapping view nodes which corresponding model nodes had
- * the attribute set. This is useful for attributes like `bold`, which may be set on text nodes in model but are
- * represented as an element in the view:
+ * Function factory, creates a converter that converts set/change/remove attribute changes from the model to the view.
+ *
+ * Attributes from model are converted to a view element that will be wrapping those view nodes that are bound to
+ * model elements having given attribute. This is useful for attributes like `bold`, which may be set on text nodes in model
+ * but are represented as an element in the view:
  *
  *		[paragraph]              MODEL ====> VIEW        <p>
  *			|- a {bold: true}                             |- <b>
@@ -264,19 +285,26 @@ export function removeAttribute( attributeCreator ) {
  * The converter automatically consumes corresponding value from consumables list, stops the event (see
  * {@link module:engine/conversion/modelconversiondispatcher~ModelConversionDispatcher}).
  *
- *		modelDispatcher.on( 'addAttribute:bold', wrapItem( new ViewAttributeElement( 'strong' ) ) );
+ *		modelDispatcher.on( 'attribute:bold', wrapItem( new ViewAttributeElement( 'strong' ) ) );
  *
  * @param {module:engine/view/element~Element|Function} elementCreator View element, or function returning a view element, which will
  * be used for wrapping.
  * @returns {Function} Set/change attribute converter.
  */
-export function wrapItem( elementCreator ) {
+export function wrap( elementCreator ) {
 	return ( evt, data, consumable, conversionApi ) => {
-		const viewElement = ( elementCreator instanceof ViewElement ) ?
+		// Recreate current wrapping node. It will be used to unwrap view range if the attribute value has changed
+		// or the attribute was removed.
+		const oldViewElement = ( elementCreator instanceof ViewElement ) ?
+			elementCreator.clone( true ) :
+			elementCreator( data.attributeOldValue, data, consumable, conversionApi );
+
+		// Create node to wrap with.
+		const newViewElement = ( elementCreator instanceof ViewElement ) ?
 			elementCreator.clone( true ) :
 			elementCreator( data.attributeNewValue, data, consumable, conversionApi );
 
-		if ( !viewElement ) {
+		if ( !oldViewElement && !newViewElement ) {
 			return;
 		}
 
@@ -286,273 +314,163 @@ export function wrapItem( elementCreator ) {
 
 		let viewRange = conversionApi.mapper.toViewRange( data.range );
 
-		// If this is a change event (because old value is not empty) and the creator is a function (so
-		// it may create different view elements basing on attribute value) we have to create
-		// view element basing on old value and unwrap it before wrapping with a newly created view element.
-		if ( data.attributeOldValue !== null && !( elementCreator instanceof ViewElement ) ) {
-			const oldViewElement = elementCreator( data.attributeOldValue, data, consumable, conversionApi );
+		// First, unwrap the range from current wrapper.
+		if ( data.attributeOldValue !== null ) {
 			viewRange = viewWriter.unwrap( viewRange, oldViewElement );
 		}
 
-		viewWriter.wrap( viewRange, viewElement );
-	};
-}
-
-/**
- * Function factory, creates a converter that converts remove attribute changes from the model to the view. It assumes, that
- * attributes from model were converted to elements in the view. This converter will unwrap view nodes from corresponding
- * view element if given attribute was removed.
- *
- * The view element type that will be unwrapped depends on passed parameter.
- * If {@link module:engine/view/element~Element} was passed, it will be used to look for similar element in the view for unwrapping.
- * If `Function` is provided, it is passed all the parameters of the
- * {@link module:engine/conversion/modelconversiondispatcher~ModelConversionDispatcher#event:addAttribute addAttribute event}.
- * It's expected that the function returns a {@link module:engine/view/element~Element}.
- * The result of the function will be used to look for similar element in the view for unwrapping.
- *
- * The converter automatically consumes corresponding value from consumables list, stops the event (see
- * {@link module:engine/conversion/modelconversiondispatcher~ModelConversionDispatcher}) and bind model and view elements.
- *
- *		modelDispatcher.on( 'removeAttribute:bold', unwrapItem( new ViewAttributeElement( 'strong' ) ) );
- *
- * @see module:engine/conversion/model-to-view-converters~wrapItem
- * @param {module:engine/view/element~Element|Function} elementCreator View element, or function returning a view element, which will
- * be used for unwrapping.
- * @returns {Function} Remove attribute converter.
- */
-export function unwrapItem( elementCreator ) {
-	return ( evt, data, consumable, conversionApi ) => {
-		const viewElement = ( elementCreator instanceof ViewElement ) ?
-			elementCreator.clone( true ) :
-			elementCreator( data.attributeOldValue, data, consumable, conversionApi );
-
-		if ( !viewElement ) {
-			return;
-		}
-
-		if ( !consumable.consume( data.item, eventNameToConsumableType( evt.name ) ) ) {
-			return;
-		}
-
-		const viewRange = conversionApi.mapper.toViewRange( data.range );
-
-		viewWriter.unwrap( viewRange, viewElement );
-	};
-}
-
-/**
- * Function factory, creates a default model-to-view converter for node remove changes.
- *
- *		modelDispatcher.on( 'remove', remove() );
- *
- * @returns {Function} Remove event converter.
- */
-export function remove() {
-	return ( evt, data, consumable, conversionApi ) => {
-		if ( !consumable.consume( data.item, 'remove' ) ) {
-			return;
-		}
-
-		// We cannot map non-existing positions from model to view. Since a range was removed
-		// from the model, we cannot recreate that range and map it to view, because
-		// end of that range is incorrect.
-		// Instead we will use `data.sourcePosition` as this is the last correct model position and
-		// it is a position before the removed item. Then, we will calculate view range to remove "manually".
-		let viewPosition = conversionApi.mapper.toViewPosition( data.sourcePosition );
-		let viewRange;
-
-		if ( data.item.is( 'element' ) ) {
-			// Note: in remove conversion we cannot use model-to-view element mapping because `data.item` may be
-			// already mapped to another element (this happens when move change is converted).
-			// In this case however, `viewPosition` is the position before view element that corresponds to removed model element.
-			//
-			// First, fix the position. Traverse the tree forward until the container element is found. The `viewPosition`
-			// may be before a ui element, before attribute element or at the end of text element.
-			viewPosition = viewPosition.getLastMatchingPosition( value => !value.item.is( 'containerElement' ) );
-
-			if ( viewPosition.parent.is( 'text' ) && viewPosition.isAtEnd ) {
-				viewPosition = ViewPosition.createAfter( viewPosition.parent );
-			}
-
-			viewRange = ViewRange.createOn( viewPosition.nodeAfter );
-		} else {
-			// If removed item is a text node, we need to traverse view tree to find the view range to remove.
-			// Range to remove will start `viewPosition` and should contain amount of characters equal to the amount of removed characters.
-			const viewRangeEnd = _shiftViewPositionByCharacters( viewPosition, data.item.offsetSize );
-			viewRange = new ViewRange( viewPosition, viewRangeEnd );
-		}
-
-		// Trim the range to remove in case some UI elements are on the view range boundaries.
-		viewWriter.remove( viewRange.getTrimmed() );
-
-		// Unbind this element only if it was moved to graveyard.
-		// The dispatcher#remove event will also be fired if the element was moved to another place (remove+insert are fired).
-		// Let's say that <b> is moved before <a>. The view will be changed like this:
-		//
-		// 1) start:    <a></a><b></b>
-		// 2) insert:   <b (new)></b><a></a><b></b>
-		// 3) remove:   <b (new)></b><a></a>
-		//
-		// If we'll unbind the <b> element in step 3 we'll also lose binding of the <b (new)> element in the view,
-		// because unbindModelElement() cancels both bindings – (model <b> => view <b (new)>) and (view <b (new)> => model <b>).
-		// We can't lose any of these.
-		//
-		// See #847.
-		if ( data.item.root.rootName == '$graveyard' ) {
-			conversionApi.mapper.unbindModelElement( data.item );
+		// Then wrap with the new wrapper.
+		if ( data.attributeNewValue !== null ) {
+			viewWriter.wrap( viewRange, newViewElement );
 		}
 	};
 }
 
 /**
- * Function factory, creates converter that converts all texts inside marker's range. Converter wraps each text with
- * {@link module:engine/view/attributeelement~AttributeElement} created from provided descriptor.
- * See {link module:engine/conversion/model-to-view-converters~highlightDescriptorToAttributeElement}.
+ * Function factory, creates a converter that converts model marker add/change/remove to the view.
  *
- * @param {module:engine/conversion/model-to-view-converters~HighlightDescriptor|Function} highlightDescriptor
- * @return {Function}
- */
-export function highlightText( highlightDescriptor ) {
-	return ( evt, data, consumable, conversionApi ) => {
-		const descriptor = typeof highlightDescriptor == 'function' ?
-			highlightDescriptor( data, consumable, conversionApi ) :
-			highlightDescriptor;
-
-		const modelItem = data.item;
-
-		if ( !descriptor || data.markerRange.isCollapsed || !modelItem.is( 'textProxy' ) ) {
-			return;
-		}
-
-		if ( !consumable.consume( modelItem, evt.name ) ) {
-			return;
-		}
-
-		if ( !descriptor.id ) {
-			descriptor.id = data.markerName;
-		}
-
-		const viewElement = createViewElementFromHighlightDescriptor( descriptor );
-		const viewRange = conversionApi.mapper.toViewRange( data.range );
-
-		if ( evt.name.split( ':' )[ 0 ] == 'addMarker' ) {
-			viewWriter.wrap( viewRange, viewElement );
-		} else {
-			viewWriter.unwrap( viewRange, viewElement );
-		}
-	};
-}
-
-/**
- * Converter function factory. Creates a function which applies the marker's highlight to all elements inside a marker's range.
- * The converter checks if an element has the addHighlight and removeHighlight functions stored as
- * {@link module:engine/view/element~Element#setCustomProperty custom properties} and if so use them to apply the highlight.
- * In such case converter will consume all element's children, assuming that they were handled by element itself.
- * If the highlight descriptor will not provide priority, priority `10` will be used as default, to be compliant with
- * {@link module:engine/conversion/model-to-view-converters~highlightText} method which uses default priority of
- * {@link module:engine/view/attributeelement~AttributeElement}.
+ * The result of this conversion is different for text nodes and elements.
+ *
+ * Text nodes are wrapped with {@link module:engine/view/attributeelement~AttributeElement} created from provided
+ * highlight descriptor. See {link module:engine/conversion/model-to-view-converters~highlightDescriptorToAttributeElement}.
+ *
+ * For elements, the converter checks if an element has `addHighlight` and `removeHighlight` functions stored as
+ * {@link module:engine/view/element~Element#setCustomProperty custom properties}. If so, it uses them to apply the highlight.
+ * In such case, children of that element will not be converted. When `addHighlight` and `removeHighlight` are not present,
+ * element is not converted in any special way, instead converter will proceed to convert element's child nodes. Most
+ * common case is that the element will be given a special class, style or attribute basing on the descriptor.
+ *
+ * If the highlight descriptor will not provide `priority` property, `10` will be used.
  *
  * If the highlight descriptor will not provide `id` property, name of the marker will be used.
- * When `addHighlight` and `removeHighlight` custom properties are not present, element is not converted
- * in any special way. This means that converters will proceed to convert element's child nodes.
  *
  * @param {module:engine/conversion/model-to-view-converters~HighlightDescriptor|Function} highlightDescriptor
  * @return {Function}
  */
-export function highlightElement( highlightDescriptor ) {
-	return ( evt, data, consumable, conversionApi ) => {
-		const descriptor = typeof highlightDescriptor == 'function' ?
-			highlightDescriptor( data, consumable, conversionApi ) :
-			highlightDescriptor;
-
-		const modelItem = data.item;
-
-		if ( !descriptor || data.markerRange.isCollapsed || !modelItem.is( 'element' ) ) {
+export function highlight( highlightDescriptor ) {
+	return ( evt, data, conversionApi ) => {
+		// This conversion makes sense only for non-collapsed range.
+		if ( data.markerRange.isCollapsed ) {
 			return;
 		}
 
-		if ( !consumable.test( data.item, evt.name ) ) {
-			return;
-		}
+		const viewRange = conversionApi.mapper.toViewRange( data.markerRange );
+		const type = evt.name.split( ':' )[ 0 ];
 
-		if ( !descriptor.priority ) {
-			descriptor.priority = 10;
-		}
+		// We will walk through every element in the range to highlight.
+		// Walking backwards will ensure that the walker won't break when change is applied inside range.
+		const treeWalker = new ViewTreeWalker( {
+			boundaries: viewRange,
+			startPosition: viewRange.end,
+			direction: 'backward'
+		} );
 
-		if ( !descriptor.id ) {
-			descriptor.id = data.markerName;
-		}
-
-		const viewElement = conversionApi.mapper.toViewElement( modelItem );
-		const addMarker = evt.name.split( ':' )[ 0 ] == 'addMarker';
-		const highlightHandlingMethod = addMarker ? 'addHighlight' : 'removeHighlight';
-
-		if ( viewElement && viewElement.getCustomProperty( highlightHandlingMethod ) ) {
-			// Consume element itself.
-			consumable.consume( data.item, evt.name );
-
-			// Consume all children nodes.
-			for ( const value of ModelRange.createIn( modelItem ) ) {
-				consumable.consume( value.item, evt.name );
+		for ( const value of treeWalker ) {
+			// Ignore element start so that the same element is not returned twice.
+			if ( value.type == 'elementStart' ) {
+				continue;
 			}
 
-			viewElement.getCustomProperty( highlightHandlingMethod )( viewElement, addMarker ? descriptor : descriptor.id );
+			const viewItem = value.item;
+
+			// Will hold a new position for walker. It will depend on what action has been taken. See below.
+			let newPosition;
+
+			if ( viewItem.is( 'textProxy' ) ) {
+				// If the item is a text node, use text node highlighting helper.
+				// It will return a new position for walker.
+				newPosition = _highlightText( viewItem, highlightDescriptor, type, data, conversionApi );
+			} else if ( viewItem.is( 'containerElement' ) ) {
+				// If the item is container element, use element highlighting helper.
+				// Returned position depends on whether the element had custom highlighting enabled.
+				// If yes, returned position will be after the element.
+				// If no, no position will be returned, so the walker will continue inside the element.
+				newPosition = _highlightElement( viewItem, highlightDescriptor, type, data, conversionApi );
+			}
+			// Skip or step inside other elements (mostly attribute elements).
+
+			// If new position got specified, apply it to the walker.
+			if ( newPosition ) {
+				if ( newPosition.isBefore( viewRange.start ) ) {
+					// If the new position is beyond the range, stop processing.
+					break;
+				} else {
+					treeWalker.position = newPosition;
+				}
+			}
 		}
-	};
+
+		evt.stop();
+	}
 }
 
-/**
- * Function factory, creates a default model-to-view converter for removing {@link module:engine/view/uielement~UIElement ui element}
- * basing on marker remove change.
- *
- * @param {module:engine/view/uielement~UIElement|Function} elementCreator View ui element, or function returning
- * a view ui element, which will be used as a pattern when look for element to remove at the marker start position.
- * @returns {Function} Remove ui element converter.
- */
-export function removeUIElement( elementCreator ) {
-	return ( evt, data, consumable, conversionApi ) => {
-		let viewStartElement, viewEndElement;
+// Helper function for `highlight`. Takes care of converting markers on text nodes.
+function _highlightText( viewItem, highlightDescriptor, type, data, conversionApi ) {
+	const descriptor = _prepareDescriptor( highlightDescriptor, viewItem, data, conversionApi );
 
-		if ( elementCreator instanceof ViewElement ) {
-			viewStartElement = elementCreator.clone( true );
-			viewEndElement = elementCreator.clone( true );
+	if ( !descriptor ) {
+		return;
+	}
+
+	const viewElement = createViewElementFromHighlightDescriptor( descriptor );
+	const viewRange = ViewRange.createOn( viewItem );
+	let viewRangeAfter;
+
+	if ( type == 'addMarker' ) {
+		viewRangeAfter = viewWriter.wrap( viewRange, viewElement );
+	} else {
+		viewRangeAfter = viewWriter.unwrap( viewRange, viewElement );
+	}
+
+	return viewRangeAfter.start;
+}
+
+// Helper function for `highlight`. Takes care of converting markers on elements.
+function _highlightElement( viewItem, highlightDescriptor, type, data, conversionApi ) {
+	const descriptor = _prepareDescriptor( highlightDescriptor, viewItem, data, conversionApi );
+
+	if ( !descriptor ) {
+		return;
+	}
+
+	// Check if highlight is actually removed or added. Choose proper method to call later.
+	const highlightHandlingMethod = type == 'addMarker' ? 'addHighlight' : 'removeHighlight';
+
+	// If such method exists, use it to apply highlighting.
+	if ( viewItem.getCustomProperty( highlightHandlingMethod ) ) {
+		if ( type == 'addMarker' ) {
+			viewItem.getCustomProperty( highlightHandlingMethod )( viewItem, descriptor );
 		} else {
-			data.isOpening = true;
-			viewStartElement = elementCreator( data, consumable, conversionApi );
-
-			data.isOpening = false;
-			viewEndElement = elementCreator( data, consumable, conversionApi );
+			viewItem.getCustomProperty( highlightHandlingMethod )( viewItem, descriptor.id );
 		}
 
-		if ( !viewStartElement || !viewEndElement ) {
-			return;
-		}
+		// Return position after highlight element, so children of this element will not be processed.
+		return ViewPosition.createBefore( viewItem );
+	}
+}
 
-		const markerRange = data.markerRange;
-		const eventName = evt.name;
+// Helper function for `highlight`. Prepares the actual descriptor object using value passed to the converter.
+function _prepareDescriptor( highlightDescriptor, viewItem, data, conversionApi ) {
+	// If passed descriptor is a creator function, call it. If not, just use passed value.
+	const descriptor = typeof highlightDescriptor == 'function' ?
+		highlightDescriptor( data, viewItem, conversionApi ) :
+		highlightDescriptor;
 
-		// If marker's range is collapsed - check if it can be consumed.
-		if ( markerRange.isCollapsed && !consumable.consume( markerRange, eventName ) ) {
-			return;
-		}
+	if ( !descriptor ) {
+		return null;
+	}
 
-		// Check if all items in the range can be consumed, and consume them.
-		for ( const value of markerRange ) {
-			if ( !consumable.consume( value.item, eventName ) ) {
-				return;
-			}
-		}
+	// Apply default descriptor priority.
+	if ( !descriptor.priority ) {
+		descriptor.priority = 10;
+	}
 
-		const viewRange = conversionApi.mapper.toViewRange( markerRange );
+	// Default descriptor id is marker name.
+	if ( !descriptor.id ) {
+		descriptor.id = data.markerName;
+	}
 
-		// First remove closing element.
-		viewWriter.clear( viewRange.getEnlarged(), viewEndElement );
-
-		// If closing and opening elements are not the same then remove opening element.
-		if ( !viewStartElement.isSimilar( viewEndElement ) ) {
-			viewWriter.clear( viewRange.getEnlarged(), viewStartElement );
-		}
-	};
+	return descriptor;
 }
 
 /**
@@ -565,26 +483,6 @@ export function eventNameToConsumableType( evtName ) {
 	const parts = evtName.split( ':' );
 
 	return parts[ 0 ] + ':' + parts[ 1 ];
-}
-
-// Helper function that shifts given view `position` in a way that returned position is after `howMany` characters compared
-// to the original `position`.
-// Because in view there might be view ui elements splitting text nodes, we cannot simply use `ViewPosition#getShiftedBy()`.
-function _shiftViewPositionByCharacters( position, howMany ) {
-	// Create a walker that will walk the view tree starting from given position and walking characters one-by-one.
-	const walker = new ViewTreeWalker( { startPosition: position, singleCharacters: true } );
-	// We will count visited characters and return the position after `howMany` characters.
-	let charactersFound = 0;
-
-	for ( const value of walker ) {
-		if ( value.type == 'text' ) {
-			charactersFound++;
-
-			if ( charactersFound == howMany ) {
-				return walker.position;
-			}
-		}
-	}
 }
 
 /**

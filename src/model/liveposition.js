@@ -35,7 +35,7 @@ export default class LivePosition extends Position {
 	 * @see module:engine/model/position~Position
 	 * @param {module:engine/model/rootelement~RootElement} root
 	 * @param {Array.<Number>} path
-	 * @param {module:engine/model/position~PositionStickiness} [stickiness] Defaults to `'sticksToNext'`.
+	 * @param {module:engine/model/position~PositionStickiness} [stickiness] Defaults to `'notSticky'`.
 	 * See {@link module:engine/model/liveposition~LivePosition#stickiness}.
 	 */
 	constructor( root, path, stickiness ) {
@@ -62,17 +62,22 @@ export default class LivePosition extends Position {
 		 *
 		 *		Insert:
 		 *		Position is at | and we insert at the same position, marked as ^:
-		 *		- | sticks to previous node: `<p>f|^oo</p>` => `<p>f|baroo</p>`
-		 *		- | sticks to next node: `<p>f^|oo</p>` => `<p>fbar|oo</p>`
+		 *		- | is not sticky:            `<p>f|^oo</p>` => `<p>fbar|oo</p>`
+		 *		- | sticks to next node:      `<p>f^|oo</p>` => `<p>fbar|oo</p>`
+		 *		- | sticks to previous node:  `<p>f|^oo</p>` => `<p>f|baroo</p>`
 		 *
 		 *		Move:
 		 *		Position is at | and range [ ] is moved to position ^:
+		 *		- | is not sticky:           `<p>f|[oo]</p><p>b^ar</p>` => `<p>f|</p><p>booar</p>`
+		 *		- | is not sticky:           `<p>f[oo]|</p><p>b^ar</p>` => `<p>f|</p><p>booar</p>`
+		 *		- | sticks to next node:     `<p>f|[oo]</p><p>b^ar</p>` => `<p>f</p><p>b|ooar</p>`
+		 *		- | sticks to next node:     `<p>f[oo]|</p><p>b^ar</p>` => `<p>f|</p><p>booar</p>`
 		 *		- | sticks to previous node: `<p>f|[oo]</p><p>b^ar</p>` => `<p>f|</p><p>booar</p>`
-		 *		- | sticks to next node: `<p>f|[oo]</p><p>b^ar</p>` => `<p>f</p><p>b|ooar</p>`
+		 *		- | sticks to previous node: `<p>f[oo]|</p><p>b^ar</p>` => `<p>f</p><p>boo|ar</p>`
 		 *
 		 * @member {module:engine/model/position~PositionStickiness} module:engine/model/liveposition~LivePosition#stickiness
 		 */
-		this.stickiness = stickiness || 'sticksToNext';
+		this.stickiness = stickiness || 'notSticky';
 
 		bindWithDocument.call( this );
 	}
@@ -168,7 +173,7 @@ function transform( type, range, position ) {
 
 	switch ( type ) {
 		case 'insert':
-			const insertBefore = this.stickiness == 'sticksToNext';
+			const insertBefore = this.stickiness != 'sticksToPrevious';
 			transformed = this._getTransformedByInsertion( range.start, howMany, insertBefore );
 			break;
 
@@ -185,8 +190,14 @@ function transform( type, range, position ) {
 			if ( gotMoved ) {
 				transformed = this._getCombined( position, range.start );
 			} else {
-				const insertBefore = this.stickiness == 'sticksToNext';
-				transformed = this._getTransformedByMove( position, range.start, howMany, insertBefore );
+				const insertBefore = this.stickiness != 'sticksToPrevious';
+
+				// Position._getTransformedByMove is expecting `targetPosition` to be "before" move
+				// (before transformation). `targetPosition (`range.start`) is already after the move happened.
+				// We have to revert `targetPosition` to the state before the move.
+				const targetPosition = range.start._getTransformedByInsertion( position, howMany );
+
+				transformed = this._getTransformedByMove( position, targetPosition, howMany, insertBefore );
 			}
 			break;
 	}
@@ -206,7 +217,7 @@ mix( LivePosition, EmitterMixin );
 
 /**
  * Enum representing how position is "sticking" with their neighbour nodes.
- * Possible values: `'sticksToNext'`, `'sticksToPrevious'`.
+ * Possible values: `'notSticky'`, `'sticksToNext'`, `'sticksToPrevious'`.
  *
  * @typedef {String} module:engine/model/position~PositionStickiness
  */

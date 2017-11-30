@@ -110,23 +110,43 @@ export default class Mapper {
 	/**
 	 * Unbinds given {@link module:engine/view/element~Element view element} from the map.
 	 *
+	 * **Note:** view-to-model binding will be removed, if it existed. However, corresponding model-to-view binding
+	 * will be removed only if model element is still bound to passed `viewElement`.
+	 *
+	 * This behavior lets for re-binding model element to another view element without fear of losing the new binding
+	 * when the previously bound view element is unbound.
+	 *
 	 * @param {module:engine/view/element~Element} viewElement View element to unbind.
 	 */
 	unbindViewElement( viewElement ) {
 		const modelElement = this.toModelElement( viewElement );
 
-		this._unbindElements( modelElement, viewElement );
+		this._viewToModelMapping.delete( viewElement );
+
+		if ( this._modelToViewMapping.get( modelElement ) == viewElement ) {
+			this._modelToViewMapping.delete( modelElement );
+		}
 	}
 
 	/**
 	 * Unbinds given {@link module:engine/model/element~Element model element} from the map.
+	 *
+	 * **Note:** model-to-view binding will be removed, if it existed. However, corresponding view-to-model binding
+	 * will be removed only if view element is still bound to passed `modelElement`.
+	 *
+	 * This behavior lets for re-binding view element to another model element without fear of losing the new binding
+	 * when the previously bound model element is unbound.
 	 *
 	 * @param {module:engine/model/element~Element} modelElement Model element to unbind.
 	 */
 	unbindModelElement( modelElement ) {
 		const viewElement = this.toViewElement( modelElement );
 
-		this._unbindElements( modelElement, viewElement );
+		this._modelToViewMapping.delete( modelElement );
+
+		if ( this._viewToModelMapping.get( viewElement ) == modelElement ) {
+			this._viewToModelMapping.delete( viewElement );
+		}
 	}
 
 	/**
@@ -293,18 +313,6 @@ export default class Mapper {
 	}
 
 	/**
-	 * Removes binding between given elements.
-	 *
-	 * @private
-	 * @param {module:engine/model/element~Element} modelElement Model element to unbind.
-	 * @param {module:engine/view/element~Element} viewElement View element to unbind.
-	 */
-	_unbindElements( modelElement, viewElement ) {
-		this._viewToModelMapping.delete( viewElement );
-		this._modelToViewMapping.delete( modelElement );
-	}
-
-	/**
 	 * Gets the length of the view element in the model.
 	 *
 	 * The length is calculated as follows:
@@ -368,7 +376,7 @@ export default class Mapper {
 	 *		We are in the text node so we can simple find the offset.
 	 *		<p>fo<b>ba|r</b>bom</p> -> expected offset: 2, actual offset: 2 -> position found
 	 *
-	 * @private
+	 * @protected
 	 * @param {module:engine/view/element~Element} viewParent Tree view element in which we are looking for the position.
 	 * @param {Number} expectedOffset Expected offset.
 	 * @returns {module:engine/view/position~Position} Found position.

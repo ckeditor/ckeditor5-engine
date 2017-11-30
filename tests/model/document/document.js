@@ -110,24 +110,38 @@ describe( 'Document', () => {
 	} );
 
 	describe( 'applyOperation()', () => {
-		it( 'should increase document version, execute operation and fire event with proper data ' +
-			'when operation is a document operation', () => {
-			const changeCallback = sinon.spy();
-			const type = 't';
-			const data = { data: 'x' };
-			const batch = new Batch();
-			const delta = new Delta();
+		let data, batch, delta, operation;
+		beforeEach( () => {
+			data = { data: 'x' };
+			batch = new Batch();
+			delta = new Delta();
+
 			delta.type = 'type';
 
-			const operation = {
-				type,
+			operation = {
+				type: 't',
 				baseVersion: 0,
 				isDocumentOperation: true,
-				_execute: sinon.stub().returns( data )
+				_execute: sinon.stub().returns( data ),
+				_validate: () => {}
 			};
 
 			delta.addOperation( operation );
 			batch.addDelta( delta );
+		} );
+
+		it( 'should fire operation event', () => {
+			const spy = sinon.spy();
+
+			doc.on( 'operation', spy );
+
+			doc.applyOperation( operation );
+
+			expect( spy.calledOnce ).to.be.true;
+		} );
+
+		it( 'for document operation: should increase document version, execute operation and fire change event with proper data', () => {
+			const changeCallback = sinon.spy();
 
 			doc.on( 'change', changeCallback );
 			doc.applyOperation( operation );
@@ -137,30 +151,15 @@ describe( 'Document', () => {
 			sinon.assert.calledOnce( operation._execute );
 
 			sinon.assert.calledOnce( changeCallback );
-			expect( changeCallback.args[ 0 ][ 1 ] ).to.equal( type );
+			expect( changeCallback.args[ 0 ][ 1 ] ).to.equal( 't' );
 			expect( changeCallback.args[ 0 ][ 2 ] ).to.equal( data );
 			expect( changeCallback.args[ 0 ][ 3 ] ).to.deep.equal( batch );
 			expect( changeCallback.args[ 0 ][ 4 ] ).to.equal( delta.type );
 		} );
 
-		it( 'should execute operation, not fire event and not increase document version ' +
-			'when operation is not a document operation', () => {
+		it( 'for non-document operation: should only execute operation', () => {
 			const changeCallback = sinon.spy();
-			const type = 't';
-			const data = { data: 'x' };
-			const batch = new Batch();
-			const delta = new Delta();
-			delta.type = 'type';
-
-			const operation = {
-				type,
-				baseVersion: 0,
-				isDocumentOperation: false,
-				_execute: sinon.stub().returns( data )
-			};
-
-			delta.addOperation( operation );
-			batch.addDelta( delta );
+			operation.isDocumentOperation = false;
 
 			doc.on( 'change', changeCallback );
 			doc.applyOperation( operation );
@@ -172,9 +171,19 @@ describe( 'Document', () => {
 			sinon.assert.notCalled( changeCallback );
 		} );
 
+		it( 'should do nothing if operation event was cancelled', () => {
+			doc.on( 'operation', evt => evt.stop() );
+
+			doc.applyOperation( operation );
+
+			expect( doc.version ).to.equal( 0 );
+			expect( operation._execute.called ).to.be.false;
+		} );
+
 		it( 'should throw an error on the operation base version and the document version is different', () => {
 			const operation = {
-				baseVersion: 1
+				baseVersion: 1,
+				isDocumentOperation: true
 			};
 
 			expect(
