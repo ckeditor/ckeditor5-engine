@@ -89,7 +89,9 @@ export default class EditingController {
 
 		// Before an operation is applied on model, buffer the change in differ.
 		this.listenTo( this.model, 'operation', ( evt, operation ) => {
-			modelDiffer.bufferOperation( operation );
+			if ( operation.isDocumentOperation ) {
+				modelDiffer.bufferOperation( operation );
+			}
 		} );
 
 		// Buffer marker changes.
