@@ -172,6 +172,25 @@ describe( 'AttributeOperation', () => {
 		expect( root.getChild( 0 ).getAttribute( 'bar' ) ).to.be.true;
 	} );
 
+	it( 'should work correctly if old and new value are same', () => {
+		root.insertChildren( 0, new Text( 'bar', { foo: 'bar' } ) );
+
+		doc.applyOperation( wrapInDelta(
+			new AttributeOperation(
+				new Range( new Position( root, [ 0 ] ), new Position( root, [ 2 ] ) ),
+				'foo',
+				'bar',
+				'bar',
+				doc.version
+			)
+		) );
+
+		expect( doc.version ).to.equal( 1 );
+		expect( root.childCount ).to.equal( 1 );
+		expect( count( root.getChild( 0 ).getAttributes() ) ).to.equal( 1 );
+		expect( root.getChild( 0 ).getAttribute( 'foo' ) ).to.equal( 'bar' );
+	} );
+
 	it( 'should remove attribute', () => {
 		root.insertChildren( 0, new Text( 'x', { foo: true, x: true, bar: true } ) );
 

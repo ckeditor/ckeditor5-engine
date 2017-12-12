@@ -227,6 +227,20 @@ describe( 'LivePosition', () => {
 				expect( live.path ).to.deep.equal( [ 2, 1, 6 ] );
 				expect( spy.calledOnce ).to.be.true;
 			} );
+
+			it( 'is from graveyard', () => {
+				const moveSource = new Position( doc.graveyard, [ 0 ] );
+				const moveRange = new Range( new Position( root, [ 1, 4, 0 ] ), new Position( root, [ 1, 4, 3 ] ) );
+
+				const changes = {
+					range: moveRange,
+					sourcePosition: moveSource
+				};
+				doc.fire( 'change', 'reinsert', changes, null );
+
+				expect( live.path ).to.deep.equal( [ 1, 4, 9 ] );
+				expect( spy.calledOnce ).to.be.true;
+			} );
 		} );
 	} );
 

@@ -13,6 +13,7 @@ import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
 import Bold from '@ckeditor/ckeditor5-basic-styles/src/bold';
 import Italic from '@ckeditor/ckeditor5-basic-styles/src/italic';
 import Undo from '@ckeditor/ckeditor5-undo/src/undo';
+import List from '@ckeditor/ckeditor5-list/src/list';
 import UIElement from '../../../src/view/uielement';
 import Position from '../../../src/view/position';
 import writer from '../../../src/view/writer';
@@ -54,8 +55,8 @@ class UIElementTestPlugin extends Plugin {
 
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
-		plugins: [ Enter, Typing, Paragraph, Undo, Bold, Italic, UIElementTestPlugin ],
-		toolbar: [ 'undo', 'redo', 'bold', 'italic' ]
+		plugins: [ Enter, Typing, Paragraph, Undo, Bold, Italic, UIElementTestPlugin, List ],
+		toolbar: [ 'undo', 'redo', 'bold', 'italic', 'bulletedList' ]
 	} )
 	.then( editor => {
 		window.editor = editor;

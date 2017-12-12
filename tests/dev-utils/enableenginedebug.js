@@ -799,12 +799,15 @@ describe( 'debug tools', () => {
 			const modelRoot = model.getRoot();
 			const view = editor.editing.view;
 
-			const insert = new InsertOperation( ModelPosition.createAt( modelRoot, 0 ), new ModelText( 'foobar' ), 0 );
-			model.applyOperation( wrapInDelta( insert ) );
+			model.enqueueChanges( () => {
+				debugger;
+				const insert = new InsertOperation( ModelPosition.createAt( modelRoot, 0 ), new ModelText( 'foobar' ), 0 );
+				model.applyOperation( wrapInDelta( insert ) );
 
-			const graveyard = model.graveyard;
-			const remove = new RemoveOperation( ModelPosition.createAt( modelRoot, 1 ), 2, ModelPosition.createAt( graveyard, 0 ), 1 );
-			model.applyOperation( wrapInDelta( remove ) );
+				const graveyard = model.graveyard;
+				const remove = new RemoveOperation( ModelPosition.createAt( modelRoot, 1 ), 2, ModelPosition.createAt( graveyard, 0 ), 1 );
+				model.applyOperation( wrapInDelta( remove ) );
+			} );
 
 			log.reset();
 
@@ -845,13 +848,6 @@ describe( 'debug tools', () => {
 			view.log( 0 );
 			expectLog(
 				'<div></div>'
-			);
-
-			view.log( 1 );
-			expectLog(
-				'<div>' +
-				'\n\tfoobar' +
-				'\n</div>'
 			);
 
 			view.log( 2 );

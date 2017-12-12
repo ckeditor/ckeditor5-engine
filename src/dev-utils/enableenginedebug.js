@@ -666,8 +666,11 @@ class DebugPlugin extends Plugin {
 
 		modelDocument.on( 'change', () => {
 			dumpTrees( modelDocument, modelDocument.version );
-			dumpTrees( viewDocument, modelDocument.version );
 		}, { priority: 'lowest' } );
+
+		modelDocument.on( 'changesDone', () => {
+			dumpTrees( viewDocument, modelDocument.version );
+		}, { priority: 'lowest' } )
 	}
 }
 

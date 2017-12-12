@@ -17,8 +17,6 @@ import buildModelConverter from '../../src/conversion/buildmodelconverter';
 
 import ModelDocument from '../../src/model/document';
 import ModelPosition from '../../src/model/position';
-import ModelElement from '../../src/model/element';
-import ModelText from '../../src/model/text';
 import ModelRange from '../../src/model/range';
 import ModelDocumentFragment from '../../src/model/documentfragment';
 
@@ -146,6 +144,7 @@ describe( 'EditingController', () => {
 			model.schema.registerItem( 'div', '$block' );
 			buildModelConverter().for( editing.modelToView ).fromElement( 'paragraph' ).toElement( 'p' );
 			buildModelConverter().for( editing.modelToView ).fromElement( 'div' ).toElement( 'div' );
+			buildModelConverter().for( editing.modelToView ).fromMarker( 'marker' ).toHighlight( {} );
 
 			// Note: The below code is highly overcomplicated due to #455.
 			model.selection.removeAllRanges();
@@ -277,127 +276,116 @@ describe( 'EditingController', () => {
 			expect( getViewData( editing.view ) ).to.equal( '<p>foo</p><p></p><p>ba{}r</p>' );
 		} );
 
-		it( 'should forward marker events to model conversion dispatcher', () => {
-			const range = ModelRange.createFromParentsAndOffsets( modelRoot, 0, modelRoot, 1 );
-			const markerStub = {
-				name: 'name',
-				getRange: () => range
-			};
+		it( 'should convert adding marker', () => {
+			const range = new ModelRange( new ModelPosition( modelRoot, [ 0, 1 ] ), new ModelPosition( modelRoot, [ 2, 2 ] ) );
 
-			sinon.spy( editing.modelToView, 'convertMarker' );
-
-			model.markers.fire( 'add', markerStub );
-
-			expect( editing.modelToView.convertMarker.calledWithExactly( 'addMarker', 'name', range ) ).to.be.true;
-
-			model.markers.fire( 'remove', markerStub );
-
-			expect( editing.modelToView.convertMarker.calledWithExactly( 'removeMarker', 'name', range ) ).to.be.true;
-
-			editing.modelToView.convertMarker.restore();
-		} );
-
-		it( 'should forward add marker event if content is inserted into a marker range', () => {
-			const markerRange = ModelRange.createFromParentsAndOffsets( modelRoot, 0, modelRoot, 3 );
-			const innerRange = ModelRange.createFromParentsAndOffsets( modelRoot, 1, modelRoot, 2 );
-
-			model.markers.set( 'name', markerRange );
-
-			sinon.spy( editing.modelToView, 'convertMarker' );
-
-			editing.modelToView.convertInsertion( innerRange );
-
-			expect( editing.modelToView.convertMarker.calledWithExactly( 'addMarker', 'name', innerRange ) ).to.be.true;
-
-			editing.modelToView.convertMarker.restore();
-		} );
-
-		describe( 'should forward add marker event if inserted content has a marker', () => {
-			let element, outerRange;
-
-			beforeEach( () => {
-				element = new ModelElement( 'paragraph', null, new ModelText( 'foo' ) );
-				modelRoot.appendChildren( element );
-
-				outerRange = ModelRange.createOn( element );
-
-				sinon.spy( editing.modelToView, 'convertMarker' );
-			} );
-
-			afterEach( () => {
-				editing.modelToView.convertMarker.restore();
-			} );
-
-			it( 'marker strictly contained', () => {
-				const markerRange = ModelRange.createFromParentsAndOffsets( element, 1, element, 2 );
-				model.markers.set( 'name', markerRange );
-
-				editing.modelToView.convertInsertion( outerRange );
-				expect( editing.modelToView.convertMarker.calledWithExactly( 'addMarker', 'name', markerRange ) ).to.be.true;
-			} );
-
-			it( 'marker starts at same position', () => {
-				const markerRange = ModelRange.createFromParentsAndOffsets( element, 0, element, 2 );
-				model.markers.set( 'name', markerRange );
-				editing.modelToView.convertInsertion( outerRange );
-				expect( editing.modelToView.convertMarker.calledWithExactly( 'addMarker', 'name', markerRange ) ).to.be.true;
-			} );
-
-			it( 'marker ends at same position', () => {
-				const markerRange = ModelRange.createFromParentsAndOffsets( element, 1, element, 3 );
-				model.markers.set( 'name', markerRange );
-				editing.modelToView.convertInsertion( outerRange );
-				expect( editing.modelToView.convertMarker.calledWithExactly( 'addMarker', 'name', markerRange ) ).to.be.true;
-			} );
-
-			it( 'marker is same as range', () => {
-				const markerRange = ModelRange.createFromParentsAndOffsets( element, 0, element, 3 );
-				model.markers.set( 'name', markerRange );
-				editing.modelToView.convertInsertion( outerRange );
-				expect( editing.modelToView.convertMarker.calledWithExactly( 'addMarker', 'name', markerRange ) ).to.be.true;
-			} );
-		} );
-
-		it( 'should not start marker conversion if content is not inserted into any marker range', () => {
-			const markerRange = ModelRange.createFromParentsAndOffsets( modelRoot, 0, modelRoot, 3 );
-			const insertRange = ModelRange.createFromParentsAndOffsets( modelRoot, 6, modelRoot, 8 );
-			const consumableMock = {
-				consume: () => true,
-				test: () => true
-			};
-
-			model.markers.set( 'name', markerRange );
-
-			sinon.spy( editing.modelToView, 'convertMarker' );
-
-			editing.modelToView.fire( 'insert', {
-				range: insertRange
-			}, consumableMock, { dispatcher: editing.modelToView } );
-
-			expect( editing.modelToView.convertMarker.called ).to.be.false;
-
-			editing.modelToView.convertMarker.restore();
-		} );
-
-		it( 'should forward add marker event if content is moved into a marker range', () => {
 			model.enqueueChanges( () => {
-				model.batch().appendElement( 'paragraph', model.getRoot() );
+				model.markers.set( 'marker', range );
 			} );
 
-			const markerRange = ModelRange.createFromParentsAndOffsets( modelRoot, 0, modelRoot, 3 );
+			expect( getViewData( editing.view, { withoutSelection: true } ) )
+				.to.equal( '<p>f<span>oo</span></p><p></p><p><span>ba</span>r</p>' );
+		} );
 
-			model.markers.set( 'name', markerRange );
+		it( 'should convert removing marker', () => {
+			const range = new ModelRange( new ModelPosition( modelRoot, [ 0, 1 ] ), new ModelPosition( modelRoot, [ 2, 2 ] ) );
 
-			sinon.spy( editing.modelToView, 'convertMarker' );
+			model.enqueueChanges( () => {
+				model.markers.set( 'marker', range );
+			} );
 
-			editing.modelToView.convertMove(
-				ModelPosition.createAt( modelRoot, 3 ),
-				ModelRange.createOn( modelRoot.getChild( 1 ) )
-			);
+			model.enqueueChanges( () => {
+				model.markers.remove( 'marker' );
+			} );
 
-			expect( editing.modelToView.convertMarker.calledWith( 'addMarker', 'name' ) ).to.be.true;
+			expect( getViewData( editing.view, { withoutSelection: true } ) )
+				.to.equal( '<p>foo</p><p></p><p>bar</p>' );
+		} );
 
-			editing.modelToView.convertMarker.restore();
+		it( 'should convert changing marker', () => {
+			const range = new ModelRange( new ModelPosition( modelRoot, [ 0, 1 ] ), new ModelPosition( modelRoot, [ 2, 2 ] ) );
+
+			model.enqueueChanges( () => {
+				model.markers.set( 'marker', range );
+			} );
+
+			const range2 = new ModelRange( new ModelPosition( modelRoot, [ 0, 0 ] ), new ModelPosition( modelRoot, [ 0, 2 ] ) );
+
+			model.enqueueChanges( () => {
+				model.markers.set( 'marker', range2 );
+			} );
+
+			expect( getViewData( editing.view, { withoutSelection: true } ) )
+				.to.equal( '<p><span>fo</span>o</p><p></p><p>bar</p>' );
+		} );
+
+		it( 'should convert insertion into marker', () => {
+			const range = new ModelRange( new ModelPosition( modelRoot, [ 0, 1 ] ), new ModelPosition( modelRoot, [ 2, 2 ] ) );
+
+			model.enqueueChanges( () => {
+				model.markers.set( 'marker', range );
+			} );
+
+			model.enqueueChanges( () => {
+				model.batch().insertText( 'xyz', new ModelPosition( modelRoot, [ 1, 0 ] ) );
+			} );
+
+			expect( getViewData( editing.view, { withoutSelection: true } ) )
+				.to.equal( '<p>f<span>oo</span></p><p><span>xyz</span></p><p><span>ba</span>r</p>' );
+		} );
+
+		it( 'should convert move to marker', () => {
+			const range = new ModelRange( new ModelPosition( modelRoot, [ 0, 1 ] ), new ModelPosition( modelRoot, [ 2, 2 ] ) );
+
+			model.enqueueChanges( () => {
+				model.markers.set( 'marker', range );
+			} );
+
+			model.enqueueChanges( () => {
+				model.batch().move(
+					new ModelRange( new ModelPosition( modelRoot, [ 2, 2 ] ), new ModelPosition( modelRoot, [ 2, 3 ] ) ),
+					new ModelPosition( modelRoot, [ 0, 3 ] )
+				);
+			} );
+
+			expect( getViewData( editing.view, { withoutSelection: true } ) )
+				.to.equal( '<p>f<span>oor</span></p><p></p><p><span>ba</span></p>' );
+		} );
+
+		it( 'should convert move from marker', () => {
+			const range = new ModelRange( new ModelPosition( modelRoot, [ 0, 1 ] ), new ModelPosition( modelRoot, [ 2, 2 ] ) );
+
+			model.enqueueChanges( () => {
+				model.markers.set( 'marker', range );
+			} );
+
+			model.enqueueChanges( () => {
+				model.batch().move(
+					new ModelRange( new ModelPosition( modelRoot, [ 0, 1 ] ), new ModelPosition( modelRoot, [ 0, 3 ] ) ),
+					new ModelPosition( modelRoot, [ 2, 3 ] )
+				);
+			} );
+
+			expect( getViewData( editing.view, { withoutSelection: true } ) )
+				.to.equal( '<p>f</p><p></p><p><span>ba</span>roo</p>' );
+		} );
+
+		it( 'should convert the whole marker move', () => {
+			const range = new ModelRange( new ModelPosition( modelRoot, [ 0, 1 ] ), new ModelPosition( modelRoot, [ 0, 3 ] ) );
+
+			model.enqueueChanges( () => {
+				model.markers.set( 'marker', range );
+			} );
+
+			model.enqueueChanges( () => {
+				model.batch().move(
+					new ModelRange( new ModelPosition( modelRoot, [ 0, 0 ] ), new ModelPosition( modelRoot, [ 0, 3 ] ) ),
+					new ModelPosition( modelRoot, [ 1, 0 ] )
+				);
+			} );
+
+			expect( getViewData( editing.view, { withoutSelection: true } ) )
+				.to.equal( '<p></p><p>f<span>oo</span></p><p>bar</p>' );
 		} );
 	} );
 

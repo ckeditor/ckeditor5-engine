@@ -130,6 +130,19 @@ export default class Document {
 
 		// Graveyard tree root. Document always have a graveyard root, which stores removed nodes.
 		this.createRoot( '$root', graveyardName );
+
+		// A low-priority callback for operation event. Fired if other listeners won't stop the event.
+		// See `model.Document#applyOperation()` for more.
+		this.on( 'operation', ( evt, operation ) => {
+			const changes = operation._execute();
+
+			if ( operation.isDocumentOperation ) {
+				this.version++;
+				this.history.addDelta( operation.delta );
+
+				this.fire( 'change', operation.type, changes, operation.delta.batch, operation.delta.type );
+			}
+		}, { priority: 'low' } );
 	}
 
 	/**
@@ -143,11 +156,21 @@ export default class Document {
 	}
 
 	/**
-	 * This is the entry point for all document changes. All changes on the document are done using
-	 * {@link module:engine/model/operation/operation~Operation operations}. To create operations in the simple way use the
+	 * Applies given {@link module:engine/model/operation/operation~Operation `operation`}.
+	 *
+	 * This is the entry point for all document changes. All changes on the document are done using operations. However,
+	 * this method in most cases should not be executed directly. To make a change on the model, use the
 	 * {@link module:engine/model/batch~Batch} API available via {@link #batch} method.
 	 *
-	 * @fires event:change
+	 * This method takes the `operation`, {@link module:engine/model/operation/operation~Operation#_validate validates it}
+	 * and if it is valid, fires {@link #event:operation operation event} with that operation. `Document` adds
+	 * a default callback for that event which actually executes the operation which performs changes on model.
+	 * Additionally, document bumps its {@link #version} and adds operation's {@link module:engine/model/delta/delta~Delta delta}
+	 * to the {@link #history}. However, because this happens as an event callback, other parts of code may listen
+	 * to the event and, for example, cancel it, or perform some scripts just before the model tree is changed.
+	 *
+	 * @fires operation
+	 * @fires change
 	 * @param {module:engine/model/operation/operation~Operation} operation Operation to be applied.
 	 */
 	applyOperation( operation ) {
@@ -163,13 +186,9 @@ export default class Document {
 				{ operation } );
 		}
 
-		const changes = operation._execute();
+		operation._validate();
 
-		if ( operation.isDocumentOperation ) {
-			this.version++;
-			this.history.addDelta( operation.delta );
-			this.fire( 'change', operation.type, changes, operation.delta.batch, operation.delta.type );
-		}
+		this.fire( 'operation', operation );
 	}
 
 	/**
@@ -421,7 +440,7 @@ export default class Document {
 	/**
 	 * Fired when document changes by applying an operation.
 	 *
-	 * There are a few types of change:
+	 * There are several types of change:
 	 *
 	 * * 'insert' when nodes are inserted,
 	 * * 'remove' when nodes are removed,
@@ -437,7 +456,7 @@ export default class Document {
 	 * * 'changeRootAttribute' when attribute for root changes.
 	 *
 	 * @event change
-	 * @param {String} type Change type, possible option: 'insert', 'remove', 'reinsert', 'move', 'attribute'.
+	 * @param {String} type Change type.
 	 * @param {Object} data Additional information about the change.
 	 * @param {module:engine/model/range~Range} [data.range] Range in model containing changed nodes. Note that the range state is
 	 * after changes has been done, i.e. for 'remove' the range will be in the {@link #graveyard graveyard root}.
@@ -461,6 +480,16 @@ export default class Document {
 	 * Fired when all queued document changes are done. See {@link #enqueueChanges}.
 	 *
 	 * @event changesDone
+	 */
+
+	/**
+	 * Fired just before {@link module:engine/model/operation/operation~Operation operation} is applied on the document.
+	 *
+	 * Since the event is fired before the operation is applied, model state is still before the change.
+	 * Since operation is executed also in a callback to this event, cancelling this event call would cancel operation execution.
+	 *
+	 * @event operation
+	 * @param {module:engine/model/operation/operation~Operation} operation Operation to be applied.
 	 */
 }
 

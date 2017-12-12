@@ -10,6 +10,7 @@ import InsertOperation from '../../../src/model/operation/insertoperation';
 import RemoveOperation from '../../../src/model/operation/removeoperation';
 import Position from '../../../src/model/position';
 import Text from '../../../src/model/text';
+import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 import { jsonParseStringify, wrapInDelta } from '../../../tests/model/_utils/utils';
 
 describe( 'InsertOperation', () => {
@@ -228,6 +229,13 @@ describe( 'InsertOperation', () => {
 
 			expect( op.isDocumentOperation ).to.false;
 		} );
+	} );
+
+	it( 'should throw an error if target position does not exist', () => {
+		const element = new Element( 'p' );
+		const op = new InsertOperation( new Position( root, [ 4 ] ), element, doc.version );
+
+		expect( () => doc.applyOperation( wrapInDelta( op ) ) ).to.throw( CKEditorError, /insert-operation-position-invalid/ );
 	} );
 
 	describe( 'toJSON', () => {
