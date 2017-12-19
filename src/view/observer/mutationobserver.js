@@ -11,6 +11,7 @@
 
 import Observer from './observer';
 import ViewSelection from '../selection';
+import ViewText from '../text';
 import { startsWithFiller, getDataWithoutFiller } from '../filler';
 import isEqualWith from '@ckeditor/ckeditor5-utils/src/lib/lodash/isEqualWith';
 
@@ -143,6 +144,7 @@ export default class MutationObserver extends Observer {
 		// Use map and set for deduplication.
 		const mutatedTexts = new Map();
 		const mutatedElements = new Set();
+		const bogusMutationNodes = new Set();
 
 		// Handle `childList` mutations first, so we will be able to check if the `characterData` mutation is in the
 		// element with changed structure anyway.
@@ -155,7 +157,11 @@ export default class MutationObserver extends Observer {
 					continue;
 				}
 
-				if ( element && !this._isBogusBrMutation( mutation ) ) {
+				const isBogusMutation = this._isBogusBrMutation( mutation );
+
+				if ( isBogusMutation ) {
+					bogusMutationNodes.add( mutation.target );
+				} else if ( element ) {
 					mutatedElements.add( element );
 				}
 			}
@@ -187,7 +193,15 @@ export default class MutationObserver extends Observer {
 				// on text, but for the view, where filler text node did not existed, new text node was created, so we
 				// need to fire 'children' mutation instead of 'text'.
 				else if ( !text && startsWithFiller( mutation.target ) ) {
-					mutatedElements.add( domConverter.mapDomToView( mutation.target.parentNode ) );
+					const dataWithoutFiller = getDataWithoutFiller( mutation.target );
+					const viewElement = domConverter.mapDomToView( mutation.target.parentNode );
+
+					// When new text node contains only filler + space or took part in bogus mutation.
+					if ( dataWithoutFiller === ' ' ) {
+						// TODO: some fix needed also.
+					} else {
+						mutatedElements.add( viewElement );
+					}
 				}
 			}
 		}
@@ -207,6 +221,12 @@ export default class MutationObserver extends Observer {
 			const domElement = domConverter.mapViewToDom( viewElement );
 			const viewChildren = Array.from( viewElement.getChildren() );
 			const newViewChildren = Array.from( domConverter.domChildrenToView( domElement ) );
+
+			// Replace bogus mutation with new space character.
+			const newChildrenCount = newViewChildren.length;
+			if ( bogusMutationNodes.has( domElement ) && newChildrenCount && newViewChildren[ newChildrenCount - 1 ].name == 'br' ) {
+				newViewChildren[ newChildrenCount - 1 ] = new ViewText( ' ' );
+			}
 
 			// It may happen that as a result of many changes (sth was inserted and then removed),
 			// both elements haven't really changed. #1031
