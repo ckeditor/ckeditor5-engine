@@ -154,11 +154,11 @@ describe( 'DataController', () => {
 			expect( count( modelDocument.history.getDeltas() ) ).to.equal( 1 );
 		} );
 
-		it( 'should fire #changesDone', () => {
+		it( 'should cause firing change event', () => {
 			const spy = sinon.spy();
 
 			schema.allow( { name: '$text', inside: '$root' } );
-			modelDocument.on( 'changesDone', spy );
+			model.document.on( 'change', spy );
 
 			data.set( 'foo' );
 

@@ -993,7 +993,11 @@ describe( 'DocumentSelection', () => {
 		describe( 'parent element\'s attributes', () => {
 			it( 'are set using a normal batch', () => {
 				const batchTypes = [];
-				doc.on( 'change', ( event, type, changes, batch ) => {
+
+				model.on( 'applyOperation', ( event, args ) => {
+					const operation = args[ 0 ];
+					const batch = operation.delta.batch;
+
 					batchTypes.push( batch.type );
 				} );
 
@@ -1012,7 +1016,10 @@ describe( 'DocumentSelection', () => {
 				selection.setAttribute( 'foo', 'bar' );
 				selection.setAttribute( 'abc', 'bar' );
 
-				doc.on( 'change', ( event, type, changes, batch ) => {
+				model.on( 'applyOperation', ( event, args ) => {
+					const operation = args[ 0 ];
+					const batch = operation.delta.batch;
+
 					batchTypes.set( batch, batch.type );
 				} );
 
