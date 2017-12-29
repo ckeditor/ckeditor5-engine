@@ -11,6 +11,7 @@
  */
 
 import ModelSelection from '../model/selection';
+import ModelRange from '../model/range';
 
 /**
  * Function factory, creates a callback function which converts a {@link module:engine/view/selection~Selection view selection} taken
@@ -34,7 +35,34 @@ export function convertSelectionChange( model, mapper ) {
 		const ranges = [];
 
 		for ( const viewRange of viewSelection.getRanges() ) {
-			ranges.push( mapper.toModelRange( viewRange ) );
+			// Get a range from view selection and map it to model.
+			const mappedRange = mapper.toModelRange( viewRange );
+
+			// Check if model range mapped from view is correct.
+			// To do so, find nearest selection range near start and end of mapped model range.
+			//
+			// Note, that if `mappedRange.start` or `mappedRange.end` are in correct position,
+			// a collapsed range at those position will be returned.
+			//
+			// Example #1 - correct collapsed selection in the middle of text:
+			// <paragraph>Fo[]obar</paragraph> -> <paragraph>Fo{}[]obar</paragraph> -> <paragraph>Fo{]obar</paragraph>
+			//
+			// Example #2 - incorrect non-collapsed range:
+			// [<paragraph>Foobar</paragraph>] -> <paragraph>[]Foobar{}</paragraph> -> <paragraph>[Foobar}</paragraph>
+			//
+			// Example #3 - incorrect collapsed range near widget:
+			// <paragraph>Foo</paragraph><widget />[] -> <paragraph>Foo</paragraph>{[<widget />]} -> <paragraph>Foo</paragraph>[<widget />}
+			const correctModelRangeStart = modelDocument.getNearestSelectionRange( mappedRange.start );
+			const correctModelRangeEnd = modelDocument.getNearestSelectionRange( mappedRange.end );
+
+			// If there is no correct position for mapped range, skip it.
+			// Both `correctModelRangeStart` and `correctModelRangeEnd` are checked, although it seems that if
+			// one is `null` (incorrect) the other always should be `null` too. But to be safe, both are checked.
+			if ( !correctModelRangeStart || !correctModelRangeEnd ) {
+				continue;
+			}
+
+			ranges.push( new ModelRange( correctModelRangeStart.start, correctModelRangeEnd.end ) );
 		}
 
 		modelSelection.setRanges( ranges, viewSelection.isBackward );
