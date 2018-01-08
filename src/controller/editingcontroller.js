@@ -84,15 +84,12 @@ export default class EditingController {
 
 		const doc = this.model.document;
 
-		// When all changes are done, get the model diff containing all the changes and convert them to view and then render to DOM.
 		this.listenTo( doc, 'change', () => {
-			// Convert changes stored in `modelDiffer`.
 			this.modelToView.convertChanges( doc.differ );
+		}, { priority: 'low' } );
 
-			// After the view is ready, convert selection from model to view.
+		this.listenTo( model, '_change', () => {
 			this.modelToView.convertSelection( doc.selection );
-
-			// When everything is converted to the view, render it to DOM.
 			this.view.render();
 		}, { priority: 'low' } );
 
@@ -108,6 +105,40 @@ export default class EditingController {
 		this.modelToView.on( 'selection', clearFakeSelection(), { priority: 'low' } );
 		this.modelToView.on( 'selection', convertRangeSelection(), { priority: 'low' } );
 		this.modelToView.on( 'selection', convertCollapsedSelection(), { priority: 'low' } );
+
+		const removedMarkers = new Set();
+
+		this.listenTo( model, 'applyOperation', ( evt, args ) => {
+			const operation =  args[ 0 ];
+
+			for ( const marker of model.markers ) {
+				if ( removedMarkers.has( marker.name ) ) {
+					continue;
+				}
+
+				const markerRange = marker.getRange();
+
+				if ( _markerIntersectsWithOperation( marker, operation ) ) {
+					removedMarkers.add( marker.name );
+					this.modelToView.convertMarkerRemove( marker.name, markerRange );
+				}
+			}
+		}, { priority: 'high' } );
+
+		this.listenTo( model.markers, 'add', ( evt, marker ) => {
+			removedMarkers.delete( marker.name );
+		} );
+
+		this.listenTo( model.markers, 'remove', ( evt, marker ) => {
+			if ( !removedMarkers.has( marker.name ) ) {
+				removedMarkers.add( marker.name );
+				this.modelToView.convertMarkerRemove( marker.name, marker.getRange() );
+			}
+		} );
+
+		this.listenTo( model, '_change', () => {
+			removedMarkers.clear();
+		}, { priority: 'low' } );
 	}
 
 	/**
@@ -148,3 +179,44 @@ export default class EditingController {
 }
 
 mix( EditingController, ObservableMixin );
+
+function _markerIntersectsWithOperation( marker, operation ) {
+	const range = marker.getRange();
+
+	if ( operation.type == 'insert' ) {
+		return _markerIntersectsWithPosition( range, operation.position );
+	} else if ( operation.type == 'move' || operation.type == 'remove' || operation.type == 'reinsert' ) {
+		return _markerIntersectsWithPosition( range, operation.targetPosition ) ||
+			_markerIntersectsWithPosition( range, operation.sourcePosition );
+	} else if ( operation.type == 'rename' ) {
+		return range.containsPosition( operation.position );
+	} else if ( operation.type == 'marker' && operation.name == marker.name ) {
+		return true;
+	}
+
+	return false;
+}
+
+function _markerIntersectsWithPosition( range, position ) {
+	// // This position can't be affected if insertion was in a different root.
+	// if ( range.root != position.root ) {
+	// 	return false;
+	// }
+	//
+	// if ( range.containsPosition( position ) ) {
+	// 	return true;
+	// }
+	//
+	// if ( range.start.parent == position.parent && range.start.offset >= position.offset ) {
+	// 	return true;
+	// } else if ( compareArrays( position.getParentPath(), range.start.getParentPath() ) == 'prefix' ) {
+	// 	const i = position.path.length - 1;
+	//
+	// 	if ( position.offset <= range.start.path[ i ] ) {
+	// 		return true;
+	// 	}
+	// }
+	//
+	// return false;
+	return !range.start._getTransformedByInsertion( position, 1, true ).isEqual( range.start );
+}

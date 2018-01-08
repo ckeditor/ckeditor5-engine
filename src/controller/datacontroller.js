@@ -160,6 +160,18 @@ export default class DataController {
 
 		this.modelToView.convertInsert( modelRange );
 
+		let markers;
+
+		if ( modelElementOrFragment.is( 'documentFragment' ) ) {
+			markers = modelElementOrFragment.markers;
+		} else {
+			markers = _getMarkersRelativeToElement( modelElementOrFragment );
+		}
+
+		for ( const [ name, range ] of markers ) {
+			this.modelToView.convertMarkerAdd( name, range );
+		}
+
 		this.mapper.clearBindings();
 
 		return viewDocumentFragment;
@@ -234,3 +246,20 @@ export default class DataController {
 }
 
 mix( DataController, ObservableMixin );
+
+function _getMarkersRelativeToElement( element ) {
+	const model = element.root.document.model;
+	const result = [];
+
+	const elementRange = ModelRange.createIn( element );
+
+	for ( const marker of model.markers ) {
+		const intersection = elementRange.getIntersection( marker.getRange() );
+
+		if ( intersection ) {
+			result.push( [ marker.name, intersection ] );
+		}
+	}
+
+	return result;
+}

@@ -164,18 +164,18 @@ export default class Document {
 		this.listenTo( model.markers, 'add', ( evt, marker ) => {
 			// TODO: Should filter out changes of markers that are not in document.
 			// Whenever a new marker is added, buffer that change.
-			this.differ.bufferMarkerChange( marker.name, null, marker.getRange() );
+			this.differ.bufferMarkerChange( marker.name, marker.getRange() );
 
 			// Whenever marker changes, buffer that.
-			marker.on( 'change', ( evt, oldRange ) => {
-				this.differ.bufferMarkerChange( marker.name, oldRange, marker.getRange() );
+			marker.on( 'change', () => {
+				this.differ.bufferMarkerChange( marker.name, marker.getRange() );
 			} );
 		} );
 
 		this.listenTo( model.markers, 'remove', ( evt, marker ) => {
 			// TODO: Should filter out changes of markers that are not in document.
 			// Whenever marker is removed, buffer that change.
-			this.differ.bufferMarkerChange( marker.name, marker.getRange(), null );
+			this.differ.bufferMarkerChange( marker.name, null );
 		} );
 	}
 

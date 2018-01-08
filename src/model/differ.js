@@ -127,44 +127,32 @@ export default class Differ {
 	 * Buffers marker change.
 	 *
 	 * @param {String} markerName Name of marker which changed.
-	 * @param {module:engine/model/range~Range|null} oldRange Marker range before the change or `null` if marker was just created.
 	 * @param {module:engine/model/range~Range|null} newRange Marker range after the change or `null` if marker was removed.
 	 */
-	bufferMarkerChange( markerName, oldRange, newRange ) {
-		const buffered = this._changedMarkers.get( markerName );
-
-		if ( !buffered ) {
-			this._changedMarkers.set( markerName, {
-				oldRange,
-				newRange
-			} );
+	bufferMarkerChange( markerName, newRange ) {
+		if ( newRange == null ) {
+			this._changedMarkers.delete( markerName );
 		} else {
-			buffered.newRange = newRange;
-
-			if ( buffered.oldRange == null && buffered.newRange == null ) {
-				// The marker is going to be removed (`newRange == null`) but it did not exist before the change set
-				// (`buffered.oldRange == null`). In this case, do not keep the marker in buffer at all.
-				this._changedMarkers.delete( markerName );
-			}
+			this._changedMarkers.set( markerName, newRange );
 		}
 	}
 
-	/**
-	 * Returns all markers which should be removed as a result of buffered changes.
-	 *
-	 * @returns {Array.<Object>} Markers to remove. Each array item is an object containing `name` and `range` property.
-	 */
-	getMarkersToRemove() {
-		const result = [];
-
-		for ( const [ name, change ] of this._changedMarkers ) {
-			if ( change.oldRange != null ) {
-				result.push( { name, range: change.oldRange } );
-			}
-		}
-
-		return result;
-	}
+	// /**
+	//  * Returns all markers which should be removed as a result of buffered changes.
+	//  *
+	//  * @returns {Array.<Object>} Markers to remove. Each array item is an object containing `name` and `range` property.
+	//  */
+	// getMarkersToRemove() {
+	// 	const result = [];
+	//
+	// 	for ( const [ name, change ] of this._changedMarkers ) {
+	// 		if ( change.oldRange != null ) {
+	// 			result.push( { name, range: change.oldRange } );
+	// 		}
+	// 	}
+	//
+	// 	return result;
+	// }
 
 	/**
 	 * Returns all markers which should be added as a result of buffered changes.
@@ -174,10 +162,8 @@ export default class Differ {
 	getMarkersToAdd() {
 		const result = [];
 
-		for ( const [ name, change ] of this._changedMarkers ) {
-			if ( change.newRange != null ) {
-				result.push( { name, range: change.newRange } );
-			}
+		for ( const [ name, range ] of this._changedMarkers ) {
+			result.push( { name, range } );
 		}
 
 		return result;
