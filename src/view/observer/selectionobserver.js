@@ -7,7 +7,7 @@
  * @module engine/view/observer/selectionobserver
  */
 
-/* global setInterval, clearInterval */
+/* global setInterval, clearInterval, setTimeout */
 
 import Observer from './observer';
 import MutationObserver from './mutationobserver';
@@ -108,7 +108,11 @@ export default class SelectionObserver extends Observer {
 		}
 
 		this.listenTo( domDocument, 'selectionchange', () => {
-			this._handleSelectionChange( domDocument );
+			// Setting short timeout to make selectionchange always async.
+			// Android Chrome fires selectionchange event before the mutations.
+			setTimeout( () => {
+				this._handleSelectionChange( domDocument );
+			}, 1 );
 		} );
 
 		this._documents.add( domDocument );
