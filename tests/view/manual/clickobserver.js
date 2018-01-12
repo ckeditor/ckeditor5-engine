@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2017, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003-2018, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md.
  */
 
@@ -7,6 +7,7 @@
 
 import Document from '../../../src/view/document';
 import DomEventObserver from '../../../src/view/observer/domeventobserver';
+import createViewRoot from '../_utils/createroot';
 
 const viewDocument = new Document();
 
@@ -45,8 +46,10 @@ document.getElementById( 'disable1' ).addEventListener( 'click', () => observer1
 // Random order.
 viewDocument.addObserver( ClickObserver1 );
 
-viewDocument.createRoot( document.getElementById( 'clickerA' ), 'clickerA' );
+createViewRoot( viewDocument, 'div', 'clickerA' );
+viewDocument.attachDomRoot( document.getElementById( 'clickerA' ), 'clickerA' );
 
 viewDocument.addObserver( ClickObserver2 );
 
-viewDocument.createRoot( document.getElementById( 'clickerB' ), 'clickerB' );
+createViewRoot( viewDocument, 'div', 'clickerB' );
+viewDocument.attachDomRoot( document.getElementById( 'clickerB' ), 'clickerB' );

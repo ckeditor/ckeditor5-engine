@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2017, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003-2018, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md.
  */
 
@@ -8,12 +8,15 @@
 import ViewDocument from '../../../src/view/document';
 import DomEventObserver from '../../../src/view/observer/domeventobserver';
 import ViewRange from '../../../src/view/range';
+import createViewRoot from '../_utils/createroot';
 import { setData } from '../../../src/dev-utils/view';
 
 const viewDocument = new ViewDocument();
 const domEditable = document.getElementById( 'editor' );
-const viewRoot = viewDocument.createRoot( domEditable );
+const viewRoot = createViewRoot();
 let viewStrong;
+
+viewDocument.attachDomRoot( domEditable );
 
 // Add mouseup oberver.
 viewDocument.addObserver( class extends DomEventObserver {

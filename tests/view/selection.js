@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2017, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003-2018, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md.
  */
 
@@ -11,6 +11,7 @@ import Text from '../../src/view/text';
 import Position from '../../src/view/position';
 import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 import count from '@ckeditor/ckeditor5-utils/src/count';
+import createViewRoot from './_utils/createroot';
 import { parse } from '../../src/dev-utils/view';
 
 describe( 'Selection', () => {
@@ -878,7 +879,7 @@ describe( 'Selection', () => {
 		it( 'should return EditableElement when selection is placed inside', () => {
 			const viewDocument = new Document();
 			const selection = viewDocument.selection;
-			const root = viewDocument.createRoot( 'div' );
+			const root = createViewRoot( viewDocument, 'div', 'main' );
 			const element = new Element( 'p' );
 			root.appendChildren( element );
 

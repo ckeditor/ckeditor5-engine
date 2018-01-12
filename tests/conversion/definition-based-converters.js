@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2017, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003-2018, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md.
  */
 
@@ -112,7 +112,10 @@ describe( 'definition-based-converters', () => {
 		modelRoot = modelDoc.createRoot();
 
 		controller = new EditingController( model );
-		controller.createRoot( 'div' );
+
+		// Set name of view root the same as dom root.
+		// This is a mock of attaching view root to dom root.
+		controller.view.getRoot()._name = 'div';
 
 		viewRoot = controller.view.getRoot();
 		dispatcher = controller.modelToView;

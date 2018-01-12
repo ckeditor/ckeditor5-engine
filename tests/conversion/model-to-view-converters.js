@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2017, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003-2018, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md.
  */
 
@@ -38,9 +38,12 @@ describe( 'model-to-view-converters', () => {
 		modelRoot = modelDoc.createRoot();
 
 		controller = new EditingController( model );
-		controller.createRoot( 'div' );
 
 		viewRoot = controller.view.getRoot();
+		// Set name of view root the same as dom root.
+		// This is a mock of attaching view root to dom root.
+		controller.view.getRoot()._name = 'div';
+
 		dispatcher = controller.modelToView;
 
 		dispatcher.on( 'insert:paragraph', insertElement( () => new ViewContainerElement( 'p' ) ) );

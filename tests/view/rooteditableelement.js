@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2017, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003-2018, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md.
  */
 
@@ -66,6 +66,18 @@ describe( 'RootEditableElement', () => {
 			expect( el.is( 'uiElement' ) ).to.be.false;
 			expect( el.is( 'emptyElement' ) ).to.be.false;
 			expect( el.is( 'documentFragment' ) ).to.be.false;
+		} );
+	} );
+
+	describe( '_name', () => {
+		it( 'should set new name to element', () => {
+			const el = new RootEditableElement( '$root' );
+
+			expect( el.name ).to.equal( '$root' );
+
+			el._name = 'div';
+
+			expect( el.name ).to.equal( 'div' );
 		} );
 	} );
 

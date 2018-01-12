@@ -1,5 +1,5 @@
 /**
- * @license Copyright (c) 2003-2017, CKSource - Frederico Knabben. All rights reserved.
+ * @license Copyright (c) 2003-2018, CKSource - Frederico Knabben. All rights reserved.
  * For licensing, see LICENSE.md.
  */
 
@@ -149,8 +149,6 @@ export default class RootAttributeOperation extends Operation {
 		} else {
 			this.root.removeAttribute( this.key );
 		}
-
-		return { root: this.root, key: this.key, oldValue: this.oldValue, newValue: this.newValue };
 	}
 
 	/**
@@ -168,7 +166,7 @@ export default class RootAttributeOperation extends Operation {
 	 * @returns {module:engine/model/operation/rootattributeoperation~RootAttributeOperation}
 	 */
 	static fromJSON( json, document ) {
-		if ( !document.hasRoot( json.root ) ) {
+		if ( !document.getRoot( json.root ) ) {
 			/**
 			 * Cannot create RootAttributeOperation for document. Root with specified name does not exist.
 			 *
