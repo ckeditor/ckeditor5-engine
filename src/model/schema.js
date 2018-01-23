@@ -27,9 +27,9 @@ import Range from './range';
  *
  * ## Defining allowed structures
  *
- * When a feature introduces a model element it should registered it in the schema. Besides
+ * When a feature introduces a model element it should register it in the schema. Besides
  * defining that such an element may exist in the model, the feature also needs to define where
- * this element may occur:
+ * this element may be placed:
  *
  *		schema.register( 'myElement', {
  *			allowIn: '$root'
@@ -108,9 +108,9 @@ import Range from './range';
  * ## Defining advanced rules in `checkChild()`'s callbacks
  *
  * The {@link ~Schema#checkChild} method which is the base method used to check whether some element is allowed in a given structure
- * is {@link module:utils/observablemixin~ObservableMixin#decorate decorated} with the {@link ~Schema#event:checkChild} event.
+ * is {@link module:utils/observablemixin~ObservableMixin#decorate a decorated method}.
  * It means that you can add listeners to implement your specific rules which are not limited by the declarative
- * {@link module:engine/model/schema~SchemaItemDefinition} API.
+ * {@link module:engine/model/schema~SchemaItemDefinition API}.
  *
  * The block quote feature defines such a listener to disallow nested `<blockQuote>` structures:
  *
@@ -730,7 +730,7 @@ mix( Schema, ObservableMixin );
  *
  * * `isBlock` – whether this item is paragraph-like. Generally speaking, a content is usually made out of blocks
  * like paragraphs, list items, images, headings, etc. All these elements are marked as blocks. A block
- * should not allow another block inside. Note: there's also the `$block` generic item which has `isBlock` set to true.
+ * should not allow another block inside. Note: there's also the `$block` generic item which has `isBlock` set to `true`.
  * Most block type items will inherit from `$block` (through `inheritAllFrom`).
  * * `isLimit` – can be understood as whether this element should not be split by <kbd>Enter</kbd>.
  * Examples of limit elements – `$root`, table cell, image caption, etc. In other words, all actions which happen inside
@@ -765,19 +765,21 @@ mix( Schema, ObservableMixin );
  * Allow `paragraph` in roots and block quotes:
  *
  *		schema.register( 'paragraph', {
- *			allowIn: [ '$root', 'blockQuote' ]
+ *			allowIn: [ '$root', 'blockQuote' ],
+ *			isBlock: true
  *		} );
  *
  * Allow `paragraph` everywhere where `$block` is allowed (i.e. in `$root`):
  *
  *		schema.register( 'paragraph', {
- *			allowWhere: '$block'
+ *			allowWhere: '$block',
+ *			isBlock: true
  *		} );
  *
  * Make `image` a block object, which is allowed everywhere where `$block` is.
  * Also, allow `src` and `alt` attributes on it:
  *
- *		schema.register( 'paragraph', {
+ *		schema.register( 'image', {
  *			allowWhere: '$block',
  *			allowAttributes: [ 'src', 'alt' ],
  *			isBlock: true,
@@ -816,6 +818,8 @@ mix( Schema, ObservableMixin );
  * * If you want to publish your feature so other developers can use it, try to use
  * generic items as much as possible.
  * * Keep your model clean – limit it to the actual data and store information in an normalized way.
+ * * Remember about definining the `is*` properties. They don't affect the allowed structures, but they can
+ * affect how editor features treat your elements.
  *
  * @typedef {Object} module:engine/model/schema~SchemaItemDefinition
  */
@@ -907,9 +911,11 @@ export class SchemaContext {
 	}
 
 	/**
-	 * Returns an iterator that iterates over all context items.
+	 * Iterable interface.
 	 *
-	 * @returns {Iterator.<module:engine/model/schema~SchemaContextItem>}
+	 * Iterates over all context items.
+	 *
+	 * @returns {Iterable.<module:engine/model/schema~SchemaContextItem>}
 	 */
 	[ Symbol.iterator ]() {
 		return this._items[ Symbol.iterator ]();
@@ -927,7 +933,7 @@ export class SchemaContext {
 	/**
 	 * Returns the names of items.
 	 *
-	 * @returns {Iterator.<String>}
+	 * @returns {Iterable.<String>}
 	 */
 	* getNames() {
 		yield* this._items.map( item => item.name );

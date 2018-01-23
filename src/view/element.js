@@ -233,7 +233,7 @@ export default class Element extends Node {
 	/**
 	 * Returns an iterator that contains the keys for attributes. Order of inserting attributes is not preserved.
 	 *
-	 * @returns {Iterator.<String>} Keys for attributes.
+	 * @returns {Iterable.<String>} Keys for attributes.
 	 */
 	* getAttributeKeys() {
 		if ( this._classes.size > 0 ) {
@@ -329,6 +329,8 @@ export default class Element extends Node {
 	 * @fires module:engine/view/node~Node#change
 	 */
 	setAttribute( key, value ) {
+		value = String( value );
+
 		this._fireChange( 'attributes', this );
 
 		if ( key == 'class' ) {
@@ -528,7 +530,7 @@ export default class Element extends Node {
 	/**
 	 * Returns iterator that contains all class names.
 	 *
-	 * @returns {Iterator.<String>}
+	 * @returns {Iterable.<String>}
 	 */
 	getClassNames() {
 		return this._classes.keys();
@@ -575,7 +577,7 @@ export default class Element extends Node {
 	/**
 	 * Returns iterator that contains all style names.
 	 *
-	 * @returns {Iterator.<String>}
+	 * @returns {Iterable.<String>}
 	 */
 	getStyleNames() {
 		return this._styles.keys();
@@ -671,7 +673,7 @@ export default class Element extends Node {
 
 	/**
 	 * Returns an iterator which iterates over this element's custom properties.
-	 * Iterator provides [key, value] pair for each stored property.
+	 * Iterator provides `[ key, value ]` pairs for each stored property.
 	 *
 	 * @returns {Iterable.<*>}
 	 */
