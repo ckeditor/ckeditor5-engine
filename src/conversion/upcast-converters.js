@@ -37,19 +37,13 @@ import cloneDeep from '@ckeditor/ckeditor5-utils/src/lib/lodash/cloneDeep';
  *		} );
  *
  *		upcastElementToElement( {
- *			view: {
- *				name: 'p',
- *				class: 'fancy'
- *			},
- *			model: new ModelElement( 'p', { fancy: true } )
- *		} );
- *
- *		upcastElementToElement( {
  * 			view: {
  *				name: 'p',
  *				class: 'heading'
  * 			},
- * 			model: viewElement => new ModelElement( 'heading', { level: viewElement.getAttribute( 'data-level' ) } )
+ * 			model: ( viewElement, modelWriter ) => {
+ * 				return modelWriter.createElement( 'heading', { level: viewElement.getAttribute( 'data-level' ) } );
+ * 			}
  * 		} );
  *
  * See {@link module:engine/conversion/conversion~Conversion#for} to learn how to add converter to conversion process.
@@ -380,10 +374,8 @@ function _prepareToElementConverter( config ) {
 function _getModelElement( model, input, writer ) {
 	if ( model instanceof Function ) {
 		return model( input, writer );
-	} else if ( typeof model == 'string' ) {
-		return writer.createElement( model );
 	} else {
-		return model;
+		return writer.createElement( model );
 	}
 }
 
