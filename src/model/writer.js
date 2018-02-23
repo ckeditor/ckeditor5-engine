@@ -85,14 +85,25 @@ export default class Writer {
 	/**
 	 * Creates a new {@link module:engine/model/text~Text text node}.
 	 *
+	 * Throws `writer-create-text-empty-data` error, if `data` is not set or is an empty string.
+	 *
 	 *		writer.createText( 'foo' );
 	 *		writer.createText( 'foo', { 'bold': true } );
 	 *
-	 * @param {String} data Text data.
+	 * @param {String} data Text data. Cannot be an empty string.
 	 * @param {Object} [attributes] Text attributes.
 	 * @returns {module:engine/model/text~Text} Created text node.
 	 */
 	createText( data, attributes ) {
+		if ( !data || data == '' ) {
+			/**
+			 * Cannot create text node with empty data.
+			 *
+			 * @error writer-create-text-empty-data
+			 */
+			throw new CKEditorError( 'writer-create-text-empty-data: Cannot create text node with empty data.' );
+		}
+
 		return new Text( data, attributes );
 	}
 

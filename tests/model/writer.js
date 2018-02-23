@@ -60,6 +60,18 @@ describe( 'Writer', () => {
 
 			expect( Array.from( text.getAttributes() ) ).to.deep.equal( [ [ 'foo', 'bar' ], [ 'biz', 'baz' ] ] );
 		} );
+
+		it( 'should throw if data is not set', () => {
+			expect( () => {
+				createText();
+			} ).to.throw( CKEditorError, /writer-create-text-empty-data/ );
+		} );
+
+		it( 'should throw if data is empty', () => {
+			expect( () => {
+				createText( '' );
+			} ).to.throw( CKEditorError, /writer-create-text-empty-data/ );
+		} );
 	} );
 
 	describe( 'createElement()', () => {
