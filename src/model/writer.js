@@ -147,14 +147,18 @@ export default class Writer {
 	 * If you want to move {@link module:engine/model/range~Range range} instead of an
 	 * {@link module:engine/model/item~Item item} use {@link module:engine/model/writer~Writer#move move}.
 	 *
-	 * @param {module:engine/model/item~Item|module:engine/model/documentfragment~DocumentFragment} item Item or document
-	 * fragment to insert.
+	 * @param {module:engine/model/item~Item|module:engine/model/documentfragment~DocumentFragment|
+	 * Array.<module:engine/model/item~Item>} item Item, document fragment or an array of items to insert.
 	 * @param {module:engine/model/item~Item|module:engine/model/position~Position} itemOrPosition
 	 * @param {Number|'end'|'before'|'after'} [offset=0] Offset or one of the flags. Used only when
 	 * second parameter is a {@link module:engine/model/item~Item model item}.
 	 */
 	insert( item, itemOrPosition, offset ) {
 		this._assertWriterUsedCorrectly();
+
+		if ( item instanceof Text && item.data == '' ) {
+			return;
+		}
 
 		const position = Position.createAt( itemOrPosition, offset );
 
@@ -222,6 +226,10 @@ export default class Writer {
 	 * third parameter is a {@link module:engine/model/item~Item model item}.
 	 */
 	insertText( text, attributes, itemOrPosition, offset ) {
+		if ( text == '' ) {
+			return;
+		}
+
 		if ( attributes instanceof DocumentFragment || attributes instanceof Element || attributes instanceof Position ) {
 			this.insert( this.createText( text ), attributes, itemOrPosition );
 		} else {

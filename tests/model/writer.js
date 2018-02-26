@@ -159,6 +159,31 @@ describe( 'Writer', () => {
 			expect( Array.from( parent.getChildren() ) ).to.deep.equal( [ child1, child2, child3 ] );
 		} );
 
+		it( 'should insert an array of items', () => {
+			const parent = createDocumentFragment();
+			const child1 = createElement( 'child' );
+			const child2 = createElement( 'child' );
+			const child3 = createElement( 'child' );
+
+			const array = [ child2, child1, child3 ];
+
+			insert( array, parent );
+
+			expect( Array.from( parent.getChildren() ) ).to.deep.equal( array );
+		} );
+
+		it( 'should do nothing if empty text node is being inserted', () => {
+			const parent = createDocumentFragment();
+
+			model.enqueueChange( batch, writer => {
+				const text = writer.createText( '' );
+
+				writer.insert( text, parent );
+			} );
+
+			expect( parent.childCount ).to.equal( 0 );
+		} );
+
 		it( 'should create proper delta for inserting element', () => {
 			const parent = createDocumentFragment();
 			const element = createElement( 'child' );
@@ -439,6 +464,14 @@ describe( 'Writer', () => {
 			expect( parent.getChild( 0 ) ).to.instanceof( Element );
 			expect( parent.getChild( 1 ) ).to.instanceof( Text );
 			expect( parent.getChild( 2 ) ).to.instanceof( Element );
+		} );
+
+		it( 'should do nothing if text data is empty', () => {
+			const parent = createDocumentFragment();
+
+			insertText( '', parent );
+
+			expect( parent.childCount ).to.equal( 0 );
 		} );
 
 		it( 'should create proper delta', () => {
