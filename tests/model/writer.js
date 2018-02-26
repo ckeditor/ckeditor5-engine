@@ -215,6 +215,16 @@ describe( 'Writer', () => {
 			expect( parent.getChild( 1 ).data ).to.equal( 'cd' );
 		} );
 
+		it( 'should skip (normalize) an empty text node when inserting an array of text nodes (different attributes)', () => {
+			const parent = createDocumentFragment();
+
+			model.enqueueChange( batch, writer => {
+				writer.insert( [ writer.createText( '' ) ], parent );
+			} );
+
+			expect( parent.childCount ).to.equal( 0 );
+		} );
+
 		it( 'should create proper delta for inserting element', () => {
 			const parent = createDocumentFragment();
 			const element = createElement( 'child' );
