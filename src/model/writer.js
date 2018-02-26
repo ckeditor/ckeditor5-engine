@@ -156,6 +156,7 @@ export default class Writer {
 	insert( item, itemOrPosition, offset ) {
 		this._assertWriterUsedCorrectly();
 
+		// Empty text node should not be added to the model. See #1320.
 		if ( item instanceof Text && item.data == '' ) {
 			return;
 		}
@@ -226,10 +227,6 @@ export default class Writer {
 	 * third parameter is a {@link module:engine/model/item~Item model item}.
 	 */
 	insertText( text, attributes, itemOrPosition, offset ) {
-		if ( text == '' ) {
-			return;
-		}
-
 		if ( attributes instanceof DocumentFragment || attributes instanceof Element || attributes instanceof Position ) {
 			this.insert( this.createText( text ), attributes, itemOrPosition );
 		} else {
