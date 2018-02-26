@@ -184,6 +184,37 @@ describe( 'Writer', () => {
 			expect( parent.childCount ).to.equal( 0 );
 		} );
 
+		it( 'should skip (normalize) an empty text node when inserting an array of text nodes', () => {
+			const parent = createDocumentFragment();
+
+			model.enqueueChange( batch, writer => {
+				const text1 = writer.createText( 'ab' );
+				const text2 = writer.createText( '' );
+				const text3 = writer.createText( 'cd' );
+
+				writer.insert( [ text1, text2, text3 ], parent );
+			} );
+
+			expect( parent.childCount ).to.equal( 1 );
+			expect( parent.getChild( 0 ).data ).to.equal( 'abcd' );
+		} );
+
+		it( 'should skip (normalize) an empty text node when inserting an array of text nodes (different attributes)', () => {
+			const parent = createDocumentFragment();
+
+			model.enqueueChange( batch, writer => {
+				const text1 = writer.createText( 'ab' );
+				const text2 = writer.createText( '' );
+				const text3 = writer.createText( 'cd', { bold: true } );
+
+				writer.insert( [ text1, text2, text3 ], parent );
+			} );
+
+			expect( parent.childCount ).to.equal( 2 );
+			expect( parent.getChild( 0 ).data ).to.equal( 'ab' );
+			expect( parent.getChild( 1 ).data ).to.equal( 'cd' );
+		} );
+
 		it( 'should create proper delta for inserting element', () => {
 			const parent = createDocumentFragment();
 			const element = createElement( 'child' );
