@@ -85,6 +85,7 @@ export default class View {
 		 */
 		this._renderer = new Renderer( this.domConverter, this.document.selection );
 		this._renderer.bind( 'isFocused' ).to( this.document );
+		this._renderer.bind( 'isComposing' ).to( this.document );
 
 		/**
 		 * Roots of the DOM tree. Map on the `HTMLElement`s with roots names as keys.
