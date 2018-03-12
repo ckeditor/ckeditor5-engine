@@ -654,7 +654,7 @@ describe( 'Renderer', () => {
 			const { view: viewP, selection: newSelection } = parse(
 				'<container:p>foo<attribute:b>[]</attribute:b></container:p>' );
 
-			viewRoot.appendChildren( viewP );
+			viewRoot._appendChildren( viewP );
 			selection._setTo( newSelection );
 
 			renderer.markToSync( 'children', viewRoot );
@@ -697,7 +697,7 @@ describe( 'Renderer', () => {
 
 			const viewB = viewP.getChild( 1 );
 			const viewText = new ViewText( 'bar' );
-			viewB.appendChildren( viewText );
+			viewB._appendChildren( viewText );
 			selection._setTo( ViewRange.createFromParentsAndOffsets( viewText, 3, viewText, 3 ) );
 
 			renderer.markToSync( 'children', viewB );
@@ -1751,7 +1751,7 @@ describe( 'Renderer', () => {
 			const { view: viewP, selection: newSelection } = parse(
 				'<container:p><attribute:b>[]</attribute:b>foo</container:p>' );
 
-			viewRoot.appendChildren( viewP );
+			viewRoot._appendChildren( viewP );
 			selection._setTo( newSelection );
 
 			renderer.markToSync( 'children', viewRoot );
@@ -1789,7 +1789,7 @@ describe( 'Renderer', () => {
 			domSelection.addRange( domRange );
 
 			const viewText = new ViewText( 'bar' );
-			viewB.appendChildren( viewText );
+			viewB._appendChildren( viewText );
 			selection._setTo( ViewRange.createFromParentsAndOffsets( viewText, 3, viewText, 3 ) );
 
 			renderer.markToSync( 'children', viewP );
@@ -1815,7 +1815,7 @@ describe( 'Renderer', () => {
 			domSelection.addRange( domRange2 );
 
 			const viewText2 = new ViewText( 'z' );
-			viewB.appendChildren( viewText2 );
+			viewB._appendChildren( viewText2 );
 			selection._setTo( ViewRange.createFromParentsAndOffsets( viewB.getChild( 0 ), 4, viewB.getChild( 0 ), 4 ) );
 
 			renderer.markToSync( 'children', viewP );
