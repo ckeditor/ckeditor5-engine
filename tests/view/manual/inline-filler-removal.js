@@ -12,7 +12,7 @@ import ArticlePluginSet from '@ckeditor/ckeditor5-core/tests/_utils/articleplugi
 ClassicEditor
 	.create( document.querySelector( '#editor' ), {
 		plugins: [ ArticlePluginSet ],
-		toolbar: [ 'headings', '|', 'bold', 'italic', 'link', 'bulletedList', 'blockQuote', 'undo', 'redo' ]
+		toolbar: [ 'bold', 'italic', 'link', 'bulletedList', 'blockQuote', 'undo', 'redo' ]
 	} )
 	.then( editor => {
 		window.editor = editor;
