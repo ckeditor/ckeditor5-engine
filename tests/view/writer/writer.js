@@ -263,14 +263,14 @@ describe( 'Writer', () => {
 		} );
 	} );
 
-	describe( 'getAllBrokenSiblings()', () => {
-		it( 'should return all clones of a broken attribute element', () => {
+	describe( '_getGroup()', () => {
+		it( 'should return all clones of a broken attribute element with id', () => {
 			const container = writer.createContainerElement( 'div' );
 			const text = writer.createText( 'abccccde' );
 
 			writer.insert( ViewPosition.createAt( container, 0 ), text );
 
-			const span = writer.createAttributeElement( 'span' );
+			const span = writer.createAttributeElement( 'span', null, { id: 'foo' } );
 			span._priority = 20;
 
 			// <div>ab<span>cccc</span>de</div>
@@ -287,7 +287,7 @@ describe( 'Writer', () => {
 				i
 			);
 
-			// <div>a<i>b<span>c</span></i><span>c</span><i><span>c</span>d</i>e</div>
+			// <div>a<i>b<span>c</span></i><span>c</span><i><span>cc</span>d</i>e</div>
 			writer.wrap(
 				ViewRange.createFromParentsAndOffsets(
 					container.getChild( 2 ).getChild( 0 ), 1,
@@ -301,11 +301,8 @@ describe( 'Writer', () => {
 
 			// For each of the spans created above...
 			for ( const oneOfAllSpans of allSpans ) {
-				// Find all broken siblings of that span...
-				const brokenArray = writer.getAllBrokenSiblings( oneOfAllSpans );
-
-				// Convert to set because we don't care about order.
-				const brokenSet = new Set( brokenArray );
+				const brokenSet = writer._getGroup( oneOfAllSpans );
+				const brokenArray = Array.from( brokenSet );
 
 				// Check if all spans are included.
 				for ( const s of allSpans ) {

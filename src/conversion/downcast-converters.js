@@ -810,6 +810,9 @@ export function highlightText( highlightDescriptor ) {
 			for ( const element of rangeAfterWrap.getItems() ) {
 				if ( element.is( 'attributeElement' ) && element.isSimilar( viewElement ) ) {
 					conversionApi.mapper.bindElementToMarker( element, data.markerName );
+
+					// One attribute element is enough, because all of them are bound together by the view writer.
+					break;
 				}
 			}
 		}
@@ -927,17 +930,19 @@ export function removeHighlight( highlightDescriptor ) {
 			if ( element.is( 'attributeElement' ) ) {
 				// If the bound element is an `AttributeElement`, get all other `AttributeElement`s that were created "from it"
 				// (when view.Writer broke it when handling other `AttributeElement`s).
-				const allAttributeElements = conversionApi.writer.getAllBrokenSiblings( element );
+				const allAttributeElements = conversionApi.writer._getGroup( element );
 
-				// Handle all those elements.
-				for ( const attributeElement of allAttributeElements ) {
-					// Filter out elements which got removed. For example, when converting from model to view,
-					// converter might have created two `AttributeElement`s, split by some other element (for
-					// example another marker). Then, that splitting element might got removed and the marker parts
-					// might got merged. In this case, previously bound element might got removed and now has to be filtered.
-					if ( attributeElement.parent ) {
-						// If the element is still in the tree, unwrap it.
-						conversionApi.writer.unwrap( ViewRange.createOn( attributeElement ), viewHighlightElement );
+				if ( allAttributeElements ) {
+					// Handle all those elements.
+					for ( const attributeElement of allAttributeElements ) {
+						// Filter out elements which got removed. For example, when converting from model to view,
+						// converter might have created two `AttributeElement`s, split by some other element (for
+						// example another marker). Then, that splitting element might got removed and the marker parts
+						// might got merged. In this case, previously bound element might got removed and now has to be filtered.
+						if ( attributeElement.parent ) {
+							// If the element is still in the tree, unwrap it.
+							conversionApi.writer.unwrap( ViewRange.createOn( attributeElement ), viewHighlightElement );
+						}
 					}
 				}
 			} else {
