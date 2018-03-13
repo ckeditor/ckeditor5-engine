@@ -1092,7 +1092,7 @@ describe( 'Renderer', () => {
 			selection._setTo( ViewRange.createFromParentsAndOffsets( viewText, 1, viewText, 1 ) );
 
 			renderer.markToSync( 'children', viewP );
-			// One change expected as inlineFiller should be removed, see #889.
+			// One change expected as inlineFiller should be removed, see #898.
 			renderAndExpectChanges( renderer, domRoot, 1 );
 
 			expect( domB.childNodes.length ).to.equal( 1 );

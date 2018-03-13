@@ -104,7 +104,7 @@ describe( 'View', () => {
 		// } );
 
 		it( 'should do nothing if caret is not directly before the filler', () => {
-			// This test checks how navigating with arrow keys behaves when there is a `inlineFiller` leftover.
+			// This test checks how navigating with arrow keys behaves when there is an `inlineFiller` leftover.
 			// Such situation shouldn't happen, but it may be caused by broken composition (`compositionend` would
 			// not be fired preventing `inlineFiller` to be removed). Here we simulate it by setting
 			// `renderer.isComposing = true` so `inlineFiller` will not be removed on render, see #898.
