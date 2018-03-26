@@ -21,6 +21,12 @@ import mix from '@ckeditor/ckeditor5-utils/src/mix';
 import deltaTransform from './delta/transform';
 import ModelElement from './element';
 import ModelRange from './range';
+import ModelPosition from './position';
+
+import InsertDelta from './delta/insertdelta';
+import MarkerDelta from './delta/markerdelta';
+import InsertOperation from './operation/insertoperation';
+import MarkerOperation from './operation/markeroperation';
 
 import insertContent from './utils/insertcontent';
 import deleteContent from './utils/deletecontent';
@@ -380,6 +386,48 @@ export default class Model {
 	destroy() {
 		this.document.destroy();
 		this.stopListening();
+	}
+
+	/**
+	 * Creates deltas from given {@link module:engine/model/documentfragment~DocumentFragment}.
+	 *
+	 * Returned array contains exactly one {@link module:engine/model/operation/insertoperation~InsertOperation} which
+	 * inserts all the nodes and zero or more {@link module:engine/model/operation/markeroperation~MarkerOperation}, depending
+	 * on {@link module:engine/model/documentfragment~DocumentFragment#markers markers set on the document fragment}.
+	 *
+	 * @param {module:engine/model/documentfragment~DocumentFragment} documentFragment Document fragment to be converted to deltas.
+	 * @param {String} [rootName] Name of a root element which will be base for the operations. The returned insert
+	 * operation will insert the nodes inside the given root. If not set, the main root will be used.
+	 * @returns {Array.<module:engine/model/operation/operation~Operation>} Operations which, when applied, will recreate given
+	 * `documentFragment` inside the specified root.
+	 */
+	convertToDeltas( documentFragment, rootName ) {
+		const root = this.document.getRoot( rootName );
+		const localDeltas = [];
+
+		const insertDelta = new InsertDelta();
+		const insertOperation = new InsertOperation( ModelPosition.createAt( root, 0 ), documentFragment, 0 );
+		insertDelta.addOperation( insertOperation );
+
+		localDeltas.push( insertDelta );
+
+		let docVersion = 1;
+
+		for ( const [ markerName, markerRange ] of documentFragment.markers ) {
+			const markerDelta = new MarkerDelta();
+
+			const rootMarkerRange = new ModelRange(
+				new ModelPosition( root, markerRange.start.path.slice() ),
+				new ModelPosition( root, markerRange.end.path.slice() )
+			);
+
+			const markerOperation = new MarkerOperation( markerName, null, rootMarkerRange, this.markers, docVersion++ );
+			markerDelta.addOperation( markerOperation );
+
+			localDeltas.push( markerDelta );
+		}
+
+		return localDeltas;
 	}
 
 	/**
