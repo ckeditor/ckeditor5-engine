@@ -8,7 +8,11 @@ import Model from '../../src/model/model';
 import NoOperation from '../../src/model/operation/nooperation';
 import deltaTransform from '../../src/model/delta/transform';
 import Delta from '../../src/model/delta/delta';
+import InsertDelta from '../../src/model/delta/insertdelta';
+import MarkerDelta from '../../src/model/delta/markerdelta';
 import ModelText from '../../src/model/text';
+import ModelElement from '../../src/model/element';
+import ModelPosition from '../../src/model/position';
 import ModelRange from '../../src/model/range';
 import ModelSelection from '../../src/model/selection';
 import ModelDocumentFragment from '../../src/model/documentfragment';
@@ -622,6 +626,82 @@ describe( 'Model', () => {
 			emitter.fire( 'event' );
 
 			sinon.assert.notCalled( spy );
+		} );
+	} );
+
+	describe( 'convertToDeltas()', () => {
+		let frag;
+
+		beforeEach( () => {
+			frag = new ModelDocumentFragment( [
+				new ModelElement( 'paragraph', {}, [
+					new ModelText( 'foo', { bold: true } )
+				] ),
+				new ModelElement( 'image', { source: 'img.jpg' } ),
+				new ModelElement( 'paragraph', {}, [
+					new ModelText( 'bar' )
+				] )
+			] );
+		} );
+
+		it( 'should return InsertDelta inserting all the nodes from the given document fragment', () => {
+			const deltas = model.convertToDeltas( frag );
+
+			expect( deltas.length ).to.equal( 1 );
+			expect( deltas[ 0 ] ).to.be.instanceof( InsertDelta );
+
+			model.applyOperation( deltas[ 0 ].operations[ 0 ] );
+
+			expect( getData( model, { withoutSelection: true } ) ).to.equal(
+				'<paragraph><$text bold="true">foo</$text></paragraph><image source="img.jpg"></image><paragraph>bar</paragraph>'
+			);
+		} );
+
+		it( 'should create InsertDelta that inserts nodes in the specified root', () => {
+			const deltas = model.convertToDeltas( frag, 'title' );
+
+			model.applyOperation( deltas[ 0 ].operations[ 0 ] );
+
+			expect( getData( model, { withoutSelection: true } ) ).to.equal( '' );
+
+			expect( getData( model, { withoutSelection: true, rootName: 'title' } ) ).to.equal(
+				'<paragraph><$text bold="true">foo</$text></paragraph><image source="img.jpg"></image><paragraph>bar</paragraph>'
+			);
+		} );
+
+		it( 'should return MarkerDeltas for each marker set in the document fragment', () => {
+			const rangeA = new ModelRange( new ModelPosition( frag, [ 1, 0 ] ), new ModelPosition( frag, [ 2 ] ) );
+			const rangeB = new ModelRange( new ModelPosition( frag, [ 2 ] ), new ModelPosition( frag, [ 3, 3 ] ) );
+
+			frag.markers.set( 'markerA', rangeA );
+			frag.markers.set( 'markerB', rangeB );
+
+			const deltas = model.convertToDeltas( frag );
+
+			expect( deltas.length ).to.equal( 3 );
+			expect( deltas[ 0 ] ).to.be.instanceof( InsertDelta );
+			expect( deltas[ 1 ] ).to.be.instanceof( MarkerDelta );
+			expect( deltas[ 2 ] ).to.be.instanceof( MarkerDelta );
+
+			for ( const delta of deltas ) {
+				model.applyOperation( delta.operations[ 0 ] );
+			}
+
+			expect( getData( model, { withoutSelection: true } ) ).to.equal(
+				'<paragraph><$text bold="true">foo</$text></paragraph><image source="img.jpg"></image><paragraph>bar</paragraph>'
+			);
+
+			const markerARange = model.markers.get( 'markerA' ).getRange();
+			const markerBRange = model.markers.get( 'markerB' ).getRange();
+			const root = model.document.getRoot();
+
+			expect( markerARange.root ).to.equal( root );
+			expect( markerARange.start.path ).to.deep.equal( [ 1, 0 ] );
+			expect( markerARange.end.path ).to.deep.equal( [ 2 ] );
+
+			expect( markerBRange.root ).to.equal( root );
+			expect( markerBRange.start.path ).to.deep.equal( [ 2 ] );
+			expect( markerBRange.end.path ).to.deep.equal( [ 3, 3 ] );
 		} );
 	} );
 } );
