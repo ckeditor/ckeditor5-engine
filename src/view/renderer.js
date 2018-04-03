@@ -97,7 +97,7 @@ export default class Renderer {
 		this._inlineFiller = null;
 
 		/**
-		 * Indicates if the view document is focused and selection can be rendered. Selection will not be rendered if
+		 * Indicates whether the view document is focused and selection can be rendered. Selection will not be rendered if
 		 * this is set to `false`.
 		 *
 		 * @member {Boolean}
@@ -105,7 +105,7 @@ export default class Renderer {
 		this.isFocused = false;
 
 		/**
-		 * Indicates if composition takes places inside view document.
+		 * Indicates whether text composition takes place in the document.
 		 *
 		 * @member {Boolean}
 		 */
