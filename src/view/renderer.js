@@ -189,7 +189,7 @@ export default class Renderer {
 		// There was inline filler rendered in the DOM but it's not
 		// at the selection position any more, so we can remove it
 		// (cause even if it's needed, it must be placed in another location).
-		if ( this._inlineFiller && !this._isSelectionInInlineFiller() ) {
+		if ( this._inlineFiller && !this.isComposing && !this._isSelectionInInlineFiller() ) {
 			this._removeInlineFiller();
 		}
 
