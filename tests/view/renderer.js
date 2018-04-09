@@ -654,7 +654,7 @@ describe( 'Renderer', () => {
 			const { view: viewP, selection: newSelection } = parse(
 				'<container:p>foo<attribute:b>[]</attribute:b></container:p>' );
 
-			viewRoot._appendChildren( viewP );
+			viewRoot._appendChild( viewP );
 			selection._setTo( newSelection );
 
 			renderer.markToSync( 'children', viewRoot );
@@ -697,7 +697,7 @@ describe( 'Renderer', () => {
 
 			const viewB = viewP.getChild( 1 );
 			const viewText = new ViewText( 'bar' );
-			viewB._appendChildren( viewText );
+			viewB._appendChild( viewText );
 			selection._setTo( ViewRange.createFromParentsAndOffsets( viewText, 3, viewText, 3 ) );
 
 			renderer.markToSync( 'children', viewB );
@@ -1751,7 +1751,7 @@ describe( 'Renderer', () => {
 			const { view: viewContent, selection: newSelection } = parse(
 				'<container:h1>h1</container:h1><container:p>foo<attribute:b>[]</attribute:b>bar</container:p>' );
 
-			viewRoot._appendChildren( viewContent );
+			viewRoot._appendChild( viewContent );
 			selection._setTo( newSelection );
 
 			renderer.markToSync( 'children', viewRoot );
@@ -1770,7 +1770,7 @@ describe( 'Renderer', () => {
 			const viewP = viewRoot.getChild( 1 );
 			const viewB = viewP.getChild( 1 );
 
-			viewB._appendChildren( new ViewText( 'baz' ) );
+			viewB._appendChild( new ViewText( 'baz' ) );
 
 			renderer.markToSync( 'children', viewRoot );
 			renderer.render();
@@ -1806,7 +1806,7 @@ describe( 'Renderer', () => {
 			const { view: viewContent, selection: newSelection } = parse(
 				'<container:h1>h1</container:h1><container:p>foo<attribute:b>[]</attribute:b>bar</container:p>' );
 
-			viewRoot._appendChildren( viewContent );
+			viewRoot._appendChild( viewContent );
 			selection._setTo( newSelection );
 
 			renderer.markToSync( 'children', viewRoot );
@@ -1825,7 +1825,7 @@ describe( 'Renderer', () => {
 			const viewP = viewRoot.getChild( 1 );
 			const viewB = viewP.getChild( 1 );
 
-			viewB._appendChildren( new ViewText( 'baz' ) );
+			viewB._appendChild( new ViewText( 'baz' ) );
 
 			renderer.markToSync( 'children', viewRoot );
 			renderer.render();
@@ -1860,7 +1860,7 @@ describe( 'Renderer', () => {
 			const { view: viewP, selection: newSelection } = parse(
 				'<container:p><attribute:b>[]</attribute:b>foo</container:p>' );
 
-			viewRoot._appendChildren( viewP );
+			viewRoot._appendChild( viewP );
 			selection._setTo( newSelection );
 
 			renderer.markToSync( 'children', viewRoot );
@@ -1893,7 +1893,7 @@ describe( 'Renderer', () => {
 			const viewB = viewRoot.getChild( 0 ).getChild( 0 );
 
 			const viewText = new ViewText( 'bar' );
-			viewB._appendChildren( viewText );
+			viewB._appendChild( viewText );
 			selection._setTo( ViewRange.createFromParentsAndOffsets( viewText, 3, viewText, 3 ) );
 
 			renderer.markToSync( 'children', viewP );
@@ -1915,7 +1915,7 @@ describe( 'Renderer', () => {
 			const { view: viewP, selection: newSelection } = parse(
 				'<container:p><attribute:b>[]</attribute:b>foo</container:p>' );
 
-			viewRoot._appendChildren( viewP );
+			viewRoot._appendChild( viewP );
 			selection._setTo( newSelection );
 
 			renderer.markToSync( 'children', viewRoot );
@@ -1937,7 +1937,7 @@ describe( 'Renderer', () => {
 			domSelection.addRange( domRange );
 
 			const viewText = new ViewText( 'bar' );
-			viewB._appendChildren( viewText );
+			viewB._appendChild( viewText );
 			selection._setTo( ViewRange.createFromParentsAndOffsets( viewText, 3, viewText, 3 ) );
 
 			renderer.markToSync( 'children', viewRoot );
