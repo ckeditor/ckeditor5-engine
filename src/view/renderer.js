@@ -186,23 +186,44 @@ export default class Renderer {
 	render() {
 		let inlineFillerPosition;
 
-		// There was inline filler rendered in the DOM but it's not
-		// at the selection position any more, so we can remove it
-		// (cause even if it's needed, it must be placed in another location).
-		if ( this._inlineFiller && !this.isComposing && !this._isSelectionInInlineFiller() ) {
-			this._removeInlineFiller();
-		}
-
-		// If we've got the filler, let's try to guess its position in the view.
 		if ( this._inlineFiller ) {
-			inlineFillerPosition = this._getInlineFillerPosition();
+			if ( !this.isComposing && !this._isSelectionInInlineFiller( false ) ) {
+				// There was inline filler rendered in the DOM but it's not at the selection position any more, so we can remove
+				// it if not during composition (cause even if it's needed, it must be placed in another location).
+				this._removeInlineFiller();
+			} else if ( this.isComposing ) {
+				// When selection has 0 ranges, `isCollapsed` returns false, but here
+				// we are only interested in non-collapsed selection (so with at least 1 range).
+				if ( !this.selection.isCollapsed && this.selection.rangeCount > 0 ) {
+					// During composition selection may be extended and its start/end moved to different text
+					// node (using 'shift + up' in Chrome on Windows during composition). In such situations
+					// filler should not be moved or deleted (because it is possible to continue composing).
+					inlineFillerPosition = this._getExistingInlineFillerPosition();
+				} else if ( !this._isValidCompositionSelection() ) {
+					// Check for situations like:
+					//
+					// 		<p>text{}</p><p>FILLERtext</p> or <p>{}</p><p>FILLERtext</p>
+					//
+					// where selection was moved to the different node without filler during composition.
+					// It means selection was moved during composition, but composition did not end properly.
+					// Filler should be removed in such cases so it will be further handled via normal flow.
+					this._removeInlineFiller();
+				}
+			}
 		}
-		// Otherwise, if it's needed, create it at the selection position.
-		else if ( this._needsInlineFillerAtSelection() ) {
-			inlineFillerPosition = this.selection.getFirstPosition();
 
-			// Do not use `markToSync` so it will be added even if the parent is already added.
-			this.markedChildren.add( inlineFillerPosition.parent );
+		if ( !inlineFillerPosition ) {
+			// If we've got the filler, let's try to guess its position in the view.
+			if ( this._inlineFiller ) {
+				inlineFillerPosition = this._getInlineFillerPosition();
+			}
+			// Otherwise, if it's needed, create it at the selection position.
+			else if ( this._needsInlineFillerAtSelection() ) {
+				inlineFillerPosition = this.selection.getFirstPosition();
+
+				// Do not use `markToSync` so it will be added even if the parent is already added.
+				this.markedChildren.add( inlineFillerPosition.parent );
+			}
 		}
 
 		for ( const element of this.markedAttributes ) {
@@ -218,7 +239,6 @@ export default class Renderer {
 				this._updateText( node, { inlineFillerPosition } );
 			}
 		}
-
 		// Check whether the inline filler is required and where it really is in the DOM.
 		// At this point in most cases it will be in the DOM, but there are exceptions.
 		// For example, if the inline filler was deep in the created DOM structure, it will not be created.
@@ -286,7 +306,7 @@ export default class Renderer {
 	 * Gets the position of the inline filler based on the current selection.
 	 * Here, we assume that we know that the filler is needed and
 	 * {@link #_isSelectionInInlineFiller is at the selection position}, and, since it's needed,
-	 * it's somewhere at the selection postion.
+	 * it's somewhere at the selection position.
 	 *
 	 * Note: we cannot restore the filler position based on the filler's DOM text node, because
 	 * when this method is called (before rendering) the bindings will often be broken. View to DOM
@@ -306,14 +326,31 @@ export default class Renderer {
 	}
 
 	/**
+	 * Gets the position of the inline filler based on the filler's DOM text node.
+	 *
+	 * Note: Here, we assume that {@link #_inlineFiller inline filler} exists. In most cases
+	 * {@link #_getInlineFillerPosition} should be used to get inline filler position which
+	 * will be valid after rendering. This method is used only in special cases (for example
+	 * when we know only selection changed so bindings will not get outdated).
+	 *
+	 * @private
+	 * @returns {module:engine/view/position~Position}
+	 */
+	_getExistingInlineFillerPosition() {
+		return this.domConverter.domPositionToView( this._inlineFiller.parentElement, 0 );
+	}
+
+	/**
 	 * Returns `true` if the selection hasn't left the inline filler's text node.
 	 * If it is `true` it means that the filler had been added for a reason and the selection does not
 	 * left the filler's text node. E.g. the user can be in the middle of a composition so it should not be touched.
 	 *
 	 * @private
+	 * @param {Boolean} [withText=true] Whether to check if selection is inside text node containing inline filler only
+	 * or additional text is also allowed.
 	 * @returns {Boolean} True if the inline filler and selection are in the same place.
 	 */
-	_isSelectionInInlineFiller() {
+	_isSelectionInInlineFiller( withText = true ) {
 		if ( this.selection.rangeCount != 1 || !this.selection.isCollapsed ) {
 			return false;
 		}
@@ -330,8 +367,44 @@ export default class Renderer {
 		const selectionPosition = this.selection.getFirstPosition();
 		const position = this.domConverter.viewPositionToDom( selectionPosition );
 
-		if ( position && isText( position.parent ) && startsWithFiller( position.parent ) ) {
+		if ( position && isText( position.parent ) ) {
+			return withText ? startsWithFiller( position.parent ) : isInlineFiller( position.parent );
+		}
+
+		return false;
+	}
+
+	/**
+	 * Checks if the selection is in the same node in which current composition
+	 * was started based on inline filler position.
+	 *
+	 * Note: we assume that inline filler exists and composition takes place.
+	 *
+	 * @private
+	 * @returns {Boolean}
+	 */
+	_isValidCompositionSelection() {
+		if ( this.selection.rangeCount != 1 ) {
+			return false;
+		}
+
+		const position = this.domConverter.viewPositionToDom( this.selection.getFirstPosition() );
+
+		if ( !position ) {
+			// Position is not mapped properly when new inline element is inserted:
+			//
+			//		<p>foo<b>{}</b></p> -> <p>foo<b><i>{}</i></b></p>
+			//
+			// or new character in the empty inline element is inserted:
+			//
+			//		<p>foo<b>{}</b></p> -> <p>foo<b>a{}</b></p>
+			//
+			// so we assume it is valid position during composition.
 			return true;
+		} else if ( position && isText( position.parent ) ) {
+			// If during composition there is an inline filler present, but in another
+			// node it means the composition was started in that node and the selection is in different one.
+			return this._isSelectionInInlineFiller();
 		}
 
 		return false;
