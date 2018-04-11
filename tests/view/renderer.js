@@ -925,7 +925,8 @@ describe( 'Renderer', () => {
 			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
 		} );
 
-		// Test for the same edge case as test above, but during composition.
+		// Test for the same edge case as test above, but during composition: "Test for an edge case
+		// in the _isSelectionInInlineFiller which can be triggered like in one of ckeditor/ckeditor5-typing#59 automated tests."
 		it( 'should not break when selection is moved to a new element during composition, when filler exists', () => {
 			// Step 1: <p>bar<b>"FILLER{}"</b></p>
 			const { view: viewP, selection: newSelection } = parse( '<container:p>bar<attribute:b>[]</attribute:b></container:p>' );
