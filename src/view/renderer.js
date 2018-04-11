@@ -204,9 +204,9 @@ export default class Renderer {
 					//
 					// 		<p>text{}</p><p>FILLERtext</p> or <p>{}</p><p>FILLERtext</p>
 					//
-					// when selection was moved to the different node (without filler) during composition.
-					// It means selection was moved during composition, but composition did not end properly.
-					// Filler should be removed in such cases so it will be further handled via normal flow.
+					// when selection was moved to a different node (without inline filler) during composition.
+					// It means selection was moved during composition, but `compositionend` event was not fired
+					// properly. Filler should be removed in such cases so it will be further handled via normal flow.
 					this._removeInlineFiller();
 				}
 			}
