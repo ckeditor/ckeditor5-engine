@@ -660,17 +660,10 @@ describe( 'Renderer', () => {
 			renderer.markToSync( 'children', viewRoot );
 			renderer.render();
 
-			expect( domRoot.childNodes.length ).to.equal( 1 );
-			expect( domRoot.childNodes[ 0 ].tagName.toLowerCase() ).to.equal( 'p' );
-
 			const domP = domRoot.childNodes[ 0 ];
 
-			expect( domP.childNodes.length ).to.equal( 2 );
-			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
-			expect( domP.childNodes[ 1 ].tagName.toLowerCase() ).to.equal( 'b' );
-			expect( domP.childNodes[ 1 ].childNodes.length ).to.equal( 1 );
+			expect( normalizeHtml( domRoot.innerHTML ) ).to.equal( '<p>foo<b></b></p>' );
 			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
-
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domP.childNodes[ 1 ].childNodes[ 0 ] );
 			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH );
@@ -683,9 +676,6 @@ describe( 'Renderer', () => {
 			renderAndExpectNoChanges( renderer, domRoot );
 
 			// Step 3: <p>foo<b>{}bar</b></p>
-			// We need new text in both DOM and View as `renderer._isSelectionInInlineFillerOnlyNode`
-			// uses `isInlineFiller` which check DOM data (before rendering) so without modifying
-			// DOM it will still hold only inline filler.
 			const domB = domP.childNodes[ 1 ];
 			domB.childNodes[ 0 ].data += 'bar';
 
@@ -703,12 +693,8 @@ describe( 'Renderer', () => {
 			renderer.markToSync( 'children', viewB );
 			renderer.render();
 
-			expect( domP.childNodes.length ).to.equal( 2 );
-			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
-			expect( domP.childNodes[ 1 ].tagName.toLowerCase() ).to.equal( 'b' );
-			expect( domP.childNodes[ 1 ].childNodes.length ).to.equal( 1 );
+			expect( normalizeHtml( domRoot.innerHTML ) ).to.equal( '<p>foo<b>bar</b></p>' );
 			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( 'bar' );
-
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domP.childNodes[ 1 ].childNodes[ 0 ] );
 			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( 3 );
@@ -779,6 +765,46 @@ describe( 'Renderer', () => {
 			const viewText = new ViewText( 'x' );
 			viewB._appendChild( viewText );
 			selection._setTo( ViewRange.createFromParentsAndOffsets( viewText, 1, viewText, 1 ) );
+
+			renderer.markToSync( 'children', viewB );
+			renderer.render();
+
+			// Step 3: Remove selection from the view.
+			selection._setTo( null );
+
+			renderer.render();
+
+			expect( domP.childNodes.length ).to.equal( 2 );
+			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
+			expect( domP.childNodes[ 1 ].tagName.toLowerCase() ).to.equal( 'b' );
+			expect( domP.childNodes[ 1 ].childNodes.length ).to.equal( 1 );
+			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( 'x' );
+		} );
+
+		it( 'should remove filler when text is added and selection removed (changes both in View and DOM)', () => {
+			// Step 1: <p>foo<b>"FILLER{}"</b></p>
+			const { view: viewP, selection: newSelection } = parse( '<container:p>foo<attribute:b>[]</attribute:b></container:p>' );
+			const viewB = viewP.getChild( 1 );
+			viewRoot._appendChild( viewP );
+			selection._setTo( newSelection );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			const domP = domRoot.childNodes[ 0 ];
+			expect( domP.childNodes.length ).to.equal( 2 );
+			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
+			expect( domP.childNodes[ 1 ].tagName.toLowerCase() ).to.equal( 'b' );
+			expect( domP.childNodes[ 1 ].childNodes.length ).to.equal( 1 );
+			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+
+			// Step 2: Add text node.
+			const viewText = new ViewText( 'x' );
+			viewB._appendChild( viewText );
+			selection._setTo( ViewRange.createFromParentsAndOffsets( viewText, 1, viewText, 1 ) );
+
+			const domB = domP.childNodes[ 1 ].childNodes[ 0 ];
+			domB.data += 'x';
 
 			renderer.markToSync( 'children', viewB );
 			renderer.render();
@@ -883,6 +909,39 @@ describe( 'Renderer', () => {
 			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
 
 			// Step 2: Move selection to a new attribute element and remove the previous one
+			viewP._removeChildren( 1 ); // Remove <b>.
+
+			const viewI = parse( '<attribute:i></attribute:i>' );
+			viewP._appendChild( viewI );
+
+			selection._setTo( ViewRange.createFromParentsAndOffsets( viewI, 0, viewI, 0 ) );
+
+			renderer.markToSync( 'children', viewP );
+			renderer.render();
+
+			// Step 3: Check whether new filler was created in the <i> element.
+			expect( domP.childNodes.length ).to.equal( 2 );
+			expect( domP.childNodes[ 1 ].tagName.toLowerCase() ).to.equal( 'i' );
+			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+		} );
+
+		// Test for the same edge case as test above, but during composition.
+		it( 'should not break when selection is moved to a new element during composition, when filler exists', () => {
+			// Step 1: <p>bar<b>"FILLER{}"</b></p>
+			const { view: viewP, selection: newSelection } = parse( '<container:p>bar<attribute:b>[]</attribute:b></container:p>' );
+			viewRoot._appendChild( viewP );
+			selection._setTo( newSelection );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			const domP = domRoot.childNodes[ 0 ];
+			expect( domP.childNodes.length ).to.equal( 2 );
+			expect( domP.childNodes[ 1 ].childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+
+			// Step 2: Start composition, move selection to a new attribute element and remove the previous one
+			renderer.isComposing = true;
+
 			viewP._removeChildren( 1 ); // Remove <b>.
 
 			const viewI = parse( '<attribute:i></attribute:i>' );
@@ -1743,8 +1802,8 @@ describe( 'Renderer', () => {
 			);
 		} );
 
-		// Happens for example with `shift + up arrow` during composition on Windows.
-		it( 'should not move/delete inline filler when selection (ranged) changes without compositionend', () => {
+		// Happens when `shift + up` arrow pressed during composition in Chrome on Windows.
+		it( 'should not delete inline filler when selection (ranged) changes without compositionend (filler on end)', () => {
 			const domSelection = document.getSelection();
 
 			// 1. Render <h1>h1</h1><p>foo<b>FILLER{}</b>bar</p>.
@@ -1759,7 +1818,7 @@ describe( 'Renderer', () => {
 
 			expect( normalizeHtml( domRoot.innerHTML ) ).to.equal( '<h1>h1</h1><p>foo<b></b>bar</p>' );
 
-			// 2. Start composition and add text node to both the DOM and the view: <p><b>FILLERbar</b>foo</p>.
+			// 2. Start composition and add text node to both the DOM and the view: <h1>h1</h1><p>foo<b>FILLERbar</b>foo</p>.
 			renderer.isComposing = true;
 
 			const domP = domRoot.childNodes[ 1 ];
@@ -1790,16 +1849,18 @@ describe( 'Renderer', () => {
 			renderer.markToSync( 'children', viewRoot );
 			renderer.render();
 
-			expect( domSelection.rangeCount ).to.equal( 1 );
-			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domH.childNodes[ 0 ] );
-			expect( domSelection.getRangeAt( 0 ).endContainer ).to.equal( domB.childNodes[ 0 ] );
-			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.false;
+			expect( normalizeHtml( domRoot.innerHTML ) ).to.equal( '<h1>h1</h1><p>foo<b>baz</b>bar</p>' );
 			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER + 'baz' );
 			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
 			expect( domH.childNodes[ 0 ].data ).to.equal( 'h1' );
+
+			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domH.childNodes[ 0 ] );
+			expect( domSelection.getRangeAt( 0 ).endContainer ).to.equal( domB.childNodes[ 0 ] );
+			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.false;
 		} );
 
-		it( 'should not move/delete inline filler when selection (collapsed) changes without compositionend', () => {
+		// This is more theoretical situation (should not be reproducible in real world unless composition is broken).
+		it( 'should not delete inline filler when selection (ranged) changes without compositionend (filler inside)', () => {
 			const domSelection = document.getSelection();
 
 			// 1. Render <h1>h1</h1><p>foo<b>FILLER{}</b>bar</p>.
@@ -1814,7 +1875,65 @@ describe( 'Renderer', () => {
 
 			expect( normalizeHtml( domRoot.innerHTML ) ).to.equal( '<h1>h1</h1><p>foo<b></b>bar</p>' );
 
-			// 2. Start composition and add text node to both the DOM and the view: <p><b>FILLERbar</b>foo</p>.
+			// 2. Start composition and add text node to both the DOM and the view: <h1>h1</h1><p>foo<b>FILLERbar</b>foo</p>.
+			renderer.isComposing = true;
+
+			const domP = domRoot.childNodes[ 1 ];
+			const domB = domP.childNodes[ 1 ];
+
+			domB.childNodes[ 0 ].data += 'baz';
+
+			const viewP = viewRoot.getChild( 1 );
+			const viewB = viewP.getChild( 1 );
+
+			viewB._appendChild( new ViewText( 'baz' ) );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			const domH = domRoot.childNodes[ 0 ];
+
+			expect( normalizeHtml( domRoot.innerHTML ) ).to.equal( '<h1>h1</h1><p>foo<b>baz</b>bar</p>' );
+			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER + 'baz' );
+			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
+			expect( domP.childNodes[ 2 ].data ).to.equal( 'bar' );
+			expect( domH.childNodes[ 0 ].data ).to.equal( 'h1' );
+
+			// 3. Move selection (ranged) and render to check if filler stays untouched.
+			const viewH = viewRoot.getChild( 0 );
+
+			selection._setTo( ViewRange.createFromParentsAndOffsets( viewH.getChild( 0 ), 1, viewP.getChild( 2 ), 1 ) );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER + 'baz' );
+			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
+			expect( domP.childNodes[ 2 ].data ).to.equal( 'bar' );
+			expect( domH.childNodes[ 0 ].data ).to.equal( 'h1' );
+
+			expect( domSelection.rangeCount ).to.equal( 1 );
+			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domH.childNodes[ 0 ] );
+			expect( domSelection.getRangeAt( 0 ).endContainer ).to.equal( domP.childNodes[ 2 ] );
+			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.false;
+		} );
+
+		it( 'should delete inline filler when selection (collapsed) changes without compositionend (inline element)', () => {
+			const domSelection = document.getSelection();
+
+			// 1. Render <h1>h1</h1><p>foo<b>FILLER{}</b>bar</p>.
+			const { view: viewContent, selection: newSelection } = parse(
+				'<container:h1>h1</container:h1><container:p>foo<attribute:b>[]</attribute:b>bar</container:p>' );
+
+			viewRoot._appendChild( viewContent );
+			selection._setTo( newSelection );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			expect( normalizeHtml( domRoot.innerHTML ) ).to.equal( '<h1>h1</h1><p>foo<b></b>bar</p>' );
+
+			// 2. Start composition and add text node to both the DOM and the view: <h1>h1</h1><p>foo<b></b>bar</p>.
 			renderer.isComposing = true;
 
 			const domP = domRoot.childNodes[ 1 ];
@@ -1837,7 +1956,7 @@ describe( 'Renderer', () => {
 			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
 			expect( domH.childNodes[ 0 ].data ).to.equal( 'h1' );
 
-			// 3. Collapse selection and render to check if filler stays untouched.
+			// 3. Collapse selection move to another node and render to check if filler is removed.
 			const viewH = viewRoot.getChild( 0 );
 
 			selection._setTo( ViewRange.createFromParentsAndOffsets( viewH.getChild( 0 ), 1, viewH.getChild( 0 ), 1 ) );
@@ -1845,12 +1964,67 @@ describe( 'Renderer', () => {
 			renderer.markToSync( 'children', viewRoot );
 			renderer.render();
 
+			expect( domB.childNodes[ 0 ].data ).to.equal( 'baz' );
+			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
+			expect( domH.childNodes[ 0 ].data ).to.equal( 'h1' );
+
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domRoot.childNodes[ 0 ].childNodes[ 0 ] );
 			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
-			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER + 'baz' );
+		} );
+
+		it( 'should delete inline filler when selection (collapsed) changes without compositionend (block element)', () => {
+			const domSelection = document.getSelection();
+
+			// 1. Render <h1></h1><p>foo<b>FILLER{}</b></p>.
+			const { view: viewContent, selection: newSelection } = parse(
+				'<container:h1></container:h1><container:p>foo<attribute:b>[]</attribute:b></container:p>' );
+
+			viewRoot._appendChild( viewContent );
+			selection._setTo( newSelection );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			// 2. Start composition and add text node to both the DOM and the view: <h1></h1><p>foo<b></b>bar</p>.
+			renderer.isComposing = true;
+
+			const domP = domRoot.childNodes[ 1 ];
+			const domB = domP.childNodes[ 1 ];
+
+			domB.childNodes[ 0 ].data += 'baz';
+
+			const viewP = viewRoot.getChild( 1 );
+			const viewB = viewP.getChild( 1 );
+
+			viewB._appendChild( new ViewText( 'baz' ) );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			const domH = domRoot.childNodes[ 0 ];
+
+			expect( domH.childNodes.length ).to.equal( 1 );
+			expect( domH.childNodes[ 0 ].tagName.toLowerCase() ).to.equal( 'br' );
 			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
-			expect( domH.childNodes[ 0 ].data ).to.equal( 'h1' );
+			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER + 'baz' );
+
+			// 3. Collapse selection move to another node and render to check if filler is removed.
+			const viewH = viewRoot.getChild( 0 );
+
+			selection._setTo( ViewRange.createFromParentsAndOffsets( viewH, 0, viewH, 0 ) );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			expect( domH.childNodes.length ).to.equal( 1 );
+			expect( domH.childNodes[ 0 ].tagName.toLowerCase() ).to.equal( 'br' );
+			expect( domP.childNodes[ 0 ].data ).to.equal( 'foo' );
+			expect( domB.childNodes[ 0 ].data ).to.equal( 'baz' );
+
+			expect( domSelection.rangeCount ).to.equal( 1 );
+			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domRoot.childNodes[ 0 ] );
+			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
 		} );
 
 		it( 'should not remove inline filler during composition', () => {
@@ -1906,6 +2080,56 @@ describe( 'Renderer', () => {
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domB.childNodes[ 0 ] );
 			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH + 3 );
 			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
+		} );
+
+		// This is more theoretical situation which should not have place (unless ofc we break composition which may happen).
+		it( 'should remove inline filler during composition if selection lost', () => {
+			const domSelection = document.getSelection();
+
+			// 1. Render <p><b>FILLER{}</b>foo</p>.
+			const { view: viewP, selection: newSelection } = parse(
+				'<container:p><attribute:b>[]</attribute:b>foo</container:p>' );
+
+			viewRoot._appendChild( viewP );
+			selection._setTo( newSelection );
+
+			renderer.markToSync( 'children', viewRoot );
+			renderer.render();
+
+			// 2. Check the DOM.
+			const domP = domRoot.childNodes[ 0 ];
+			const domB = domP.childNodes[ 0 ];
+
+			expect( normalizeHtml( domRoot.innerHTML ) ).to.equal( '<p><b></b>foo</p>' );
+			expect( domB.childNodes[ 0 ].data ).to.equal( INLINE_FILLER );
+
+			expect( domSelection.rangeCount ).to.equal( 1 );
+			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domB.childNodes[ 0 ] );
+			expect( domSelection.getRangeAt( 0 ).startOffset ).to.equal( INLINE_FILLER_LENGTH );
+			expect( domSelection.getRangeAt( 0 ).collapsed ).to.be.true;
+
+			// 3. Start composition and add text node to both the DOM and the
+			// view: <p><b>FILLERbar</b>foo</p> to check if filler is preserved.
+			renderer.isComposing = true;
+
+			const viewB = viewRoot.getChild( 0 ).getChild( 0 );
+
+			const viewText = new ViewText( 'bar' );
+			viewB._appendChild( viewText );
+			selection._setTo( ViewRange.createFromParentsAndOffsets( viewText, 3, viewText, 3 ) );
+
+			renderer.markToSync( 'children', viewP );
+			renderer.render();
+
+			// 4. Remove selection from the view and DOM.
+			selection._setTo( null );
+			domSelection.removeAllRanges();
+
+			renderer.render();
+
+			expect( normalizeHtml( domRoot.innerHTML ) ).to.equal( '<p><b>bar</b>foo</p>' );
+			expect( domB.childNodes[ 0 ].data ).to.equal( 'bar' );
+			expect( domSelection.rangeCount ).to.equal( 0 );
 		} );
 
 		it( 'should remove inline filler after composition', () => {
