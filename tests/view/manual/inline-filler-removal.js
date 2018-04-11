@@ -17,20 +17,28 @@ ClassicEditor
 	.then( editor => {
 		window.editor = editor;
 
-		let fillerRemoval = true;
+		let isComposing = true;
 
 		// Prevent stealing the focus.
-		document.querySelector( '#filler-removal-toggle' ).addEventListener( 'mousedown', evt => {
+		document.querySelector( '#composition-toggle' ).addEventListener( 'mousedown', evt => {
 			evt.preventDefault();
 		} );
 
-		document.querySelector( '#filler-removal-toggle' ).addEventListener( 'click', evt => {
-			editor.editing.view._renderer.isComposing = fillerRemoval;
-			console.log( `Filler removal is now ${ fillerRemoval ? 'blocked' : 'allowed' }.` );
-			fillerRemoval = !fillerRemoval;
+		document.querySelector( '#composition-toggle' ).addEventListener( 'click', evt => {
+			editor.editing.view._renderer.isComposing = isComposing;
+			console.log( `Composition is ${ isComposing ? 'on' : 'off' } (toggle button).` );
+			isComposing = !isComposing;
 
 			// Prevent stealing the focus.
 			evt.preventDefault();
+		} );
+
+		editor.editing.view.document.on( 'compositionstart', () => {
+			console.log( 'Composition is on (native event).' );
+		} );
+
+		editor.editing.view.document.on( 'compositionend', () => {
+			console.log( 'Composition is off (native event).' );
 		} );
 	} )
 	.catch( err => {
