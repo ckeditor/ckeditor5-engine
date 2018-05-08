@@ -1,6 +1,26 @@
 Changelog
 =========
 
+## [10.0.0](https://github.com/ckeditor/ckeditor5-engine/compare/v1.0.0-beta.4...v10.0.0) (2018-04-25)
+
+### Other changes
+
+* Changed the license to GPL2+ only. See [ckeditor/ckeditor5#991](https://github.com/ckeditor/ckeditor5/issues/991). ([af46d16](https://github.com/ckeditor/ckeditor5-engine/commit/af46d16))
+
+### BREAKING CHANGES
+
+* The license under which CKEditor 5 is released has been changed from a triple GPL, LGPL and MPL license to a GPL2+ only. See [ckeditor/ckeditor5#991](https://github.com/ckeditor/ckeditor5/issues/991) for more information.
+
+
+## [1.0.0-beta.4](https://github.com/ckeditor/ckeditor5-engine/compare/v1.0.0-beta.2...v1.0.0-beta.4) (2018-04-19)
+
+### Bug fixes
+
+* `model.Differ` should handle attribute change transformation correctly. Closes [#1404](https://github.com/ckeditor/ckeditor5-engine/issues/1404). ([3769a02](https://github.com/ckeditor/ckeditor5-engine/commit/3769a02))
+* `view.Writer` should deeply add and remove `view.AttributeElement`s to/from their clone groups. Closes [#1401](https://github.com/ckeditor/ckeditor5-engine/issues/1401). ([e6bb59b](https://github.com/ckeditor/ckeditor5-engine/commit/e6bb59b))
+* The `bindTwoStepCaretToAttribute()` behavioral helper should not fail in more complex cases. Closes [#1301](https://github.com/ckeditor/ckeditor5-engine/issues/1301). Closes [#1346](https://github.com/ckeditor/ckeditor5-engine/issues/1346). Closes [ckeditor/ckeditor5#937](https://github.com/ckeditor/ckeditor5/issues/937).  Closes [ckeditor/ckeditor5#922](https://github.com/ckeditor/ckeditor5/issues/922).  Closes [ckeditor/ckeditor5#946](https://github.com/ckeditor/ckeditor5/issues/946). ([f0fd2d8](https://github.com/ckeditor/ckeditor5-engine/commit/f0fd2d8))
+
+
 ## [1.0.0-beta.2](https://github.com/ckeditor/ckeditor5-engine/compare/v1.0.0-beta.1...v1.0.0-beta.2) (2018-04-10)
 
 ### Features
