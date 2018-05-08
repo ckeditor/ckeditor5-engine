@@ -195,7 +195,7 @@ export default class Renderer {
 				// When selection has 0 ranges, `isCollapsed` returns false, but here
 				// we are only interested in non-collapsed selection (so with at least 1 range).
 				if ( !this.selection.isCollapsed && this.selection.rangeCount > 0 ) {
-					// During composition selection may be extended and its start/end moved to different text
+					// During composition selection may be extended and its start/end moved to a different text
 					// node (using 'shift + up' in Chrome on Windows during composition). In such situations
 					// filler should not be moved or deleted (because it is possible to continue composing).
 					inlineFillerPosition = this._getExistingInlineFillerPosition();
@@ -204,9 +204,8 @@ export default class Renderer {
 					//
 					// 		<p>text{}</p><p>FILLERtext</p> or <p>{}</p><p>FILLERtext</p>
 					//
-					// when selection was moved to a different node (without inline filler) during composition.
-					// It means selection was moved during composition, but `compositionend` event was not fired
-					// properly. Filler should be removed in such cases so it will be further handled via normal flow.
+					// when collapsed selection was moved to a different node (without inline filler) during composition.
+					// It means `compositionend` event was not fired properly and inline filler should be removed.
 					this._removeInlineFiller();
 				}
 			}
@@ -245,20 +244,27 @@ export default class Renderer {
 		// Similarly, if it was removed at the beginning of this function and then neither text nor children were updated,
 		// it will not be present.
 		// Fix those and similar scenarios.
+		this._inlineFiller = null; // Reset filler first.
 		if ( inlineFillerPosition ) {
 			const fillerDomPosition = this.domConverter.viewPositionToDom( inlineFillerPosition );
-			const domDocument = fillerDomPosition.parent.ownerDocument;
 
-			if ( !startsWithFiller( fillerDomPosition.parent ) ) {
-				// Filler has not been created at filler position. Create it now.
-				this._inlineFiller = this._addInlineFiller( domDocument, fillerDomPosition.parent, fillerDomPosition.offset );
-			} else {
-				// Filler has been found, save it.
-				this._inlineFiller = fillerDomPosition.parent;
+			// `fillerDomPosition` may be null during composition in situations like:
+			//
+			//		<p>Foo Bar<b>FILLER{}</b></p> -> 'Shift' + 'Arrow up' -> <p>{Foo Bar}</p>
+			//
+			// because `inlineFillerPosition` points to `AttributeElement` (`strong`) which was removed during rendering.
+			// It means inline filler is already removed from DOM so `this._inlineFiller` should be null.
+			if ( fillerDomPosition ) {
+				const domDocument = fillerDomPosition.parent.ownerDocument;
+
+				if ( !startsWithFiller( fillerDomPosition.parent ) ) {
+					// Filler has not been created at filler position. Create it now.
+					this._inlineFiller = this._addInlineFiller( domDocument, fillerDomPosition.parent, fillerDomPosition.offset );
+				} else {
+					// Filler has been found, save it.
+					this._inlineFiller = fillerDomPosition.parent;
+				}
 			}
-		} else {
-			// There is no filler needed.
-			this._inlineFiller = null;
 		}
 
 		this._updateSelection();
@@ -337,7 +343,12 @@ export default class Renderer {
 	 * @returns {module:engine/view/position~Position}
 	 */
 	_getExistingInlineFillerPosition() {
-		return this.domConverter.domPositionToView( this._inlineFiller.parentElement, 0 );
+		let fillerPosition = this.domConverter.domPositionToView( this._inlineFiller, 0 );
+		if ( fillerPosition.parent.is( 'text' ) ) {
+			const textNode = fillerPosition.parent;
+			fillerPosition = new ViewPosition( textNode.parent, textNode.index );
+		}
+		return fillerPosition;
 	}
 
 	/**
