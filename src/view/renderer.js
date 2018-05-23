@@ -90,17 +90,10 @@ export default class Renderer {
 		this.selection = selection;
 
 		/**
-		 * The text node in which the inline filler was rendered.
-		 *
-		 * @private
-		 * @member {Text}
-		 */
-		this._inlineFiller = null;
-
-		/**
 		 * Indicates whether the view document is focused and selection can be rendered. Selection will not be rendered if
 		 * this is set to `false`.
 		 *
+		 * @readonly
 		 * @member {Boolean}
 		 */
 		this.isFocused = false;
@@ -108,9 +101,18 @@ export default class Renderer {
 		/**
 		 * Indicates whether text composition takes place in the document.
 		 *
+		 * @readonly
 		 * @member {Boolean}
 		 */
 		this.isComposing = false;
+
+		/**
+		 * The text node in which the inline filler was rendered.
+		 *
+		 * @private
+		 * @member {Text}
+		 */
+		this._inlineFiller = null;
 
 		/**
 		 * DOM element containing fake selection.
@@ -188,25 +190,28 @@ export default class Renderer {
 		let inlineFillerPosition;
 
 		if ( this._inlineFiller ) {
+			// There was inline filler rendered in the DOM but it's not at the selection position any more, so we can remove
+			// it if not during composition (cause even if it's needed, it must be placed in another location).
 			if ( !this.isComposing && !this._isSelectionInInlineFiller( false ) ) {
-				// There was inline filler rendered in the DOM but it's not at the selection position any more, so we can remove
-				// it if not during composition (cause even if it's needed, it must be placed in another location).
 				this._removeInlineFiller();
 			} else if ( this.isComposing ) {
 				// When selection has 0 ranges, `isCollapsed` returns false, but here
 				// we are only interested in non-collapsed selection (so with at least 1 range).
-				if ( !this.selection.isCollapsed && this.selection.rangeCount > 0 ) {
-					// During composition selection may be extended and its start/end moved to a different text
-					// node (using 'shift + up' in Chrome on Windows during composition). In such situations
-					// filler should not be moved or deleted (because it is possible to continue composing).
+				const isSelectionNotCollapsed = !this.selection.isCollapsed && this.selection.rangeCount > 0;
+
+				// During composition selection may be extended and its start/end moved to a different text
+				// node (using 'shift + up' in Chrome on Windows during composition). In such situations
+				// filler should not be moved or deleted (because it is possible to continue composing).
+				if ( isSelectionNotCollapsed ) {
 					inlineFillerPosition = this._getExistingInlineFillerPosition();
-				} else if ( !this._isValidCompositionSelection() ) {
-					// Check for situations like:
-					//
-					// 		<p>text{}</p><p>FILLERtext</p> or <p>{}</p><p>FILLERtext</p>
-					//
-					// when collapsed selection was moved to a different node (without inline filler) during composition.
-					// It means `compositionend` event was not fired properly and inline filler should be removed.
+				}
+				// Check for situations like:
+				//
+				// <p>text{}</p><p>FILLERtext</p> or <p>{}</p><p>FILLERtext</p>
+				//
+				// when collapsed selection was moved to a different node (without inline filler) during composition.
+				// It means `compositionend` event was not fired properly and inline filler should be removed.
+				else if ( !this._isValidCompositionSelection() ) {
 					this._removeInlineFiller();
 				}
 			}
@@ -239,6 +244,7 @@ export default class Renderer {
 				this._updateText( node, { inlineFillerPosition } );
 			}
 		}
+
 		// Check whether the inline filler is required and where it really is in the DOM.
 		// At this point in most cases it will be in the DOM, but there are exceptions.
 		// For example, if the inline filler was deep in the created DOM structure, it will not be created.
@@ -246,6 +252,7 @@ export default class Renderer {
 		// it will not be present.
 		// Fix those and similar scenarios.
 		this._inlineFiller = null; // Reset filler first.
+
 		if ( inlineFillerPosition ) {
 			const fillerDomPosition = this.domConverter.viewPositionToDom( inlineFillerPosition );
 
