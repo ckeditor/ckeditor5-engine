@@ -12,11 +12,12 @@ import Position from '../../../../src/model/position';
 import Range from '../../../../src/model/range';
 
 export class Client {
-	constructor() {
+	constructor( name ) {
 		this.editor = null;
 		this.document = null;
 		this.syncedVersion = 0;
 		this.orderNumber = null;
+		this.name = name;
 	}
 
 	init() {
@@ -34,6 +35,17 @@ export class Client {
 		setData( this.editor.model, initModelString );
 
 		this.syncedVersion = this.document.version;
+	}
+
+	setSelection( start, end ) {
+		if ( !end ) {
+			end = start.slice();
+		}
+
+		const startPos = this._getPosition( start );
+		const endPos = this._getPosition( end );
+
+		this._processAction( 'setSelection', new Range( startPos, endPos ) );
 	}
 
 	insert( itemString, path ) {
@@ -64,7 +76,7 @@ export class Client {
 		this._processAction( 'move', new Range( startPos, endPos ), targetPos );
 	}
 
-	rename( path, newName ) {
+	rename( newName, path ) {
 		const pos = this._getPosition( path, 'beforeParent' );
 		const element = pos.nodeAfter;
 
@@ -186,8 +198,8 @@ export class Client {
 		bufferedDeltas.add( { deltas, client: this } );
 	}
 
-	static get() {
-		const client = new Client();
+	static get( clientName ) {
+		const client = new Client( clientName );
 		client.orderNumber = clients.size;
 
 		clients.add( client );
@@ -240,7 +252,7 @@ export function syncClients() {
 
 export function expectClients( expectedModelString ) {
 	for ( const client of clients ) {
-		expect( client.getModelString() ).to.equal( expectedModelString );
+		expect( client.getModelString(), client.name + ' content' ).to.equal( expectedModelString );
 	}
 
 	let syncedVersion = null;
@@ -251,7 +263,7 @@ export function expectClients( expectedModelString ) {
 			continue;
 		}
 
-		expect( client.syncedVersion ).to.equal( syncedVersion );
+		expect( client.syncedVersion, client.name + ' version' ).to.equal( syncedVersion );
 	}
 }
 
