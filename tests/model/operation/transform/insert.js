@@ -97,22 +97,5 @@ describe.only( 'transform', () => {
 				);
 			} );
 		} );
-		
-		describe( 'by move', () => {
-			it( 'elements in different paths', () => {
-				john.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
-				kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
-
-				john.move( [ 1, 0 ], [ 0, 0 ], [ 0, 3 ] );
-				kate.move( [ 0, 0 ], [ 1, 0 ], [ 1, 3 ] );
-
-				syncClients();
-
-				expectClients(
-					'<paragraph>Bar</paragraph>' +
-					'<paragraph>Foo</paragraph>'
-				)
-			} );
-		} );
 	} );
 } );
