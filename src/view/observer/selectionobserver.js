@@ -102,7 +102,7 @@ export default class SelectionObserver extends Observer {
 		}
 
 		this.listenTo( domDocument, 'selectionchange', () => {
-			this._handleSelectionChange( domDocument );
+			this._handleSelectionChange( domElement );
 		} );
 
 		this._documents.add( domDocument );
@@ -124,13 +124,10 @@ export default class SelectionObserver extends Observer {
 	 * and {@link module:engine/view/document~Document#event:selectionChangeDone} when selection stop changing.
 	 *
 	 * @private
-	 * @param {Document} domDocument DOM document.
+	 * @param {Element} domElement DOM element.
 	 */
-	_handleSelectionChange( domDocument ) {
-		// Selection is handled when document is not focused but is read-only. This is because in read-only
-		// mode contenteditable is set as false and editor won't receive focus but we still need to know
-		// selection position.
-		if ( !this.isEnabled || ( !this.document.isFocused && !this.document.isReadOnly ) ) {
+	_handleSelectionChange( domElement ) {
+		if ( !this.isEnabled ) {
 			return;
 		}
 
@@ -139,7 +136,12 @@ export default class SelectionObserver extends Observer {
 
 		// If there were mutations then the view will be re-rendered by the mutation observer and selection
 		// will be updated, so selections will equal and event will not be fired, as expected.
-		const domSelection = domDocument.defaultView.getSelection();
+		const domSelection = domElement.ownerDocument.defaultView.getSelection();
+
+		if ( !domSelection.containsNode( domElement, true ) ) {
+			return;
+		}
+
 		const newViewSelection = this.domConverter.domSelectionToView( domSelection );
 
 		if ( this.selection.isEqual( newViewSelection ) && this.domConverter.isDomSelectionCorrect( domSelection ) ) {
