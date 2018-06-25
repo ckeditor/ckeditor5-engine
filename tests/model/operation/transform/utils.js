@@ -221,9 +221,10 @@ export function syncClients() {
 				continue;
 			}
 
-			switchDeltasRoots( remoteDeltas, client.document.getRoot() );
-
 			const clientDeltas = Array.from( client.document.history.getDeltas( client.syncedVersion ) );
+
+			switchDeltasRoots( remoteDeltas, client.document.getRoot() );
+			switchDeltasRoots( clientDeltas, client.document.getRoot() );
 
 			let remoteDeltasTransformed = null;
 

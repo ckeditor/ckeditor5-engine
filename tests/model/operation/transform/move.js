@@ -1,6 +1,6 @@
 import { Client, syncClients, expectClients } from './utils.js';
 
-describe( 'transform', () => {
+describe.only( 'transform', () => {
 	let john, kate;
 
 	beforeEach( () => {
@@ -14,14 +14,14 @@ describe( 'transform', () => {
 		return Promise.all( [ john.destroy(), kate.destroy() ] );
 	} );
 
-  describe( 'move', () => {
+	describe( 'move', () => {
 		describe( 'by move', () => {
 			it( 'text in same path #1', () => {
-				john.setData( '<paragraph>Foo Bar</paragraph>' );
-				kate.setData( '<paragraph>Foo Bar</paragraph>' );
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
-				john.move( [ 0, 4 ], [ 0, 0 ], [ 0, 3 ] );
-				kate.move( [ 0, 0 ], [ 0, 4 ], [ 0, 7 ] );
+				john.move( [ 0, 4 ] );
+				kate.move( [ 0, 0 ] );
 
 				syncClients();
 
