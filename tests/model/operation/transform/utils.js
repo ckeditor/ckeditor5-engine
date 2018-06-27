@@ -106,7 +106,7 @@ export class Client {
 		if ( this.editor.model.markers.has( name ) ) {
 			actionName = 'updateMarker';
 		} else {
-			actionName = 'setMarker';
+			actionName = 'addMarker';
 		}
 
 		const range = new Range( startPos, endPos );

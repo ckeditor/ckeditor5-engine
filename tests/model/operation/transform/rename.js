@@ -182,5 +182,91 @@ describe.only( 'transform', () => {
 				);
 			} );
 		} );
+
+		it( 'element while wrapping into blockquote in same path', () => {
+			john.setData( '<paragraph>Foo</paragraph>' );
+			john.setSelection( [ 0, 1 ] );
+
+			kate.setData( '[<paragraph>Foo</paragraph>]' );
+
+			john.rename( 'heading1' );
+			kate.wrap( 'blockQuote' );
+
+			syncClients();
+
+			expectClients(
+				'<blockQuote><heading1>Foo</heading1></blockQuote>'
+			);
+		} );
+
+		it( 'element while splitting in same path', () => {
+			john.setData( '<paragraph>Foo Bar</paragraph>' );
+			john.setSelection( [ 0, 0 ] );
+
+			kate.setData( '<paragraph>Foo Bar</paragraph>' );
+			kate.setSelection( [ 0, 4 ] );
+
+			john.rename( 'heading1' );
+			kate.split();
+
+			syncClients();
+
+			expectClients(
+				'<heading1>Foo </heading1>' +
+				'<heading1>Bar</heading1>'
+			);
+		} );
+
+		it( 'element while adding attribute in same path', () => {
+			john.setData( '<paragraph>Foo Bar</paragraph>' );
+			john.setSelection( [ 0, 0 ] );
+
+			kate.setData( '<paragraph>Foo Bar</paragraph>' );
+			kate.setSelection( [ 0, 0 ], [ 0, 7 ] );
+
+			john.rename( 'heading1' );
+			kate.setAttribute( 'bold', 'true' );
+
+			syncClients();
+
+			expectClients(
+				'<heading1><$text bold="true">Foo Bar</$text></heading1>'
+			);
+		} );
+
+		it( 'element while splitting element in same path, then undo', () => {
+			john.setData( '<paragraph>Foo Bar</paragraph>' );
+			john.setSelection( [ 0, 0 ] );
+
+			kate.setData( '<paragraph>Foo Bar</paragraph>' );
+			kate.setSelection( [ 0, 4 ] );
+
+			john.rename( 'heading1' );
+			kate.split();
+			john.undo();
+			syncClients();
+
+			expectClients(
+				'<paragraph>Foo </paragraph>' +
+				'<paragraph>Bar</paragraph>'
+			);
+		} );
+
+		it( 'element while removing nodes in same path', () => {
+			john.setData( '<paragraph>Foo</paragraph>' );
+			john.setSelection( [ 0, 0 ] );
+
+			kate.setData( '<paragraph>Foo</paragraph>' );
+			kate.setSelection( [ 0, 1 ], [ 0, 2 ] );
+
+			john.rename( 'heading1' );
+			kate.remove();
+
+			syncClients();
+
+			expectClients(
+				'<heading1>F</heading1>'
+			);
+		} );
   } );
 } );
