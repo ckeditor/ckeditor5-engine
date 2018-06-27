@@ -1,6 +1,6 @@
 import { Client, syncClients, expectClients } from './utils.js';
 
-describe( 'transform', () => {
+describe.only( 'transform', () => {
 	let john, kate;
 
 	beforeEach( () => {
@@ -180,6 +180,148 @@ describe( 'transform', () => {
 					'<paragraph>BarFoo Abc</paragraph>'
 				);
 			} );
+		} );
+
+		it.skip( 'element while wrapping element into blockquote in same path', () => {
+			john.setData( '<paragraph>Foo Bar</paragraph>[]' );
+			kate.setData( '[<paragraph>Foo Bar</paragraph>]' );
+
+			john.insert( '<paragraph>Abc</paragraph>' );
+			kate.wrap( 'blockQuote' );
+
+			syncClients();
+
+			expectClients(
+				'<blockQuote>' +
+				'<paragraph>Foo Bar</paragraph>' +
+				'<paragraph>Abc</paragraph>' +
+				'</blockQuote>'
+			);
+		} );
+
+		it( 'text while wrapping element into blockquote in same path', () => {
+			john.setData( '<paragraph>Foo</paragraph>' );
+			john.setSelection( [ 0, 3 ] );
+
+			kate.setData( '[<paragraph>Foo</paragraph>]' );
+
+			john.type( ' Bar' );
+			kate.wrap( 'blockQuote' );
+
+			syncClients();
+
+			expectClients(
+				'<blockQuote>' +
+				'<paragraph>Foo Bar</paragraph>' +
+				'</blockQuote>'
+			);
+		} );
+
+		it( 'element while splitting element in same path', () => {
+			john.setData( '<paragraph>Foo</paragraph>[]' );
+
+			kate.setData( '<paragraph>Foo</paragraph>' );
+			kate.setSelection( [ 0, 1 ] );
+
+			john.insert( '<paragraph>Bar</paragraph>' );
+			kate.split();
+
+			syncClients();
+
+			expectClients(
+				'<paragraph>F</paragraph>' +
+				'<paragraph>Bar</paragraph>' +
+				'<paragraph>oo</paragraph>'
+			);
+		} );
+
+		it( 'text while splitting element in same path', () => {
+			john.setData( '<paragraph>Foo</paragraph>' );
+			john.setSelection( [ 0, 2 ] );
+
+			kate.setData( '<paragraph>Foo</paragraph>' );
+			kate.setSelection( [ 0, 1 ] );
+
+			john.type( 'Bar' );
+			kate.split();
+
+			syncClients();
+
+			expectClients(
+				'<paragraph>F</paragraph>' +
+				'<paragraph>oBaro</paragraph>'
+			);
+		} );
+
+		it( 'element while wrapping element into blockQuote in different paths', () => {
+			john.setData( '<paragraph>Foo</paragraph>[]<paragraph>Bar</paragraph>' );
+			kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+			john.insert( '<paragraph>Abc</paragraph>' );
+			kate.wrap( 'blockQuote' );
+
+			syncClients();
+
+			expectClients(
+				'<paragraph>Foo</paragraph>' +
+				'<paragraph>Abc</paragraph>' +
+				'<blockQuote><paragraph>Bar</paragraph></blockQuote>'
+			);
+		} );
+
+		it( 'element while splitting element in different paths', () => {
+			john.setData( '[]<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
+
+			kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
+			kate.setSelection( [ 1, 1 ] );
+
+			john.insert( '<paragraph>Abc</paragraph>' );
+			kate.split();
+
+			syncClients();
+
+			expectClients(
+				'<paragraph>Abc</paragraph>' +
+				'<paragraph>Foo</paragraph>' +
+				'<paragraph>B</paragraph>' +
+				'<paragraph>ar</paragraph>'
+			);
+		} );
+
+		it( 'text while wrapping element into blockquote in different paths', () => {
+			john.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
+			john.setSelection( [ 1, 3 ] );
+
+			kate.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
+
+			john.type( 'Abc' );
+			kate.wrap( 'blockQuote' );
+
+			syncClients();
+
+			expectClients(
+				'<blockQuote><paragraph>Foo</paragraph></blockQuote>' +
+				'<paragraph>BarAbc</paragraph>'
+			);
+		} );
+
+		it( 'text while splitting element in different paths', () => {
+			john.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
+			john.setSelection( [ 0, 3 ] );
+
+			kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
+			kate.setSelection( [ 1, 1 ] );
+
+			john.type( 'Abc' );
+			kate.split();
+
+			syncClients();
+
+			expectClients(
+				'<paragraph>FooAbc</paragraph>' +
+				'<paragraph>B</paragraph>' +
+				'<paragraph>ar</paragraph>'
+			);
 		} );
 	} );
 } );
