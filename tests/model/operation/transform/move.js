@@ -15,6 +15,39 @@ describe.only( 'transform', () => {
 	} );
 
 	describe( 'move', () => {
+		it( 'text while wrapping element into blockQuote in different path', () => {
+			john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
+			kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+			john.move( [ 0, 0 ] );
+			kate.wrap( 'blockQuote' );
+
+			syncClients();
+
+			expectClients(
+				'<paragraph>ooF</paragraph>' +
+				'<blockQuote>' +
+				'<paragraph>Bar</paragraph>' +
+				'</blockQuote>'
+			);
+		} );
+
+		it( 'text while wrapping element into blockQuote in same path', () => {
+			john.setData( '<paragraph>F[oo]</paragraph>' );
+			kate.setData( '[<paragraph>Foo</paragraph>]' );
+
+			john.move( [ 0, 0 ] );
+			kate.wrap( 'blockQuote' );
+
+			syncClients();
+
+			expectClients(
+				'<blockQuote>' +
+				'<paragraph>ooF</paragraph>' +
+				'</blockQuote>'
+			);
+		} );
+
 		describe( 'by move', () => {
 			it( 'text in same path #1', () => {
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
@@ -29,11 +62,11 @@ describe.only( 'transform', () => {
 			} );
 
 			it( 'text in same path #2', () => {
-				john.setData( '<paragraph>Foo Bar</paragraph>' );
-				kate.setData( '<paragraph>Foo Bar</paragraph>' );
+				john.setData( '<paragraph>F[oo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo B[ar]</paragraph>' );
 
-				john.move( [ 0, 0 ], [ 0, 1 ], [ 0, 3 ] );
-				kate.move( [ 0, 4 ], [ 0, 5 ], [ 0, 7 ] );
+				john.move( [ 0, 0 ] );
+				kate.move( [ 0, 4 ] );
 
 				syncClients();
 
@@ -43,11 +76,11 @@ describe.only( 'transform', () => {
 			} );
 
 			it( 'text in same path #3', () => {
-				john.setData( '<paragraph>Foo Bar</paragraph>' );
-				kate.setData( '<paragraph>Foo Bar</paragraph>' );
+				john.setData( '<paragraph>Foo [Bar]</paragraph>' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
-				john.move( [ 0, 0 ], [ 0, 4 ], [ 0, 7 ] );
-				kate.move( [ 0, 0 ], [ 0, 4 ], [ 0, 7 ] );
+				john.move( [ 0, 0 ] );
+				kate.move( [ 0, 0 ] );
 
 				syncClients();
 
@@ -57,11 +90,11 @@ describe.only( 'transform', () => {
 			} );
 
 			it( 'text at different paths #1', () => {
-				john.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
-				kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
+				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[ar]</paragraph>' );
 
-				john.move( [ 0, 0 ], [ 0, 1 ], [ 0, 3 ] );
-				kate.move( [ 1, 0 ], [ 1, 1 ], [ 1, 3 ] );
+				john.move( [ 0, 0 ] );
+				kate.move( [ 1, 0 ] );
 
 				syncClients();
 
@@ -72,11 +105,11 @@ describe.only( 'transform', () => {
 			} );
 
 			it( 'text in different paths #2', () => {
-				john.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
-				kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
+				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
 
-				john.move( [ 1, 0 ], [ 0, 0 ], [ 0, 3 ] );
-				kate.move( [ 0, 0 ], [ 1, 0 ], [ 1, 3 ] );
+				john.move( [ 1, 0 ] );
+				kate.move( [ 0, 0 ] );
 
 				syncClients();
 
@@ -87,11 +120,11 @@ describe.only( 'transform', () => {
 			} );
 
 			it( 'text in different paths #3', () => {
-				john.setData( '<paragraph>Foo</paragraph><blockQuote><paragraph>Bar</paragraph></blockQuote>' );
-				kate.setData( '<paragraph>Foo</paragraph><blockQuote><paragraph>Bar</paragraph></blockQuote>' );
+				john.setData( '<paragraph>F[oo]</paragraph><blockQuote><paragraph>Bar</paragraph></blockQuote>' );
+				kate.setData( '<paragraph>Foo</paragraph><blockQuote><paragraph>B[ar]</paragraph></blockQuote>' );
 
-				john.move( [ 1, 0, 0 ], [ 0, 1 ], [ 0, 3 ] );
-				kate.move( [ 0, 0 ], [ 1, 0, 1 ], [ 1, 0, 3 ] );
+				john.move( [ 1, 0, 0 ] );
+				kate.move( [ 0, 0 ] );
 
 				syncClients();
 

@@ -17,11 +17,8 @@ describe.only( 'transform', () => {
   describe( 'rename', () => {
     describe( 'by rename', () => {
       it( 'elements in different paths #1', () => {
-        john.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
-        john.setSelection( [ 0, 0 ] );
-
-        kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
-        kate.setSelection( [ 1, 0 ] );
+        john.setData( '<paragraph>[]Foo</paragraph><paragraph>Bar</paragraph>' );
+        kate.setData( '<paragraph>Foo</paragraph><paragraph>[]Bar</paragraph>' );
 
         john.rename( 'heading1' );
         kate.rename( 'heading2' );
@@ -35,11 +32,8 @@ describe.only( 'transform', () => {
       } );
 
 			it( 'elements in different paths #2', () => {
-        john.setData( '<blockQuote><paragraph>Foo Bar</paragraph></blockQuote>' );
-        john.setSelection( [ 0, 0 ] );
-
-        kate.setData( '<blockQuote><paragraph>Foo Bar</paragraph></blockQuote>' );
-        kate.setSelection( [ 0, 0, 0 ] );
+        john.setData( '<blockQuote>[]<paragraph>Foo Bar</paragraph></blockQuote>' );
+        kate.setData( '<blockQuote><paragraph>[]Foo Bar</paragraph></blockQuote>' );
 
         john.rename( 'blockQuote2' );
         kate.rename( 'heading2' );
@@ -54,11 +48,8 @@ describe.only( 'transform', () => {
       } );
 
       it( 'elements in same path', () => {
-        john.setData( '<blockQuote><paragraph>Foo Bar</paragraph></blockQuote>' );
-        john.setSelection( [ 0, 1 ] );
-
-        kate.setData( '<blockQuote><paragraph>Foo Bar</paragraph></blockQuote>' );
-        kate.setSelection( [ 0, 1 ] );
+        john.setData( '<blockQuote>[]<paragraph>Foo Bar</paragraph></blockQuote>' );
+        kate.setData( '<blockQuote>[]<paragraph>Foo Bar</paragraph></blockQuote>' );
 
         john.rename( 'blockQuote2' );
         kate.rename( 'blockQuote3' );
@@ -73,11 +64,8 @@ describe.only( 'transform', () => {
 
     describe( 'by insert', () => {
       it( 'element in same path', () => {
-        john.setData( '<paragraph>Foo Bar</paragraph>' );
-        john.setSelection( [ 0, 1 ] );
-
-        kate.setData( '<paragraph>Foo Bar</paragraph>' );
-        kate.setSelection( [ 0, 3 ] );
+        john.setData( '<paragraph>F[]oo Bar</paragraph>' );
+        kate.setData( '<paragraph>Foo[] Bar</paragraph>' );
 
         john.rename( 'heading1' );
         kate.type( 'Abc' );
@@ -90,11 +78,8 @@ describe.only( 'transform', () => {
       } );
 
       it( 'element in different paths', () => {
-        john.setData( '<blockQuote><paragraph>Foo</paragraph></blockQuote><paragraph>Bar</paragraph>' );
-        john.setSelection( [ 0, 0, 1 ] );
-
-        kate.setData( '<blockQuote><paragraph>Foo</paragraph></blockQuote><paragraph>Bar</paragraph>' );
-        kate.setSelection( [ 1, 1 ] );
+        john.setData( '<blockQuote><paragraph>F[]oo</paragraph></blockQuote><paragraph>Bar</paragraph>' );
+        kate.setData( '<blockQuote><paragraph>Foo</paragraph></blockQuote><paragraph>B[]ar</paragraph>' );
 
         john.rename( 'heading1' );
         kate.type( 'Abc' );
@@ -112,13 +97,11 @@ describe.only( 'transform', () => {
 
 		describe( 'by move', () => {
 			it( 'element in different path #1', () => {
-				john.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
-				john.setSelection( [ 0, 0 ] );
-
-				kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
+				john.setData( '<paragraph>[]Foo</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[ar]</paragraph>' );
 
 				john.rename( 'heading1' );
-				kate.move( [ 1, 0 ], [ 1, 1 ], [ 1, 3 ] );
+				kate.move( [ 1, 0 ] );
 
 				syncClients();
 
@@ -129,13 +112,11 @@ describe.only( 'transform', () => {
 			} );
 
 			it( 'element in different path #2', () => {
-				john.setData( '<blockQuote><paragraph>Foo</paragraph><paragraph>Bar</paragraph></blockQuote>' );
-				john.setSelection( [ 0, 0 ] );
-
-				kate.setData( '<blockQuote><paragraph>Foo</paragraph><paragraph>Bar</paragraph></blockQuote>' );
+				john.setData( '<blockQuote>[]<paragraph>Foo</paragraph><paragraph>Bar</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>Foo</paragraph><paragraph>[Bar]</paragraph></blockQuote>' );
 
 				john.rename( 'blockQuote2' );
-				kate.move( [ 0, 0, 0 ], [ 0, 1, 0 ], [ 0, 1, 3 ] );
+				kate.move( [ 0, 0, 0 ] );
 
 				syncClients();
 
@@ -148,13 +129,11 @@ describe.only( 'transform', () => {
 			} );
 
 			it( 'element in different path #3', () => {
-				john.setData( '<blockQuote><paragraph>Foo</paragraph><paragraph>Bar</paragraph></blockQuote>' );
-				john.setSelection( [ 0, 0, 0 ] );
-
-				kate.setData( '<blockQuote><paragraph>Foo</paragraph><paragraph>Bar</paragraph></blockQuote>' );
+				john.setData( '<blockQuote><paragraph>[]Foo</paragraph><paragraph>Bar</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>[Foo]</paragraph><paragraph>Bar</paragraph></blockQuote>' );
 
 				john.rename( 'heading1' );
-				kate.move( [ 0, 1, 0 ], [ 0, 0, 0 ], [ 0, 0, 3 ] );
+				kate.move( [ 0, 1, 0 ] );
 
 				syncClients();
 
@@ -167,13 +146,11 @@ describe.only( 'transform', () => {
 			} );
 
 			it( 'element in same path', () => {
-				john.setData( '<paragraph>Foo Bar</paragraph>' );
-				john.setSelection( [ 0, 0 ] );
-
-				kate.setData( '<paragraph>Foo Bar</paragraph>' );
+				john.setData( '<paragraph>[]Foo Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
 				john.rename( 'heading1' );
-				kate.move( [ 0, 0 ], [ 0, 4 ], [ 0, 7 ] );
+				kate.move( [ 0, 0 ] );
 
 				syncClients();
 
@@ -184,9 +161,7 @@ describe.only( 'transform', () => {
 		} );
 
 		it( 'element while wrapping into blockquote in same path', () => {
-			john.setData( '<paragraph>Foo</paragraph>' );
-			john.setSelection( [ 0, 1 ] );
-
+			john.setData( '<paragraph>F[]oo</paragraph>' );
 			kate.setData( '[<paragraph>Foo</paragraph>]' );
 
 			john.rename( 'heading1' );
@@ -200,11 +175,8 @@ describe.only( 'transform', () => {
 		} );
 
 		it( 'element while splitting in same path', () => {
-			john.setData( '<paragraph>Foo Bar</paragraph>' );
-			john.setSelection( [ 0, 0 ] );
-
-			kate.setData( '<paragraph>Foo Bar</paragraph>' );
-			kate.setSelection( [ 0, 4 ] );
+			john.setData( '<paragraph>[]Foo Bar</paragraph>' );
+			kate.setData( '<paragraph>Foo []Bar</paragraph>' );
 
 			john.rename( 'heading1' );
 			kate.split();
@@ -218,11 +190,8 @@ describe.only( 'transform', () => {
 		} );
 
 		it( 'element while adding attribute in same path', () => {
-			john.setData( '<paragraph>Foo Bar</paragraph>' );
-			john.setSelection( [ 0, 0 ] );
-
-			kate.setData( '<paragraph>Foo Bar</paragraph>' );
-			kate.setSelection( [ 0, 0 ], [ 0, 7 ] );
+			john.setData( '<paragraph>[]Foo Bar</paragraph>' );
+			kate.setData( '<paragraph>[Foo Bar]</paragraph>' );
 
 			john.rename( 'heading1' );
 			kate.setAttribute( 'bold', 'true' );
@@ -234,12 +203,9 @@ describe.only( 'transform', () => {
 			);
 		} );
 
-		it( 'element while splitting element in same path, then undo', () => {
-			john.setData( '<paragraph>Foo Bar</paragraph>' );
-			john.setSelection( [ 0, 0 ] );
-
-			kate.setData( '<paragraph>Foo Bar</paragraph>' );
-			kate.setSelection( [ 0, 4 ] );
+		it.skip( 'element while splitting element in same path, then undo', () => {
+			john.setData( '<paragraph>[]Foo Bar</paragraph>' );
+			kate.setData( '<paragraph>Foo []Bar</paragraph>' );
 
 			john.rename( 'heading1' );
 			kate.split();
@@ -252,12 +218,9 @@ describe.only( 'transform', () => {
 			);
 		} );
 
-		it( 'element while removing nodes in same path', () => {
-			john.setData( '<paragraph>Foo</paragraph>' );
-			john.setSelection( [ 0, 0 ] );
-
-			kate.setData( '<paragraph>Foo</paragraph>' );
-			kate.setSelection( [ 0, 1 ], [ 0, 2 ] );
+		it.skip( 'element while removing nodes in same path', () => {
+			john.setData( '<paragraph>[]Foo</paragraph>' );
+			kate.setData( '<paragraph>F[o]o</paragraph>' );
 
 			john.rename( 'heading1' );
 			kate.remove();

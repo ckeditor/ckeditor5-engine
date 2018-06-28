@@ -17,11 +17,8 @@ describe( 'transform', () => {
   describe( 'marker', () => {
     describe( 'by marker', () => {
       it( 'in different paths', () => {
-        john.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
-        john.setSelection( [ 0, 0 ], [ 0, 2 ] );
-
-        kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
-        kate.setSelection( [ 1, 0 ], [ 1, 2 ] );
+        john.setData( '<paragraph>[Fo]o</paragraph><paragraph>Bar</paragraph>' );
+        kate.setData( '<paragraph>Foo</paragraph><paragraph>[Ba]r</paragraph>' );
 
         john.setMarker( 'comment1' );
         kate.setMarker( 'comment2' );
