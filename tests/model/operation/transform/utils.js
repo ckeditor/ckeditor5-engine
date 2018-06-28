@@ -10,6 +10,7 @@ import { getData, setData, parse } from '../../../../src/dev-utils/model';
 import deltaTransform from '../../../../src/model/delta/transform';
 import Position from '../../../../src/model/position';
 import Range from '../../../../src/model/range';
+import DeltaFactory from '../../../../src/model/delta/deltafactory';
 
 export class Client {
 	constructor( name ) {
@@ -98,6 +99,8 @@ export class Client {
 	}
 
 	setMarker( name, start, end ) {
+		name = 'marker:' + name;
+
 		let actionName;
 
 		const startPos = this._getPosition( start, 'start' );
@@ -115,6 +118,8 @@ export class Client {
 	}
 
 	removeMarker( name ) {
+		name = 'marker:' + name;
+
 		this._processAction( 'removeMarker', name );
 	}
 
@@ -151,7 +156,7 @@ export class Client {
 
 		const deltas = this.document.history.getDeltas( oldVersion );
 
-		bufferedDeltas.add( { deltas, client: this } );
+		bufferDeltas( Array.from( deltas ), this );
 	}
 
 	_getPosition( path, type ) {
@@ -195,7 +200,7 @@ export class Client {
 
 		const deltas = Array.from( this.document.history.getDeltas( oldVersion ) );
 
-		bufferedDeltas.add( { deltas, client: this } );
+		bufferDeltas( deltas, this );
 	}
 
 	static get( clientName ) {
@@ -211,10 +216,14 @@ export class Client {
 const clients = new Set();
 const bufferedDeltas = new Set();
 
+function bufferDeltas( deltas, client ) {
+	bufferedDeltas.add( { deltas: deltas.map( delta => JSON.stringify( delta ) ), client } );
+}
+
 export function syncClients() {
 	for ( const client of clients ) {
 		for ( const item of bufferedDeltas ) {
-			const remoteDeltas = item.deltas;
+			const remoteDeltas = item.deltas.map( delta => DeltaFactory.fromJSON( JSON.parse( delta ), client.document ) );
 			const remoteClient = item.client;
 
 			if ( remoteClient == client ) {
@@ -222,9 +231,6 @@ export function syncClients() {
 			}
 
 			const clientDeltas = Array.from( client.document.history.getDeltas( client.syncedVersion ) );
-
-			switchDeltasRoots( remoteDeltas, client.document.getRoot() );
-			switchDeltasRoots( clientDeltas, client.document.getRoot() );
 
 			let remoteDeltasTransformed = null;
 

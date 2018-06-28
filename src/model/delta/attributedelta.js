@@ -54,11 +54,6 @@ export default class AttributeDelta extends Delta {
 	 * @type {module:engine/model/range~Range|null}
 	 */
 	get range() {
-		// Check if it is cached.
-		if ( this._range ) {
-			return this._range;
-		}
-
 		let start = null;
 		let end = null;
 
@@ -77,9 +72,7 @@ export default class AttributeDelta extends Delta {
 		}
 
 		if ( start && end ) {
-			this._range = new Range( start, end );
-
-			return this._range;
+			return new Range( start, end );
 		}
 
 		return null;
@@ -87,17 +80,6 @@ export default class AttributeDelta extends Delta {
 
 	get _reverseDeltaClass() {
 		return AttributeDelta;
-	}
-
-	/**
-	 * @inheritDoc
-	 */
-	toJSON() {
-		const json = super.toJSON();
-
-		delete json._range;
-
-		return json;
 	}
 
 	/**

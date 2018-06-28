@@ -1,6 +1,6 @@
 import { Client, syncClients, expectClients } from './utils.js';
 
-describe.only( 'transform', () => {
+describe( 'transform', () => {
 	let john, kate;
 
 	beforeEach( () => {
@@ -15,39 +15,6 @@ describe.only( 'transform', () => {
 	} );
 
 	describe( 'move', () => {
-		it( 'text while wrapping element into blockQuote in different path', () => {
-			john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
-			kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
-
-			john.move( [ 0, 0 ] );
-			kate.wrap( 'blockQuote' );
-
-			syncClients();
-
-			expectClients(
-				'<paragraph>ooF</paragraph>' +
-				'<blockQuote>' +
-				'<paragraph>Bar</paragraph>' +
-				'</blockQuote>'
-			);
-		} );
-
-		it( 'text while wrapping element into blockQuote in same path', () => {
-			john.setData( '<paragraph>F[oo]</paragraph>' );
-			kate.setData( '[<paragraph>Foo</paragraph>]' );
-
-			john.move( [ 0, 0 ] );
-			kate.wrap( 'blockQuote' );
-
-			syncClients();
-
-			expectClients(
-				'<blockQuote>' +
-				'<paragraph>ooF</paragraph>' +
-				'</blockQuote>'
-			);
-		} );
-
 		describe( 'by move', () => {
 			it( 'text in same path #1', () => {
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
@@ -70,9 +37,7 @@ describe.only( 'transform', () => {
 
 				syncClients();
 
-				expectClients(
-					'<paragraph>ooF arB</paragraph>'
-				);
+				expectClients( '<paragraph>ooF arB</paragraph>' );
 			} );
 
 			it( 'text in same path #3', () => {
@@ -84,9 +49,7 @@ describe.only( 'transform', () => {
 
 				syncClients();
 
-				expectClients(
-					'<paragraph>BarFoo </paragraph>'
-				);
+				expectClients( '<paragraph>BarFoo </paragraph>' );
 			} );
 
 			it( 'text at different paths #1', () => {
@@ -98,10 +61,7 @@ describe.only( 'transform', () => {
 
 				syncClients();
 
-				expectClients(
-					'<paragraph>ooF</paragraph>' +
-					'<paragraph>arB</paragraph>'
-				);
+				expectClients( '<paragraph>ooF</paragraph><paragraph>arB</paragraph>' );
 			} );
 
 			it( 'text in different paths #2', () => {
@@ -113,10 +73,7 @@ describe.only( 'transform', () => {
 
 				syncClients();
 
-				expectClients(
-					'<paragraph>Bar</paragraph>' +
-					'<paragraph>Foo</paragraph>'
-				)
+				expectClients( '<paragraph>Bar</paragraph><paragraph>Foo</paragraph>' );
 			} );
 
 			it( 'text in different paths #3', () => {
@@ -130,8 +87,45 @@ describe.only( 'transform', () => {
 
 				expectClients(
 					'<paragraph>arF</paragraph>' +
-					'<blockQuote><paragraph>ooB</paragraph></blockQuote>'
-				)
+					'<blockQuote>' +
+						'<paragraph>ooB</paragraph>' +
+					'</blockQuote>'
+				);
+			} );
+		} );
+
+		describe( 'by wrap', () => {
+			it( 'text while wrapping element into blockQuote in different path', () => {
+				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+				john.move( [ 0, 0 ] );
+				kate.wrap( 'blockQuote' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>ooF</paragraph>' +
+					'<blockQuote>' +
+						'<paragraph>Bar</paragraph>' +
+					'</blockQuote>'
+				);
+			} );
+
+			it( 'text while wrapping element into blockQuote in same path', () => {
+				john.setData( '<paragraph>F[oo]</paragraph>' );
+				kate.setData( '[<paragraph>Foo</paragraph>]' );
+
+				john.move( [ 0, 0 ] );
+				kate.wrap( 'blockQuote' );
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote>' +
+						'<paragraph>ooF</paragraph>' +
+					'</blockQuote>'
+				);
 			} );
 		} );
 	} );

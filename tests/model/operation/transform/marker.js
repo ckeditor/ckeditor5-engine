@@ -14,22 +14,22 @@ describe( 'transform', () => {
 		return Promise.all( [ john.destroy(), kate.destroy() ] );
 	} );
 
-  describe( 'marker', () => {
-    describe( 'by marker', () => {
-      it( 'in different paths', () => {
-        john.setData( '<paragraph>[Fo]o</paragraph><paragraph>Bar</paragraph>' );
-        kate.setData( '<paragraph>Foo</paragraph><paragraph>[Ba]r</paragraph>' );
+	describe( 'marker', () => {
+		describe( 'by marker', () => {
+			it( 'in different paths', () => {
+				john.setData( '<paragraph>[Fo]o</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Ba]r</paragraph>' );
 
-        john.setMarker( 'comment1' );
-        kate.setMarker( 'comment2' );
+				john.setMarker( 'comment1' );
+				kate.setMarker( 'comment2' );
 
-        syncClients();
+				syncClients();
 
-        expectClients(
-          '<paragraph>Foo</paragraph>' +
-          '<paragraph>Bar</paragraph>'
-        );
-      } );
-    } );
-  } );
+				expectClients(
+					'<paragraph>Foo</paragraph>' +
+					'<paragraph>Bar</paragraph>'
+				);
+			} );
+		} );
+	} );
 } );
