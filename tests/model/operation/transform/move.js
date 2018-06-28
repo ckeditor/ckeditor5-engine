@@ -14,7 +14,7 @@ describe( 'transform', () => {
 		return Promise.all( [ john.destroy(), kate.destroy() ] );
 	} );
 
-	describe( 'move', () => {
+	describe.only( 'move', () => {
 		describe( 'by move', () => {
 			it( 'text in same path #1', () => {
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
@@ -90,6 +90,112 @@ describe( 'transform', () => {
 					'<blockQuote>' +
 						'<paragraph>ooB</paragraph>' +
 					'</blockQuote>'
+				);
+			} );
+		} );
+
+		describe( 'by insert', () => {
+			it( 'element in different path', () => {
+				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>[]' );
+
+				john.move( [ 0, 0 ] );
+				kate.insert( '<paragraph>Abc</paragraph>' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>ooF</paragraph>' +
+					'<paragraph>Bar</paragraph>' +
+					'<paragraph>Abc</paragraph>'
+				);
+			} );
+
+			it( 'element in same path', () => {
+				john.setData( '<paragraph>F[oo]</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[]' );
+
+				john.move( [ 0, 0 ] );
+				kate.insert( '<paragraph>Bar</paragraph>' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>ooF</paragraph>' +
+					'<paragraph>Bar</paragraph>'
+				);
+			} );
+
+			it( 'text in different path #1', () => {
+				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar[]</paragraph>' );
+
+				john.move( [ 0, 0 ] );
+				kate.type( 'Abc' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>ooF</paragraph>' +
+					'<paragraph>BarAbc</paragraph>'
+				);
+			} );
+
+			it( 'text in different path #2', () => {
+				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar[]</paragraph>' );
+
+				john.move( [ 1, 0 ] );
+				kate.type( 'Abc' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>F</paragraph>' +
+					'<paragraph>ooBarAbc</paragraph>'
+				);
+			} );
+
+			it( 'text in same path', () => {
+				john.setData( '<paragraph>F[oo]</paragraph>' );
+				kate.setData( '<paragraph>Foo[]</paragraph>' );
+
+				john.move( [ 0, 0 ] );
+				kate.type( 'Bar' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>ooFBar</paragraph>'
+				);
+			} );
+
+			it( 'text in same position', () => {
+				john.setData( '<paragraph>Fo[o]</paragraph>' );
+				kate.setData( '<paragraph>F[]oo</paragraph>' );
+
+				john.move( [ 0, 1 ] );
+				kate.type( 'Bar' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>FoBaro</paragraph>'
+				);
+			} );
+
+			it( 'text in other user\'s selection', () => {
+				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>F[]oo</paragraph><paragraph>Bar</paragraph>' );
+
+				john.move( [ 1, 0 ] );
+				kate.type( 'Abc' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>' +
+					'<paragraph>FAbcooBar</paragraph>'
 				);
 			} );
 		} );
