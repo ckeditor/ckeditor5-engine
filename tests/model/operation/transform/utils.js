@@ -99,8 +99,6 @@ export class Client {
 	}
 
 	setMarker( name, start, end ) {
-		name = 'marker:' + name;
-
 		let actionName;
 
 		const startPos = this._getPosition( start, 'start' );
@@ -118,8 +116,6 @@ export class Client {
 	}
 
 	removeMarker( name ) {
-		name = 'marker:' + name;
-
 		this._processAction( 'removeMarker', name );
 	}
 
