@@ -1,0 +1,261 @@
+import { Client, syncClients, expectClients } from './utils.js';
+
+describe( 'transform', () => {
+	let john, kate;
+
+	beforeEach( () => {
+		return Promise.all( [
+			Client.get( 'john' ).then( client => john = client ),
+			Client.get( 'kate' ).then( client => kate = client )
+		] );
+	} );
+
+	afterEach( () => {
+		return Promise.all( [ john.destroy(), kate.destroy() ] );
+	} );
+
+	describe( 'remove', () => {
+		describe( 'by remove', () => {
+			it( 'text in different path', () => {
+				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[ar]</paragraph>' );
+
+				john.remove();
+				kate.remove();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>F</paragraph><paragraph>B</paragraph>'
+				);
+			} );
+
+			it( 'text in same path', () => {
+				john.setData( '<paragraph>F[oo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo B[ar]</paragraph>' );
+
+				john.remove();
+				kate.remove();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>F B</paragraph>'
+				);
+			} );
+
+			it( 'text in other user\'s selection #1', () => {
+				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
+				kate.setData( '<paragraph>Fo[o B]ar</paragraph>' );
+
+				john.remove();
+				kate.remove();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>'
+				);
+			} );
+
+			it( 'text in other user\'s selection #2', () => {
+				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
+				kate.setData( '<paragraph>[Foo Bar]</paragraph>' );
+
+				john.remove();
+				kate.remove();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>'
+				);
+			} );
+
+			it( 'element in different path', () => {
+				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+				john.remove();
+				kate.remove();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>'
+				);
+			} );
+		} );
+
+		describe( 'by move', () => {
+			it( 'text in different path', () => {
+				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[ar]</paragraph>' );
+
+				john.remove();
+				kate.move( [ 1, 0 ] );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph><paragraph>arB</paragraph>'
+				);
+			} );
+
+			it( 'text in same path', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
+
+				john.remove();
+				kate.move( [ 0, 0 ] );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Bar </paragraph>'
+				);
+			} );
+
+			it( 'text in other user\'s selection', () => {
+				john.setData( '<paragraph>[Foo B]ar</paragraph>' );
+				kate.setData( '<paragraph>Fo[o B]ar</paragraph>' );
+
+				john.remove();
+				kate.move( [ 0, 0 ] );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>ar</paragraph>'
+				)
+			} );
+		} );
+
+		describe( 'by wrap', () => {
+			it( 'element in different path', () => {
+				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+				john.remove();
+				kate.wrap( 'blockQuote' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>' +
+					'<blockQuote>' +
+						'<paragraph>Bar</paragraph>' +
+					'</blockQuote>'
+				);
+			} );
+
+			it( 'element in same path', () => {
+				john.setData( '<paragraph>[Foo]</paragraph>' );
+				kate.setData( '[<paragraph>Foo</paragraph>]' );
+
+				john.remove();
+				kate.wrap( 'blockQuote' );
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote><paragraph></paragraph></blockQuote>'
+				);
+			} );
+		} );
+
+		describe( 'by unwrap', () => {
+			it( 'element in different path', () => {
+				john.setData( '<paragraph>[Foo]</paragraph><blockQuote><paragraph>Bar</paragraph></blockQuote>' );
+				kate.setData( '<paragraph>Foo</paragraph><blockQuote>[<paragraph>Bar</paragraph>]</blockQuote>' );
+
+				john.remove();
+				kate.unwrap();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>' +
+					'<paragraph>Bar</paragraph>'
+				);
+			} );
+
+			it( 'element in same path', () => {
+				john.setData( '<blockQuote><paragraph>[Foo]</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote>[<paragraph>Foo</paragraph>]</blockQuote>' );
+
+				john.remove();
+				kate.unwrap();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>'
+				);
+			} );
+		} );
+
+		describe( 'by split', () => {
+			it( 'text in different path', () => {
+				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[]ar</paragraph>' );
+
+				john.remove();
+				kate.split();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>F</paragraph>' +
+					'<paragraph>B</paragraph>' +
+					'<paragraph>ar</paragraph>'
+				);
+			} );
+
+			it( 'text in same path', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo []Bar</paragraph>' );
+
+				john.remove();
+				kate.split();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph> </paragraph>' +
+					'<paragraph>Bar</paragraph>'
+				);
+			} );
+
+			it( 'text in other user\'s selection #1', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>F[]oo Bar</paragraph>' );
+
+				john.remove();
+				kate.split();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>' +
+					'<paragraph> Bar</paragraph>'
+				);
+			} );
+
+			it( 'text in other user\'s selection #2', () => {
+				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
+				kate.setData( '<paragraph>F[]oo Bar</paragraph>' );
+
+				john.remove();
+				kate.split();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>' +
+					'<paragraph></paragraph>'
+				);
+			} );
+		} );
+	} );
+} );

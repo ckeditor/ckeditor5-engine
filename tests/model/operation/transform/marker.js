@@ -14,7 +14,7 @@ describe( 'transform', () => {
 		return Promise.all( [ john.destroy(), kate.destroy() ] );
 	} );
 
-	describe.only( 'marker', () => {
+	describe( 'marker', () => {
 		describe( 'by marker', () => {
 			it( 'in different paths', () => {
 				john.setData( '<paragraph>[Fo]o</paragraph><paragraph>Bar</paragraph>' );
@@ -198,6 +198,51 @@ describe( 'transform', () => {
 
 				expectClients(
 					'<paragraph>Ba<m1:start></m1:start>Foo r<m1:end></m1:end></paragraph>'
+				);
+			} );
+		} );
+
+		describe( 'by remove', () => {
+			it( 'text in different path', () => {
+				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Ba]r</paragraph>' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.remove();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><$text bold="true">Foo</$text></paragraph>' +
+					'<paragraph>r</paragraph>'
+				);
+			} );
+
+			it( 'text in same path', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.remove();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><$text bold="true">Foo</$text> </paragraph>'
+				);
+			} );
+
+			it( 'text in other user\'s selection', () => {
+				john.setData( '<paragraph>[Foo]</paragraph>' );
+				kate.setData( '<paragraph>F[oo]</paragraph>' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.remove();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><$text bold="true">F</$text></paragraph>'
 				);
 			} );
 		} );
