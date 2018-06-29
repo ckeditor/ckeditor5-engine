@@ -206,25 +206,12 @@ export default class Renderer {
 			}
 		}
 
-		// Check whether the inline filler is required and where it really is in the DOM.
-		// At this point in most cases it will be in the DOM, but there are exceptions.
-		// For example, if the inline filler was deep in the created DOM structure, it will not be created.
-		// Similarly, if it was removed at the beginning of this function and then neither text nor children were updated,
-		// it will not be present.
-		// Fix those and similar scenarios.
+		// Check whether the inline filler is required and where it really got rendered in the DOM.
 		if ( inlineFillerPosition ) {
 			const fillerDomPosition = this.domConverter.viewPositionToDom( inlineFillerPosition );
-			const domDocument = fillerDomPosition.parent.ownerDocument;
 
-			if ( !startsWithFiller( fillerDomPosition.parent ) ) {
-				// Filler has not been created at filler position. Create it now.
-				this._inlineFiller = addInlineFiller( domDocument, fillerDomPosition.parent, fillerDomPosition.offset );
-			} else {
-				// Filler has been found, save it.
-				this._inlineFiller = fillerDomPosition.parent;
-			}
+			this._inlineFiller = fillerDomPosition.parent;
 		} else {
-			// There is no filler needed.
 			this._inlineFiller = null;
 		}
 
@@ -856,16 +843,12 @@ function isEditable( element ) {
 
 // Adds inline filler at a given position.
 //
-// The position can be given as an array of DOM nodes and an offset in that array,
-// or a DOM parent element and an offset in that element.
-//
 // @private
 // @param {Document} domDocument
-// @param {Element|Array.<Node>} domParentOrArray
-// @param {Number} offset
+// @param {Array.<Node>} childNodes An arrray of DOM nodes.
+// @param {Number} offset Offset in the `childNodes` array where the filler is needed.
 // @returns {Text} The DOM text node that contains an inline filler.
-function addInlineFiller( domDocument, domParentOrArray, offset ) {
-	const childNodes = domParentOrArray instanceof Array ? domParentOrArray : domParentOrArray.childNodes;
+function addInlineFiller( domDocument, childNodes, offset ) {
 	const nodeAfterFiller = childNodes[ offset ];
 
 	if ( isText( nodeAfterFiller ) ) {
@@ -875,11 +858,7 @@ function addInlineFiller( domDocument, domParentOrArray, offset ) {
 	} else {
 		const fillerNode = domDocument.createTextNode( INLINE_FILLER );
 
-		if ( Array.isArray( domParentOrArray ) ) {
-			childNodes.splice( offset, 0, fillerNode );
-		} else {
-			insertAt( domParentOrArray, offset, fillerNode );
-		}
+		childNodes.splice( offset, 0, fillerNode );
 
 		return fillerNode;
 	}
