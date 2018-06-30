@@ -2825,6 +2825,72 @@ describe( 'transform', () => {
 
 				expectOperation( transOp[ 0 ], expected );
 			} );
+
+			// #1167
+			it( 'operations source positions paths are related but are in different roots', () => {
+				const op = new MoveOperation(
+					new Position( root, [ 0, 6 ] ),
+					2,
+					new Position( root, [ 1, 0 ] ),
+					baseVersion
+				);
+
+				op.isSticky = true;
+
+				const transformBy = new MoveOperation(
+					new Position( doc.graveyard, [ 0 ] ),
+					1,
+					new Position( root, [ 0, 6 ] ),
+					baseVersion
+				);
+
+				const transOp = transform( op, transformBy, { isStrong: true, forceNotSticky: true } );
+
+				expect( transOp.length ).to.equal( 1 );
+
+				expected.sourcePosition.path = [ 0, 7 ];
+
+				expectOperation( transOp[ 0 ], {
+					type: MoveOperation,
+					sourcePosition: new Position( root, [ 0, 7 ] ),
+					targetPosition: new Position( root, [ 1, 0 ] ),
+					howMany: 2,
+					baseVersion: baseVersion + 1
+				} );
+			} );
+
+			// #1167
+			it( 'transformed operation moves 0 nodes', () => {
+				const op = new MoveOperation(
+					new Position( root, [ 0, 6 ] ),
+					0,
+					new Position( root, [ 1, 0 ] ),
+					baseVersion
+				);
+
+				op.isSticky = true;
+
+				const transformBy = new MoveOperation(
+					new Position( root, [ 3 ] ),
+					2,
+					new Position( root, [ 0, 6 ] ),
+					baseVersion
+				);
+
+				const transOp = transform( op, transformBy, { isStrong: true, forceNotSticky: true } );
+
+				expect( transOp.length ).to.equal( 1 );
+
+				expected.sourcePosition.path = [ 0, 7 ];
+
+				expectOperation( transOp[ 0 ], {
+					type: MoveOperation,
+					sourcePosition: new Position( root, [ 0, 8 ] ),
+					targetPosition: new Position( root, [ 1, 0 ] ),
+					howMany: 0,
+					baseVersion: baseVersion + 1
+				} );
+			} );
 		} );
 
 		describe( 'by RemoveOperation', () => {
