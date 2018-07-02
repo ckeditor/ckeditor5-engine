@@ -162,6 +162,21 @@ describe( 'transform', () => {
 					'<blockQuote><paragraph></paragraph></blockQuote>'
 				);
 			} );
+
+			it( 'element while removing', () => {
+				john.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+				john.remove();
+				kate.wrap( 'blockQuote' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Foo</paragraph>' +
+					'<blockQuote></blockQuote>'
+				);
+			} );
 		} );
 
 		describe( 'by unwrap', () => {
@@ -191,6 +206,20 @@ describe( 'transform', () => {
 
 				expectClients(
 					'<paragraph></paragraph>'
+				);
+			} );
+
+			it( 'element while unwrapping', () => {
+				john.setData( '<paragraph>Foo</paragraph><blockQuote>[<paragraph>Bar</paragraph>]</blockQuote>' );
+				kate.setData( '<paragraph>Foo</paragraph><blockQuote>[<paragraph>Bar</paragraph>]</blockQuote>' );
+
+				john.remove();
+				kate.unwrap();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Foo</paragraph>'
 				);
 			} );
 		} );
@@ -253,6 +282,27 @@ describe( 'transform', () => {
 
 				expectClients(
 					'<paragraph></paragraph>' +
+					'<paragraph></paragraph>'
+				);
+			} );
+
+			it.skip( 'text, then remove and undo', () => {
+				john.setData( '<paragraph>[Foo ]Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo []Bar</paragraph>' );
+
+				john.remove();
+				kate.split();
+
+				syncClients();
+
+				john.setSelection( [ 1, 0 ], [ 1, 3] );
+
+				john.remove();
+				kate.undo();
+
+				syncClients();
+
+				expectClients(
 					'<paragraph></paragraph>'
 				);
 			} );
@@ -384,6 +434,65 @@ describe( 'transform', () => {
 
 				john.remove();
 				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>'
+				);
+			} );
+		} );
+
+		describe( 'by attribute', () => {
+			it( 'text in different path', () => {
+				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
+
+				john.remove();
+				kate.setAttribute( 'bold', 'true' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>F</paragraph>' +
+					'<paragraph><$text bold="true">Bar</$text></paragraph>'
+				);
+			} );
+
+			it( 'text in same path', () => {
+				john.setData( '<paragraph>[Fo]o</paragraph>' );
+				kate.setData( '<paragraph>Fo[o]</paragraph>' );
+
+				john.remove();
+				kate.setAttribute( 'bold', 'true' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><$text bold="true">o</$text></paragraph>'
+				);
+			} );
+
+			it( 'text in other user\'s selection #1', () => {
+				john.setData( '<paragraph>[Foo B]ar</paragraph>' );
+				kate.setData( '<paragraph>Fo[o Bar]</paragraph>' );
+
+				john.remove();
+				kate.setAttribute( 'bold', 'true' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><$text bold="true">ar</$text></paragraph>'
+				);
+			} );
+
+			it( 'text in other user\'s selection #2', () => {
+				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
+				kate.setData( '<paragraph>[Foo Bar]</paragraph>' );
+
+				john.remove();
+				kate.setAttribute( 'bold', 'true' );
 
 				syncClients();
 
