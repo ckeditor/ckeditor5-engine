@@ -310,6 +310,35 @@ describe( 'transform', () => {
 
 				);
 			} );
+
+			it( 'element, then split at the same position and undo', () => {
+				john.setData( '<paragraph>Foo[]</paragraph>' );
+				kate.setData( '[<paragraph>Foo</paragraph>]' );
+
+				john.type( ' Bar' );
+				kate.wrap( 'blockQuote' );
+
+				syncClients();
+
+				john.setSelection( [ 0, 0, 3 ] );
+				kate.setSelection( [ 0, 0, 3 ] );
+
+				john.split();
+				kate.split();
+
+				syncClients();
+
+				kate.undo();
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote>' +
+						'<paragraph>Foo</paragraph>' +
+						'<paragraph> Bar</paragraph>' +
+					'</blockQuote>'
+				);
+			} );
 		} );
 
 		describe( 'by unwrap', () => {
@@ -422,6 +451,33 @@ describe( 'transform', () => {
 					'<blockQuote>' +
 						'<paragraph>Foo</paragraph>' +
 					'</blockQuote>'
+				);
+			} );
+
+			it.skip( 'element, then wrap, unwrap and undo', () => {
+				john.setData( '<blockQuote><paragraph>Foo[]</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>Fo[]o</paragraph></blockQuote>' );
+
+				john.type( ' Bar' );
+				kate.unwrap();
+
+				syncClients();
+
+				john.setSelection( [ 0 ], [ 1 ] );
+
+				john.wrap( 'blockQuote' );
+
+				syncClients();
+
+				kate.setSelection( [ 0, 0, 0 ] );
+
+				john.undo();
+				kate.unwrap();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Foo Bar</paragraph>'
 				);
 			} );
 		} );
