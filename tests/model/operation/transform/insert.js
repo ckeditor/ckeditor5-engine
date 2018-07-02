@@ -96,6 +96,29 @@ describe( 'transform', () => {
 					'<paragraph>BarXyz</paragraph>'
 				);
 			} );
+
+			it.skip( 'text, then wrap and undo', () => {
+				john.setData( '<paragraph>Foo[]</paragraph>' );
+				kate.setData( '<paragraph>Foo[]</paragraph>' );
+
+				john.type( 'Bar' );
+				kate.type( 'Abc' );
+
+				syncClients();
+
+				john.setSelection( [ 0 ], [ 1 ] );
+
+				john.wrap( 'blockQuote' );
+				kate.undo();
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote>' +
+						'<paragraph>FooBar</paragraph>' +
+					'</blockQuote>'
+				);
+			} );
 		} );
 
 		describe( 'by move', () => {

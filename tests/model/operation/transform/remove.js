@@ -14,7 +14,7 @@ describe( 'transform', () => {
 		return Promise.all( [ john.destroy(), kate.destroy() ] );
 	} );
 
-	describe.only( 'remove', () => {
+	describe( 'remove', () => {
 		describe( 'by remove', () => {
 			it( 'text in different path', () => {
 				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );

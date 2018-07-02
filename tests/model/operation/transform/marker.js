@@ -1,6 +1,6 @@
 import { Client, syncClients, expectClients } from './utils.js';
 
-describe( 'transform', () => {
+describe.only( 'transform', () => {
 	let john, kate;
 
 	beforeEach( () => {
@@ -77,6 +77,35 @@ describe( 'transform', () => {
 					'<paragraph>' +
 						'<m1:start></m1:start>Fo<m2:start></m2:start>o B<m2:end></m2:end>ar<m1:end></m1:end>' +
 					'</paragraph>'
+				);
+			} );
+
+			it( 'then wrap and split', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Fo[o Bar]</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setMarker( 'm2' );
+
+				syncClients();
+
+				john.setSelection( [ 0 ], [ 1 ] );
+				kate.setSelection( [ 0, 3 ] );
+
+				john.wrap( 'blockQuote' );
+				kate.split();
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote>' +
+						'<paragraph>' +
+							'<m1:start></m1:start>Fo<m2:start></m2:start>o<m1:end></m1:end>' +
+						'</paragraph>' +
+						'<paragraph>' +
+							' Bar<m2:end></m2:end>' +
+						'</paragraph>' +
+					'</blockQuote>'
 				);
 			} );
 		} );
@@ -357,6 +386,101 @@ describe( 'transform', () => {
 				expectClients(
 					'<paragraph><m1:start></m1:start>Fo</paragraph>' +
 					'<paragraph>o<m1:end></m1:end></paragraph>'
+				);
+			} );
+		} );
+
+		describe( 'by attribute', () => {
+			it( 'in different paths', () => {
+				john.setData( '<paragraph>[Fo]o</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Ba]r</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setAttribute( 'bold', 'true' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><m1:start></m1:start>Fo<m1:end></m1:end>o</paragraph>' +
+					'<paragraph><$text bold="true">Ba</$text>r</paragraph>'
+				);
+			} );
+
+			it( 'in same path', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setAttribute( 'bold', 'true' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>' +
+						'<m1:start></m1:start>Foo<m1:end></m1:end> ' +
+						'<$text bold="true">Bar</$text>' +
+					'</paragraph>'
+				);
+			} );
+
+			it( 'in same range', () => {
+				john.setData( '<paragraph>[Foo]</paragraph>' );
+				kate.setData( '<paragraph>[Foo]</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setAttribute( 'bold', 'true' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>' +
+						'<m1:start></m1:start><$text bold="true">Foo</$text><m1:end></m1:end>' +
+					'</paragraph>'
+				);
+			} );
+
+			it( 'in other user\'s selection', () => {
+				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
+				kate.setData( '<paragraph>Fo[o B]ar</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setAttribute( 'bold', 'true' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>' +
+						'<m1:start></m1:start>Fo<$text bold="true">o B</$text>ar<m1:end></m1:end>' +
+					'</paragraph>'
+				);
+			} );
+
+			it( 'in same range, then wrap and split', () => {
+				john.setData( '<paragraph>[Foo]</paragraph>' );
+				kate.setData( '<paragraph>[Foo]</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setAttribute( 'bold', 'true' );
+
+				syncClients();
+
+				john.setSelection( [ 0 ], [ 1 ] );
+				kate.setSelection( [ 0, 2 ] );
+
+				john.wrap( 'blockQuote' );
+				kate.split();
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote>' +
+						'<paragraph>' +
+							'<m1:start></m1:start><$text bold="true">Fo</$text>' +
+						'</paragraph>' +
+						'<paragraph>' +
+							'<$text bold="true">o</$text><m1:end></m1:end>' +
+						'</paragraph>' +
+					'</blockQuote>'
 				);
 			} );
 		} );
