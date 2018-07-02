@@ -1684,30 +1684,38 @@ describe( 'Renderer', () => {
 		} );
 
 		// #1451
+		// <ul><li1>Foo</li1><li2><b>Bar</b></li2></ul>
+		// ->
+		// <ul><li1>Foo<ul><li2><b>Bar</b><i>Baz</i></li2></ul></li1></ul>
 		it( 'should correctly render changed children even if direct parent is not marked to sync', () => {
-			const inputView =
+			const viewUl = parse(
 				'<container:ul>' +
 					'<container:li>Foo</container:li>' +
 					'<container:li><attribute:b>Bar</attribute:b></container:li>' +
-				'</container:ul>';
+				'</container:ul>' );
 
-			const view = parse( inputView );
-
-			viewRoot._appendChild( view );
+			viewRoot._appendChild( viewUl );
 
 			renderer.markToSync( 'children', viewRoot );
 			renderer.render();
 
 			expect( domRoot.innerHTML ).to.equal( '<ul><li>Foo</li><li><b>Bar</b></li></ul>' );
 
-			const viewLi = view.getChild( 0 );
-			const viewLiIndented = view._removeChildren( 1, 1 ); // Array with one element.
-			viewLiIndented[ 0 ]._appendChild( parse( '<attribute:i>Baz</attribute:i>' ) );
-			const viewUl = new ViewContainerElement( 'ul', null, viewLiIndented );
-			viewLi._appendChild( viewUl );
+			const viewLi1 = viewUl._removeChildren( 0, 1 )[ 0 ];
+			const viewLi2 = viewUl._removeChildren( 0, 1 )[ 0 ];
 
-			renderer.markToSync( 'children', view );
-			renderer.markToSync( 'children', viewLi );
+			viewLi2._appendChild( parse( '<attribute:i>Baz</attribute:i>' ) );
+
+			const viewInnerUl = new ViewContainerElement( 'ul', null, [ viewLi2 ] );
+
+			viewLi1._appendChild( viewInnerUl );
+			viewUl._appendChild( viewLi1 );
+
+			// Note: It may happen, if a consumer worked on a detached piece of view (viewLi2),
+			// that only the root has been marked (only nodes attached to view roots are observed).
+			//
+			// See also the following test: renderer-integration.js / renders changes made in detached elements.
+			renderer.markToSync( 'children', viewUl );
 			renderer.render();
 
 			expect( domRoot.innerHTML ).to.equal( '<ul><li>Foo<ul><li><b>Bar</b><i>Baz</i></li></ul></li></ul>' );
