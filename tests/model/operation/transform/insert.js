@@ -527,64 +527,170 @@ describe( 'transform', () => {
 					'<paragraph>o</paragraph>'
 				);
 			} );
+
+			it( 'text, then add marker and move', () => {
+				john.setData( '<paragraph>Foo[]</paragraph>' );
+				kate.setData( '<paragraph>Foo[]</paragraph>' );
+
+				john.type( 'Bar' );
+				kate.split();
+
+				syncClients();
+
+				john.setSelection( [ 0, 2 ], [ 1, 2 ] );
+				kate.setSelection( [ 1, 0 ], [ 1, 2 ] );
+
+				john.setMarker( 'm1' );
+				kate.move( [ 0, 0 ] );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>BaFo<m1:start></m1:start>o</paragraph>' +
+					'<paragraph><m1:end></m1:end>r</paragraph>'
+				);
+			} );
+
+			it.skip( 'text, then add attribute, remove and undo', () => {
+				john.setData( '<paragraph>Foo[]</paragraph>' );
+				kate.setData( '<paragraph>Foo[]</paragraph>' );
+
+				john.type( 'Bar' );
+				kate.split();
+
+				syncClients();
+
+				john.setSelection( [ 0, 2 ], [ 1, 2 ] );
+				kate.setSelection( [ 0, 2 ], [ 1, 2 ] );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.remove();
+
+				syncClients();
+
+				kate.undo();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Fo<$text bold="true">o</$text></paragraph>' +
+					'<paragraph bold="true"><$text bold="true">Ba</$text>r</paragraph>'
+				);
+			} );
 		} );
-	} );
 
-	describe( 'by remove', () => {
-		it( 'text in different path', () => {
-			john.setData( '<paragraph>Foo[]</paragraph><paragraph>Bar</paragraph>' );
-			kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
+		describe( 'by remove', () => {
+			it( 'text in different path', () => {
+				john.setData( '<paragraph>Foo[]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
 
-			john.type( 'Abc' );
-			kate.remove();
+				john.type( 'Abc' );
+				kate.remove();
 
-			syncClients();
+				syncClients();
 
-			expectClients(
-				'<paragraph>FooAbc</paragraph><paragraph></paragraph>'
-			);
-		} );
+				expectClients(
+					'<paragraph>FooAbc</paragraph><paragraph></paragraph>'
+				);
+			} );
 
-		it( 'text in same path', () => {
-			john.setData( '<paragraph>Foo[]</paragraph>' );
-			kate.setData( '<paragraph>[Foo]</paragraph>' );
+			it( 'text in same path', () => {
+				john.setData( '<paragraph>Foo[]</paragraph>' );
+				kate.setData( '<paragraph>[Foo]</paragraph>' );
 
-			john.type( 'Bar' );
-			kate.remove();
+				john.type( 'Bar' );
+				kate.remove();
 
-			syncClients();
+				syncClients();
 
-			expectClients(
-				'<paragraph>Bar</paragraph>'
-			);
-		} );
+				expectClients(
+					'<paragraph>Bar</paragraph>'
+				);
+			} );
 
-		it( 'element in different path', () => {
-			john.setData( '<paragraph>Foo[]</paragraph><paragraph>Bar</paragraph>' );
-			kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+			it( 'element in different path', () => {
+				john.setData( '<paragraph>Foo[]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
 
-			john.type( 'Abc' );
-			kate.remove();
+				john.type( 'Abc' );
+				kate.remove();
 
-			syncClients();
+				syncClients();
 
-			expectClients(
-				'<paragraph>FooAbc</paragraph>'
-			);
-		} );
+				expectClients(
+					'<paragraph>FooAbc</paragraph>'
+				);
+			} );
 
-		it( 'element in same path', () => {
-			john.setData( '<paragraph>Foo[]</paragraph><paragraph>Bar</paragraph>' );
-			kate.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
+			it( 'element in same path', () => {
+				john.setData( '<paragraph>Foo[]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
 
-			john.type( 'Abc' );
-			kate.remove();
+				john.type( 'Abc' );
+				kate.remove();
 
-			syncClients();
+				syncClients();
 
-			expectClients(
-				'<paragraph>Bar</paragraph>'
-			);
+				expectClients(
+					'<paragraph>Bar</paragraph>'
+				);
+			} );
+
+			it.skip( 'text, then rename, split and undo', () => {
+				john.setData( '<paragraph>Foo Bar[]</paragraph>' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
+
+				john.type( 'Bar' );
+				kate.remove();
+
+				syncClients();
+
+				john.setSelection( [ 0, 0 ] );
+				kate.setSelection( [ 0, 4 ] );
+
+				john.rename( 'heading1' );
+				kate.split();
+
+				syncClients();
+
+				kate.undo();
+
+				syncClients();
+
+				expectClients(
+					'<heading1>Foo Bar</heading1>'
+				);
+			} );
+
+			it.skip( 'element, then add marker, split and undo with type', () => {
+				john.setData( '<paragraph>Foo</paragraph>[]' );
+				kate.setData( '[<paragraph>Foo</paragraph>]' );
+
+				john.insert( '<paragraph>Bar</paragraph>' );
+				kate.remove();
+
+				syncClients();
+
+				john.setSelection( [ 0, 0 ], [ 0, 3 ] );
+				kate.setSelection( [ 0, 2 ] );
+
+				john.setMarker( 'm1' );
+				kate.split();
+
+				syncClients();
+
+				john.setSelection( [ 1, 1 ] );
+
+				john.undo();
+				john.type( 'Abc' );
+				kate.undo();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>BarAbc</paragraph>'
+				);
+			} );
 		} );
 	} );
 } );
