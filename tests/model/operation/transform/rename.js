@@ -392,5 +392,94 @@ describe( 'transform', () => {
 				);
 			} );
 		} );
+
+		describe( 'by merge', () => {
+			it( 'element into paragraph #1', () => {
+				john.setData( '<paragraph>F[]oo</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+				john.rename( 'heading1' );
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<heading1>FooBar</heading1>'
+				);
+			} );
+
+			it( 'element into paragraph #2', () => {
+				john.setData( '<paragraph>Foo</paragraph><paragraph>B[]ar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+				john.rename( 'heading1' );
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>FooBar</paragraph>'
+				);
+			} );
+
+			it( 'wrapped element into wrapped paragraph #1', () => {
+				john.setData( '<blockQuote><paragraph>F[]oo</paragraph><paragraph>Bar</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]</blockQuote>' );
+
+				john.rename( 'heading1' );
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote><heading1>FooBar</heading1></blockQuote>'
+				);
+			} );
+
+			it( 'wrapped element into wrapped paragraph #2', () => {
+				john.setData( '<blockQuote><paragraph>Foo</paragraph><paragraph>B[]ar</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]</blockQuote>' );
+
+				john.rename( 'heading1' );
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote><paragraph>FooBar</paragraph></blockQuote>'
+				);
+			} );
+		} );
+
+		describe( 'by marker', () => {
+			it( 'in different path', () => {
+				john.setData( '<paragraph>F[]oo</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
+
+				john.rename( 'heading1' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<heading1>Foo</heading1>' +
+					'<paragraph><m1:start></m1:start>Bar<m1:end></m1:end></paragraph>'
+				);
+			} );
+
+			it( 'in same path', () => {
+				john.setData( '<paragraph>[]Foo</paragraph>' );
+				kate.setData( '<paragraph>Fo[o]</paragraph>' );
+
+				john.rename( 'heading1' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<heading1>Fo<m1:start></m1:start>o<m1:end></m1:end></heading1>'
+				);
+			} );
+		} );
 	} );
 } );

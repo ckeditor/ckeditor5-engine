@@ -501,5 +501,63 @@ describe( 'transform', () => {
 				);
 			} );
 		} );
+
+		describe( 'by merge', () => {
+			it( 'element into paragraph #1', () => {
+				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+				john.remove();
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>FBar</paragraph>'
+				);
+			} );
+
+			it( 'element into paragraph #2', () => {
+				john.setData( '<paragraph>Foo</paragraph><paragraph>B[ar]</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+				john.remove();
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>FooB</paragraph>'
+				);
+			} );
+
+			it( 'wrapped element into wrapped paragraph #1', () => {
+				john.setData( '<blockQuote><paragraph>F[oo]</paragraph><paragraph>Bar</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]</blockQuote>' );
+
+				john.remove();
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote><paragraph>FBar</paragraph></blockQuote>'
+				);
+			} );
+
+			it( 'wrapped element into wrapped paragraph #2', () => {
+				john.setData( '<blockQuote><paragraph>Foo</paragraph><paragraph>B[ar]</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]</blockQuote>' );
+
+				john.remove();
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote><paragraph>FooB</paragraph></blockQuote>'
+				);
+			} );
+		} );
 	} );
 } );

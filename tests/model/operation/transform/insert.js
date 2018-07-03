@@ -856,5 +856,52 @@ describe( 'transform', () => {
 				);
 			} );
 		} );
+
+		describe( 'by marker', () => {
+			it( 'in different path #1', () => {
+				john.setData( '[]<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
+
+				john.insert( '<paragraph>Abc</paragraph>' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Abc</paragraph>' +
+					'<paragraph>Foo</paragraph>' +
+					'<paragraph><m1:start></m1:start>Bar<m1:end></m1:end></paragraph>'
+				);
+			} );
+
+			it( 'in different path #2', () => {
+				john.setData( '<paragraph>Foo[]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
+
+				john.type( 'Abc' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>FooAbc</paragraph>' +
+					'<paragraph><m1:start></m1:start>Bar<m1:end></m1:end></paragraph>'
+				);
+			} );
+
+			it( 'in same path', () => {
+				john.setData( '<paragraph>[]Foo</paragraph>' );
+				kate.setData( '<paragraph>Fo[o]</paragraph>' );
+
+				john.type( 'Bar' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>BarFo<m1:start></m1:start>o<m1:end></m1:end></paragraph>'
+				);
+			} );
+		} );
 	} );
 } );
