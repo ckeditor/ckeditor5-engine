@@ -423,5 +423,80 @@ describe( 'transform', () => {
 				);
 			} );
 		} );
+
+		describe( 'by marker', () => {
+			it( 'in text at same path', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients( '<paragraph><$text bold="true">Foo</$text> <m1:start></m1:start>Bar<m1:end></m1:end></paragraph>' );
+			} );
+
+			it( 'in text in different path', () => {
+				john.setData( '<paragraph>F[o]o</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[a]r</paragraph>' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>F<$text bold="true">o</$text>o</paragraph>' +
+					'<paragraph>B<m1:start></m1:start>a<m1:end></m1:end>r</paragraph>'
+				);
+			} );
+
+			it( 'in text with selection inside other client\'s selection #1', () => {
+				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
+				kate.setData( '<paragraph>Fo[o B]ar</paragraph>' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>' +
+						'<$text bold="true">Fo</$text><m1:start></m1:start>' +
+						'<$text bold="true">o B</$text><m1:end></m1:end><$text bold="true">ar</$text>' +
+					'</paragraph>'
+				);
+			} );
+
+			it( 'in text with selection inside other client\'s selection #2', () => {
+				john.setData( '<paragraph>F[oo</paragraph><paragraph>Ba]r</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>F<$text bold="true">oo</$text></paragraph>' +
+					'<paragraph bold="true">' +
+						'<m1:start></m1:start><$text bold="true">Ba</$text>r<m1:end></m1:end>' +
+					'</paragraph>'
+				);
+			} );
+
+			it( 'in text at same position', () => {
+				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
+				kate.setData( '<paragraph>[Foo Bar]</paragraph>' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients( '<paragraph><m1:start></m1:start><$text bold="true">Foo Bar</$text><m1:end></m1:end></paragraph>' );
+			} );
+		} );
 	} );
 } );

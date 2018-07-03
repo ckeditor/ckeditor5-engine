@@ -1,6 +1,6 @@
 import { Client, syncClients, expectClients } from './utils.js';
 
-describe.only( 'transform', () => {
+describe( 'transform', () => {
 	let john, kate;
 
 	beforeEach( () => {
@@ -106,6 +106,199 @@ describe.only( 'transform', () => {
 							' Bar<m2:end></m2:end>' +
 						'</paragraph>' +
 					'</blockQuote>'
+				);
+			} );
+
+			it( 'then unwrap and split', () => {
+				john.setData( '<blockQuote><paragraph>[Foo] Bar</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>Fo[o Bar]</paragraph></blockQuote>' );
+
+				john.setMarker( 'm1' );
+				kate.setMarker( 'm2' );
+
+				syncClients();
+
+				john.setSelection( [ 0, 0 ], [ 0, 1 ] );
+				kate.setSelection( [ 0, 0, 3 ] );
+
+				john.unwrap();
+				kate.split();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>' +
+						'<m1:start></m1:start>Fo<m2:start></m2:start>o<m1:end></m1:end>' +
+					'</paragraph>' +
+					'<paragraph>' +
+						' Bar<m2:end></m2:end>' +
+					'</paragraph>'
+				);
+			} );
+
+			it( 'then remove text', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Fo[o Bar]</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setMarker( 'm2' );
+
+				syncClients();
+
+				john.setSelection( [ 0, 0 ], [ 0, 3 ] );
+				kate.setSelection( [ 0, 2 ], [ 0, 7 ] );
+
+				john.remove();
+				kate.remove();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>'
+				);
+			} );
+
+			it.skip( 'then remove text and undo', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Fo[o Bar]</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setMarker( 'm2' );
+
+				syncClients();
+
+				john.setSelection( [ 0, 0 ], [ 0, 3 ] );
+				kate.setSelection( [ 0, 2 ], [ 0, 7 ] );
+
+				john.remove();
+				kate.remove();
+
+				syncClients();
+
+				john.undo();
+				kate.undo();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>' +
+						'<m1:start></m1:start>Fo<m2:start></m2:start>o<m1:end></m1:end> Bar<m2:end></m2:end>' +
+					'</paragraph>'
+				);
+			} );
+
+			it( 'then move and remove', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setMarker( 'm2' );
+
+				syncClients();
+
+				john.setSelection( [ 0, 1 ], [ 0, 3 ] );
+				kate.setSelection( [ 0, 4 ], [ 0, 7 ] );
+
+				john.move( [ 0, 4 ] );
+				kate.remove();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><m1:start></m1:start>F oo<m1:end></m1:end></paragraph>'
+				);
+			} );
+
+			it( 'then unwrap and merge', () => {
+				john.setData( '<blockQuote><paragraph>[Foo]</paragraph><paragraph> Bar</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>Foo</paragraph><paragraph> [Bar]</paragraph></blockQuote>' );
+
+				john.setMarker( 'm1' );
+				kate.setMarker( 'm2' );
+
+				syncClients();
+
+				john.setSelection( [ 0, 0 ], [ 0, 1 ] );
+				kate.setSelection( [ 0, 1 ], [ 0, 2 ] );
+
+				john.unwrap();
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>' +
+						'<m1:start></m1:start>Foo<m1:end></m1:end> ' +
+						'<m2:start></m2:start>Bar<m2:end></m2:end>' +
+					'</paragraph>'
+				);
+			} );
+
+			it( 'then merge elements', () => {
+				john.setData( '<paragraph>[Foo]</paragraph><paragraph> Bar</paragraph><paragraph>Abc</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph> [Bar]</paragraph><paragraph>Abc</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setMarker( 'm2' );
+
+				syncClients();
+
+				john.setSelection( [ 1 ], [ 2 ] );
+				kate.setSelection( [ 2 ], [ 3 ] );
+
+				john.merge();
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>' +
+						'<m1:start></m1:start>Foo<m1:end></m1:end> ' +
+						'<m2:start></m2:start>Bar<m2:end></m2:end>Abc' +
+					'</paragraph>'
+				)
+			} );
+
+			it( 'then split text in same path', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setMarker( 'm2' );
+
+				syncClients();
+
+				john.setSelection( [ 0, 3 ] );
+				kate.setSelection( [ 0, 4 ] );
+
+				john.split();
+				kate.split();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><m1:start></m1:start>Foo<m1:end></m1:end></paragraph>' +
+					'<paragraph> </paragraph>' +
+					'<paragraph><m2:start></m2:start>Bar<m2:end></m2:end></paragraph>'
+				);
+			} );
+
+			it( 'then remove markers', () => {
+				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.setMarker( 'm2' );
+
+				syncClients();
+
+				john.removeMarker( 'm2' );
+				kate.removeMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Foo Bar</paragraph>'
 				);
 			} );
 		} );
@@ -480,6 +673,58 @@ describe.only( 'transform', () => {
 						'<paragraph>' +
 							'<$text bold="true">o</$text><m1:end></m1:end>' +
 						'</paragraph>' +
+					'</blockQuote>'
+				);
+			} );
+		} );
+
+		describe( 'by merge', () => {
+			it( 'element into paragraph', () => {
+				john.setData( '<paragraph>[Foo]</paragraph><paragraph> Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph> Bar</paragraph>]' );
+
+				john.setMarker( 'm1' );
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><m1:start></m1:start>Foo<m1:end></m1:end> Bar</paragraph>'
+				);
+			} );
+
+			it( 'elements into paragraph', () => {
+				john.setData( '<paragraph>[Foo]</paragraph><paragraph> Bar</paragraph><paragraph> Abc</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph> Bar</paragraph>[<paragraph> Abc</paragraph>]' );
+
+				john.setMarker( 'm1' );
+				kate.merge();
+
+				syncClients();
+
+				kate.setSelection( [ 1 ], [ 2 ] );
+
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><m1:start></m1:start>Foo<m1:end></m1:end> Bar Abc</paragraph>'
+				);
+			} );
+
+			it( 'wrapped element into wrapped paragraph', () => {
+				john.setData( '<blockQuote><paragraph>[Foo]</paragraph><paragraph> Bar</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>Foo</paragraph>[<paragraph> Bar</paragraph>]</blockQuote>' );
+
+				john.setMarker( 'm1' );
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote>' +
+						'<paragraph><m1:start></m1:start>Foo<m1:end></m1:end> Bar</paragraph>' +
 					'</blockQuote>'
 				);
 			} );

@@ -119,6 +119,61 @@ describe( 'transform', () => {
 					'</blockQuote>'
 				);
 			} );
+
+			it.skip( 'text, then insert element and merge', () => {
+				john.setData( '<paragraph>[]</paragraph><paragraph>Abc</paragraph>' );
+				kate.setData( '<paragraph>[]</paragraph><paragraph>Abc</paragraph>' );
+
+				john.type( 'Foo' );
+				kate.type( ' Bar' );
+
+				syncClients();
+
+				john.setSelection( [ 1 ] );
+				kate.setSelection( [ 1 ], [ 2 ] );
+
+				john.insert( '<paragraph>Xyz</paragraph>' );
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Foo BarAbc</paragraph>' +
+					'<paragraph>Xyz</paragraph>'
+				);
+			} );
+
+			it.skip( 'text, then split and undo', () => {
+				john.setData( '<paragraph>[]</paragraph>' );
+				kate.setData( '<paragraph>[]</paragraph>' );
+
+				john.type( 'Foo' );
+				kate.type( ' Bar' );
+
+				syncClients();
+
+				john.setSelection( [ 0, 1 ] );
+				kate.setSelection( [ 0, 4 ] );
+
+				john.split();
+				kate.split();
+
+				syncClients();
+
+				john.undo();
+				kate.undo();
+
+				syncClients();
+
+				john.undo();
+				kate.undo();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph></paragraph>'
+				);
+			} );
 		} );
 
 		describe( 'by move', () => {
@@ -768,6 +823,36 @@ describe( 'transform', () => {
 
 				expectClients(
 					'<paragraph>BarAbc</paragraph>'
+				);
+			} );
+		} );
+
+		describe( 'by merge', () => {
+			it( 'element into paragraph', () => {
+				john.setData( '<paragraph>Foo</paragraph><paragraph>[]</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph></paragraph>]' );
+
+				john.type( ' Bar' );
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Foo Bar</paragraph>'
+				);
+			} );
+
+			it( 'wrapped element into wrapped paragraph', () => {
+				john.setData( '<blockQuote><paragraph>Foo</paragraph><paragraph>[]</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>Foo</paragraph>[<paragraph></paragraph>]</blockQuote>' );
+
+				john.type( ' Bar' );
+				kate.merge();
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote><paragraph>Foo Bar</paragraph></blockQuote>'
 				);
 			} );
 		} );
