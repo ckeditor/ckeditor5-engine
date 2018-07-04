@@ -85,6 +85,25 @@ describe( 'transform', () => {
 					'<paragraph></paragraph>'
 				);
 			} );
+
+			it.skip( 'text in other user\'s selection, then undo', () => {
+				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
+				kate.setData( '<paragraph>Fo[o B]ar</paragraph>' );
+
+				john.remove();
+				kate.remove();
+
+				syncClients();
+
+				john.undo();
+				kate.undo();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Foo Bar</paragraph>'
+				);
+			} );
 		} );
 
 		describe( 'by move', () => {
@@ -127,7 +146,26 @@ describe( 'transform', () => {
 
 				expectClients(
 					'<paragraph>ar</paragraph>'
-				)
+				);
+			} );
+
+			it( 'text in other user\'s selection, then undo', () => {
+				john.setData( '<paragraph>[Foo B]ar</paragraph>' );
+				kate.setData( '<paragraph>Fo[o B]ar</paragraph>' );
+
+				john.remove();
+				kate.move( [ 0, 0 ] );
+
+				syncClients();
+
+				john.undo();
+				kate.undo();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>o BFoar</paragraph>'
+				);
 			} );
 		} );
 
@@ -177,6 +215,25 @@ describe( 'transform', () => {
 					'<blockQuote></blockQuote>'
 				);
 			} );
+
+			it.skip( 'element while removing, then undo', () => {
+				john.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+				john.remove();
+				kate.wrap( 'blockQuote' );
+
+				syncClients();
+
+				john.undo();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Foo</paragraph>' +
+					'<blockQuote><paragraph>Bar</paragraph></blockQuote>'
+				);
+			} );
 		} );
 
 		describe( 'by unwrap', () => {
@@ -209,7 +266,7 @@ describe( 'transform', () => {
 				);
 			} );
 
-			it( 'element while unwrapping', () => {
+			it( 'element while removing', () => {
 				john.setData( '<paragraph>Foo</paragraph><blockQuote>[<paragraph>Bar</paragraph>]</blockQuote>' );
 				kate.setData( '<paragraph>Foo</paragraph><blockQuote>[<paragraph>Bar</paragraph>]</blockQuote>' );
 
@@ -220,6 +277,25 @@ describe( 'transform', () => {
 
 				expectClients(
 					'<paragraph>Foo</paragraph>'
+				);
+			} );
+
+			it.skip( 'element while removing, then undo', () => {
+				john.setData( '<paragraph>Foo</paragraph><blockQuote>[<paragraph>Bar</paragraph>]</blockQuote>' );
+				kate.setData( '<paragraph>Foo</paragraph><blockQuote>[<paragraph>Bar</paragraph>]</blockQuote>' );
+
+				john.remove();
+				kate.unwrap();
+
+				syncClients();
+
+				john.undo();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>Foo</paragraph>' +
+					'<paragraph>Bar</paragraph>'
 				);
 			} );
 		} );
@@ -528,6 +604,24 @@ describe( 'transform', () => {
 
 				expectClients(
 					'<paragraph>FooB</paragraph>'
+				);
+			} );
+
+			it.skip( 'element into paragraph, then undo', () => {
+				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
+
+				john.remove();
+				kate.merge();
+
+				syncClients();
+
+				john.undo();
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>FooBar</paragraph>'
 				);
 			} );
 
