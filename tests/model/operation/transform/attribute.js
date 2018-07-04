@@ -76,6 +76,24 @@ describe( 'transform', () => {
 				);
 			} );
 
+			it( 'in text with selection inside other client\'s selection #3', () => {
+				john.setData( '<paragraph><$text bold="true">[Foo Bar]</$text></paragraph>' );
+				kate.setData( '<paragraph><$text bold="true">Fo[o] Bar</$text></paragraph>' );
+
+				john.setAttribute( 'italic', 'true' );
+				kate.setAttribute( 'underline', 'true' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph>' +
+						'<$text bold="true" italic="true">Fo</$text>' +
+						'<$text bold="true" italic="true" underline="true">o</$text>' +
+						'<$text bold="true" italic="true"> Bar</$text>' +
+					'</paragraph>'
+				);
+			} );
+
 			it( 'in text at same position', () => {
 				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
 				kate.setData( '<paragraph>[Foo Bar]</paragraph>' );
