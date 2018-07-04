@@ -480,6 +480,52 @@ describe( 'transform', () => {
 					'<heading1>Fo<m1:start></m1:start>o<m1:end></m1:end></heading1>'
 				);
 			} );
+
+			it( 'then wrap and split', () => {
+				john.setData( '<paragraph>[]Foo</paragraph>' );
+				kate.setData( '<paragraph>[Foo]</paragraph>' );
+
+				john.rename( 'heading1' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				john.setSelection( [ 0 ], [ 1 ] );
+				kate.setSelection( [ 0, 2 ] );
+
+				john.wrap( 'blockQuote' );
+				kate.split();
+
+				syncClients();
+
+				expectClients(
+					'<blockQuote>' +
+						'<heading1><m1:start></m1:start>Fo</heading1>' +
+						'<heading1>o<m1:end></m1:end></heading1>' +
+					'</blockQuote>'
+				);
+			} );
+
+			it( 'then unwrap and remove marker', () => {
+				john.setData( '<blockQuote><paragraph>[]Foo</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote><paragraph>[Foo]</paragraph></blockQuote>' );
+
+				john.rename( 'heading1' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				john.setSelection( [ 0, 0 ], [ 0, 1 ] );
+
+				john.unwrap();
+				kate.removeMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<heading1>Foo</heading1>'
+				);
+			} );
 		} );
 	} );
 } );

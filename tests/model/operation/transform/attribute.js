@@ -88,6 +88,18 @@ describe( 'transform', () => {
 				expectClients( '<paragraph><$text bold="true" italic="true">Foo Bar</$text></paragraph>' );
 			} );
 
+			it( 'in element at same position', () => {
+				john.setData( '[<paragraph>Foo Bar</paragraph>]' );
+				kate.setData( '[<paragraph>Foo Bar</paragraph>]' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.setAttribute( 'italic', 'true' );
+
+				syncClients();
+
+				expectClients( '<paragraph bold="true" italic="true"><$text bold="true" italic="true">Foo Bar</$text></paragraph>' );
+			} );
+
 			it( 'in collapsed selection', () => {
 				john.setData( '<paragraph>F[]oo Bar</paragraph>' );
 				kate.setData( '<paragraph>F[]oo Bar</paragraph>' );
@@ -99,10 +111,25 @@ describe( 'transform', () => {
 
 				expectClients( '<paragraph>Foo Bar</paragraph>' );
 			} );
+
+			it( 'in elements in different paths', () => {
+				john.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' ) ;
+
+				john.setAttribute( 'bold', 'true' );
+				kate.setAttribute( 'bold', 'true' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph bold="true"><$text bold="true">Foo</$text></paragraph>' +
+					'<paragraph bold="true"><$text bold="true">Bar</$text></paragraph>'
+				);
+			} );
 		} );
 
 		describe( 'by insert', () => {
-			it( 'text in different path', () => {
+			it( 'text in different path #1', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>[]Bar</paragraph>' );
 
@@ -114,7 +141,19 @@ describe( 'transform', () => {
 				expectClients( '<paragraph><$text bold="true">Foo</$text></paragraph><paragraph>AbcBar</paragraph>' );
 			} );
 
-			it( 'text at same path', () => {
+			it( 'text in different path #2', () => {
+				john.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>[]Bar</paragraph>' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.type( 'Abc' );
+
+				syncClients();
+
+				expectClients( '<paragraph bold="true"><$text bold="true">Foo</$text></paragraph><paragraph>AbcBar</paragraph>' );
+			} );
+
+			it( 'text at same path #1', () => {
 				john.setData( '<paragraph>[F]oo</paragraph>' );
 				kate.setData( '<paragraph>Foo[]</paragraph>' );
 
@@ -124,6 +163,18 @@ describe( 'transform', () => {
 				syncClients();
 
 				expectClients( '<paragraph><$text bold="true">F</$text>ooAbc</paragraph>' );
+			} );
+
+			it( 'text at same path #2', () => {
+				john.setData( '[<paragraph>Foo</paragraph>]' );
+				kate.setData( '<paragraph>Foo[]</paragraph>' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.type( 'Abc' );
+
+				syncClients();
+
+				expectClients( '<paragraph bold="true"><$text bold="true">Foo</$text>Abc</paragraph>' );
 			} );
 
 			it( 'text inside other client\'s selection', () => {
@@ -138,7 +189,7 @@ describe( 'transform', () => {
 				expectClients( '<paragraph><$text bold="true">FoAbco</$text></paragraph>' );
 			} );
 
-			it( 'element in different path', () => {
+			it( 'element in different path #1', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>[]' );
 
@@ -149,6 +200,22 @@ describe( 'transform', () => {
 
 				expectClients(
 					'<paragraph><$text bold="true">Foo</$text></paragraph>' +
+					'<paragraph>Bar</paragraph>' +
+					'<paragraph>Abc</paragraph>'
+				);
+			} );
+
+			it( 'element in different path #2', () => {
+				john.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>[]' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.insert( '<paragraph>Abc</paragraph>' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph bold="true"><$text bold="true">Foo</$text></paragraph>' +
 					'<paragraph>Bar</paragraph>' +
 					'<paragraph>Abc</paragraph>'
 				);
@@ -425,7 +492,7 @@ describe( 'transform', () => {
 		} );
 
 		describe( 'by marker', () => {
-			it( 'in text at same path', () => {
+			it( 'in text at same path #1', () => {
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
@@ -435,6 +502,23 @@ describe( 'transform', () => {
 				syncClients();
 
 				expectClients( '<paragraph><$text bold="true">Foo</$text> <m1:start></m1:start>Bar<m1:end></m1:end></paragraph>' );
+			} );
+
+			it( 'in text at same path #2', () => {
+				john.setData( '[<paragraph>Foo Bar</paragraph>]' );
+				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
+
+				john.setAttribute( 'bold', 'true' );
+				kate.setMarker( 'm1' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph bold="true">' +
+						'<$text bold="true">Foo </$text><m1:start></m1:start>' +
+						'<$text bold="true">Bar</$text><m1:end></m1:end>' +
+					'</paragraph>'
+				 );
 			} );
 
 			it( 'in text in different path', () => {
