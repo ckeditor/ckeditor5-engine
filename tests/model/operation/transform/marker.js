@@ -429,13 +429,13 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Ba]r</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setMarker( 'm1' );
 				kate.remove();
 
 				syncClients();
 
 				expectClients(
-					'<paragraph><$text bold="true">Foo</$text></paragraph>' +
+					'<paragraph><m1:start></m1:start>Foo<m1:end></m1:end></paragraph>' +
 					'<paragraph>r</paragraph>'
 				);
 			} );
@@ -444,13 +444,13 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setMarker( 'm1' );
 				kate.remove();
 
 				syncClients();
 
 				expectClients(
-					'<paragraph><$text bold="true">Foo</$text> </paragraph>'
+					'<paragraph><m1:start></m1:start>Foo<m1:end></m1:end> </paragraph>'
 				);
 			} );
 
@@ -458,13 +458,13 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph>' );
 				kate.setData( '<paragraph>F[oo]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setMarker( 'm1' );
 				kate.remove();
 
 				syncClients();
 
 				expectClients(
-					'<paragraph><$text bold="true">F</$text></paragraph>'
+					'<paragraph><m1:start></m1:start>F<m1:end></m1:end></paragraph>'
 				);
 			} );
 		} );
@@ -674,6 +674,94 @@ describe( 'transform', () => {
 							'<$text bold="true">o</$text><m1:end></m1:end>' +
 						'</paragraph>' +
 					'</blockQuote>'
+				);
+			} );
+		} );
+
+		describe( 'by remove attribute', () => {
+			it( 'from element in different path', () => {
+				john.setData( '<paragraph>[Foo]</paragraph><paragraph bold="true"><$text bold="true">Bar</$text></paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph bold="true"><$text bold="true">Bar</$text></paragraph>]' );
+
+				john.setMarker( 'm1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><m1:start></m1:start>Foo<m1:end></m1:end></paragraph>' +
+					'<paragraph>Bar</paragraph>'
+				);
+			} );
+
+			it( 'from text in different path', () => {
+				john.setData( '<paragraph>[Foo]</paragraph><paragraph><$text bold="true">Bar</$text></paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph><$text bold="true">[Bar]</$text></paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><m1:start></m1:start>Foo<m1:end></m1:end></paragraph>' +
+					'<paragraph>Bar</paragraph>'
+				);
+			} );
+
+			it( 'from text in same path', () => {
+				john.setData( '<paragraph>[Fo]<$text bold="true">o</$text></paragraph>' );
+				kate.setData( '<paragraph>Fo<$text bold="true">[o]</$text></paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><m1:start></m1:start>Fo<m1:end></m1:end>o</paragraph>'
+				);
+			} );
+
+			it( 'from element in same path', () => {
+				john.setData( '<paragraph bold="true"><$text bold="true">[Fo]o</$text></paragraph>' );
+				kate.setData( '[<paragraph bold="true"><$text bold="true">Foo</$text></paragraph>]' );
+
+				john.setMarker( 'm1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><m1:start></m1:start>Fo<m1:end></m1:end>o</paragraph>'
+				);
+			} );
+
+			it( 'from text with 2 attributes in same path', () => {
+				john.setData( '<paragraph>[Fo]<$text bold="true" italic="true">o</$text></paragraph>' );
+				kate.setData( '<paragraph>Fo<$text bold="true" italic="true">[o]</$text></paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><m1:start></m1:start>Fo<m1:end></m1:end><$text italic="true">o</$text></paragraph>'
+				);
+			} );
+
+			it( 'from text in other user\'s selection', () => {
+				john.setData( '<paragraph><$text bold="true">[Foo]</$text></paragraph>' );
+				kate.setData( '<paragraph><$text bold="true">[Foo]</$text></paragraph>' );
+
+				john.setMarker( 'm1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<paragraph><m1:start></m1:start>Foo<m1:end></m1:end></paragraph>'
 				);
 			} );
 		} );
