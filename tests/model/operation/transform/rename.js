@@ -345,11 +345,8 @@ describe( 'transform', () => {
 			} );
 
 		it( 'elements in same path', () => {
-				john.setData( '<blockQuote><paragraph>Foo Bar</paragraph></blockQuote>' );
-				john.setSelection( [ 0, 1 ] );
-
-				kate.setData( '<blockQuote><paragraph>Foo Bar</paragraph></blockQuote>' );
-				kate.setSelection( [ 0, 1 ] );
+				john.setData( '<blockQuote>[]<paragraph>Foo Bar</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote>[]<paragraph>Foo Bar</paragraph></blockQuote>' );
 
 				john.rename( 'blockQuote2' );
 				kate.rename( 'blockQuote3' );
