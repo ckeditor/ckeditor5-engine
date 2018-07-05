@@ -60,6 +60,94 @@ describe( 'transform', () => {
 			} );
 		} );
 
+		describe( 'by remove attribute', () => {
+			it( 'from element in different path', () => {
+				john.setData( '<paragraph>F[]oo</paragraph><paragraph bold="true"><$text bold="true">Bar</$text></paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph bold="true"><$text bold="true">Bar</$text></paragraph>]' );
+
+				john.rename( 'heading1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<heading1>Foo</heading1>' +
+					'<paragraph>Bar</paragraph>'
+				);
+			} );
+
+			it( 'from text in different path', () => {
+				john.setData( '<paragraph>F[]oo</paragraph><paragraph><$text bold="true">Bar</$text></paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph><paragraph><$text bold="true">[Bar]</$text></paragraph>' );
+
+				john.rename( 'heading1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<heading1>Foo</heading1>' +
+					'<paragraph>Bar</paragraph>'
+				);
+			} );
+
+			it( 'from text in same path', () => {
+				john.setData( '<paragraph>F[]o<$text bold="true">o</$text></paragraph>' );
+				kate.setData( '<paragraph>Fo<$text bold="true">[o]</$text></paragraph>' );
+
+				john.rename( 'heading1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<heading1>Foo</heading1>'
+				);
+			} );
+
+			it( 'from element in same path', () => {
+				john.setData( '<paragraph bold="true"><$text bold="true">F[]oo</$text></paragraph>' );
+				kate.setData( '[<paragraph bold="true"><$text bold="true">Foo</$text></paragraph>]' );
+
+				john.rename( 'heading1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<heading1>Foo</heading1>'
+				);
+			} );
+
+			it( 'from text with 2 attributes in same path', () => {
+				john.setData( '<paragraph>F[o]<$text bold="true" italic="true">o</$text></paragraph>' );
+				kate.setData( '<paragraph>Fo<$text bold="true" italic="true">[o]</$text></paragraph>' );
+
+				john.rename( 'heading1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<heading1>Fo<$text italic="true">o</$text></heading1>'
+				);
+			} );
+
+			it( 'from text in other user\'s selection', () => {
+				john.setData( '<paragraph><$text bold="true">[Foo]</$text></paragraph>' );
+				kate.setData( '<paragraph><$text bold="true">[Foo]</$text></paragraph>' );
+
+				john.rename( 'heading1' );
+				kate.removeAttribute( 'bold' );
+
+				syncClients();
+
+				expectClients(
+					'<heading1>Foo</heading1>'
+				);
+			} );
+		} );
+
 		describe( 'by insert', () => {
 			it( 'element in different path', () => {
 				john.setData( '<paragraph>F[]oo</paragraph><paragraph>Bar</paragraph>' );
