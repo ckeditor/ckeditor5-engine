@@ -86,7 +86,7 @@ describe( 'transform', () => {
 				);
 			} );
 
-			it.skip( 'text in other user\'s selection, then undo', () => {
+			it( 'text in other user\'s selection, then undo', () => {
 				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
 				kate.setData( '<paragraph>Fo[o B]ar</paragraph>' );
 
@@ -164,7 +164,7 @@ describe( 'transform', () => {
 				syncClients();
 
 				expectClients(
-					'<paragraph>o BFoar</paragraph>'
+					'<paragraph>Foo Bar</paragraph>'
 				);
 			} );
 		} );
@@ -229,9 +229,13 @@ describe( 'transform', () => {
 
 				syncClients();
 
+				// Actual content:
+				// <paragraph>Foo</paragraph><paragraph>Bar</paragraph><blockQuote></blockQuote>
 				expectClients(
 					'<paragraph>Foo</paragraph>' +
-					'<blockQuote><paragraph>Bar</paragraph></blockQuote>'
+					'<blockQuote>' +
+						'<paragraph>Bar</paragraph>' +
+					'</blockQuote>'
 				);
 			} );
 		} );
@@ -293,6 +297,8 @@ describe( 'transform', () => {
 
 				syncClients();
 
+				// Actual result:
+				// <paragraph>Foo</paragraph>
 				expectClients(
 					'<paragraph>Foo</paragraph>' +
 					'<paragraph>Bar</paragraph>'
@@ -362,7 +368,7 @@ describe( 'transform', () => {
 				);
 			} );
 
-			it.skip( 'text, then remove and undo', () => {
+			it( 'text, then remove and undo', () => {
 				john.setData( '<paragraph>[Foo ]Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo []Bar</paragraph>' );
 
@@ -525,7 +531,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
 
 				john.remove();
-				kate.setAttribute( 'bold', 'true' );
+				kate.setAttribute( 'bold', true );
 
 				syncClients();
 
@@ -540,7 +546,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>Fo[o]</paragraph>' );
 
 				john.remove();
-				kate.setAttribute( 'bold', 'true' );
+				kate.setAttribute( 'bold', true );
 
 				syncClients();
 
@@ -554,7 +560,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>Fo[o Bar]</paragraph>' );
 
 				john.remove();
-				kate.setAttribute( 'bold', 'true' );
+				kate.setAttribute( 'bold', true );
 
 				syncClients();
 
@@ -568,7 +574,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>[Foo Bar]</paragraph>' );
 
 				john.remove();
-				kate.setAttribute( 'bold', 'true' );
+				kate.setAttribute( 'bold', true );
 
 				syncClients();
 
@@ -695,7 +701,7 @@ describe( 'transform', () => {
 				);
 			} );
 
-			it.skip( 'element into paragraph, then undo', () => {
+			it( 'element into paragraph, then undo', () => {
 				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
 

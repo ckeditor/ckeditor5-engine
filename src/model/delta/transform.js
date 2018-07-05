@@ -21,7 +21,6 @@ import operationTransform from '../operation/transform';
 import NoOperation from '../operation/nooperation';
 import MoveOperation from '../operation/moveoperation';
 import RemoveOperation from '../operation/removeoperation';
-import arrayUtils from '@ckeditor/ckeditor5-utils/src/lib/lodash/array';
 import compareArrays from '@ckeditor/ckeditor5-utils/src/comparearrays';
 
 const specialCases = new Map();
@@ -56,10 +55,7 @@ const transform = {
 		const transformAlgorithm = transform.getTransformationCase( a, b ) || transform.defaultTransform;
 
 		// Make new instance of context object, so all changes done during transformation are not saved in original object.
-		const transformed = transformAlgorithm( a, b, Object.assign( {}, context ) );
-		const baseVersion = arrayUtils.last( b.operations ).baseVersion;
-
-		return updateBaseVersion( baseVersion, transformed );
+		return transformAlgorithm( a, b, Object.assign( {}, context ) );
 	},
 
 	/**
@@ -227,6 +223,20 @@ const transform = {
 	 * by the first set of deltas.
 	 */
 	transformDeltaSets( deltasA, deltasB, document = null ) {
+		if ( deltasA.length == 0 ) {
+			return {
+				deltasA: [],
+				deltasB: deltasB.slice()
+			};
+		}
+
+		if ( deltasB.length == 0 ) {
+			return {
+				deltasA: deltasA.slice(),
+				deltasB: []
+			};
+		}
+
 		const transformedDeltasA = Array.from( deltasA );
 		const transformedDeltasB = Array.from( deltasB );
 
@@ -310,21 +320,31 @@ const transform = {
 			padWithNoOps( transformedDeltasA, opsDiffB - opsDiffA );
 		}
 
-		return { deltasA: transformedDeltasA, deltasB: transformedDeltasB };
+		return {
+			deltasA: updateBaseVersion( transformedDeltasA, getLastVersion( deltasB ) ),
+			deltasB: updateBaseVersion( transformedDeltasB, getLastVersion( deltasA ) )
+		};
 	}
 };
 
 export default transform;
 
 // Updates base versions of operations inside deltas (which are the results of delta transformation).
-function updateBaseVersion( baseVersion, deltas ) {
+function updateBaseVersion( deltas, baseVersion ) {
 	for ( const delta of deltas ) {
 		for ( const op of delta.operations ) {
-			op.baseVersion = ++baseVersion;
+			op.baseVersion = baseVersion++;
 		}
 	}
 
 	return deltas;
+}
+
+function getLastVersion( deltas ) {
+	const lastDelta = deltas[ deltas.length - 1 ];
+	const lastOp = lastDelta.operations[ lastDelta.operations.length - 1 ];
+
+	return lastOp.baseVersion + 1;
 }
 
 // Returns number of operations in given array of deltas.

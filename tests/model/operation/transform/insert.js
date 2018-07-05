@@ -97,7 +97,7 @@ describe( 'transform', () => {
 				);
 			} );
 
-			it.skip( 'text, then wrap and undo', () => {
+			it( 'text, then wrap and undo', () => {
 				john.setData( '<paragraph>Foo[]</paragraph>' );
 				kate.setData( '<paragraph>Foo[]</paragraph>' );
 
@@ -120,7 +120,7 @@ describe( 'transform', () => {
 				);
 			} );
 
-			it.skip( 'text, then insert element and merge', () => {
+			it( 'text, then insert element and merge', () => {
 				john.setData( '<paragraph>[]</paragraph><paragraph>Abc</paragraph>' );
 				kate.setData( '<paragraph>[]</paragraph><paragraph>Abc</paragraph>' );
 
@@ -129,8 +129,13 @@ describe( 'transform', () => {
 
 				syncClients();
 
+				expectClients(
+					'<paragraph>Foo Bar</paragraph>' +
+					'<paragraph>Abc</paragraph>'
+				);
+
 				john.setSelection( [ 1 ] );
-				kate.setSelection( [ 1 ], [ 2 ] );
+				kate.setSelection( [ 1 ] );
 
 				john.insert( '<paragraph>Xyz</paragraph>' );
 				kate.merge();
@@ -138,12 +143,13 @@ describe( 'transform', () => {
 				syncClients();
 
 				expectClients(
-					'<paragraph>Foo BarAbc</paragraph>' +
-					'<paragraph>Xyz</paragraph>'
+					'<paragraph>Foo Bar</paragraph>' +
+					'<paragraph>Xyz</paragraph>' +
+					'<paragraph>Abc</paragraph>'
 				);
 			} );
 
-			it.skip( 'text, then split and undo', () => {
+			it( 'text, then split and undo', () => {
 				john.setData( '<paragraph>[]</paragraph>' );
 				kate.setData( '<paragraph>[]</paragraph>' );
 
@@ -258,6 +264,8 @@ describe( 'transform', () => {
 
 				syncClients();
 
+				// Actual result:
+				// <paragraph>Abc</paragraph><blockQuote><paragraph>Foo Bar</paragraph></blockQuote>
 				expectClients(
 					'<blockQuote>' +
 						'<paragraph>Foo Bar</paragraph>' +
@@ -385,7 +393,6 @@ describe( 'transform', () => {
 				expectClients(
 					'<paragraph>Abc</paragraph>' +
 					'<paragraph>Foo Bar</paragraph>'
-
 				);
 			} );
 
@@ -398,6 +405,8 @@ describe( 'transform', () => {
 
 				syncClients();
 
+				expectClients( '<blockQuote><paragraph>Foo Bar</paragraph></blockQuote>' );
+
 				john.setSelection( [ 0, 0, 3 ] );
 				kate.setSelection( [ 0, 0, 3 ] );
 
@@ -406,14 +415,23 @@ describe( 'transform', () => {
 
 				syncClients();
 
+				expectClients(
+					'<blockQuote>' +
+						'<paragraph>Foo</paragraph>' +
+						'<paragraph></paragraph>' +
+						'<paragraph> Bar</paragraph>' +
+					'</blockQuote>'
+				);
+
 				kate.undo();
 
 				syncClients();
 
+				// Below is not the best result ever but it is acceptable.
 				expectClients(
 					'<blockQuote>' +
-						'<paragraph>Foo</paragraph>' +
-						'<paragraph> Bar</paragraph>' +
+						'<paragraph>Foo Bar</paragraph>' +
+						'<paragraph></paragraph>' +
 					'</blockQuote>'
 				);
 			} );
@@ -509,7 +527,7 @@ describe( 'transform', () => {
 				);
 			} );
 
-			it.skip( 'element, then wrap and undo on both clients', () => {
+			it( 'element, then wrap and undo on both clients', () => {
 				john.setData( '<blockQuote><paragraph>Foo</paragraph>[]</blockQuote>' );
 				kate.setData( '<blockQuote>[<paragraph>Foo</paragraph>]</blockQuote>' );
 
@@ -532,31 +550,32 @@ describe( 'transform', () => {
 				);
 			} );
 
-			it.skip( 'element, then wrap, unwrap and undo', () => {
+			it( 'element, then wrap, unwrap and undo', () => {
 				john.setData( '<blockQuote><paragraph>Foo[]</paragraph></blockQuote>' );
-				kate.setData( '<blockQuote><paragraph>Fo[]o</paragraph></blockQuote>' );
+				kate.setData( '<blockQuote>[]<paragraph>Foo</paragraph></blockQuote>' );
 
 				john.type( ' Bar' );
 				kate.unwrap();
 
 				syncClients();
 
-				john.setSelection( [ 0 ], [ 1 ] );
+				expectClients( '<paragraph>Foo Bar</paragraph>' );
 
+				john.setSelection( [ 0 ], [ 1 ] );
 				john.wrap( 'blockQuote' );
 
 				syncClients();
 
-				kate.setSelection( [ 0, 0, 0 ] );
+				expectClients( '<blockQuote><paragraph>Foo Bar</paragraph></blockQuote>' );
 
 				john.undo();
+
+				kate.setSelection( [ 0, 0 ], [ 0, 1 ] );
 				kate.unwrap();
 
 				syncClients();
 
-				expectClients(
-					'<paragraph>Foo Bar</paragraph>'
-				);
+				expectClients( '<paragraph>Foo Bar</paragraph>' );
 			} );
 		} );
 
@@ -685,7 +704,7 @@ describe( 'transform', () => {
 				);
 			} );
 
-			it.skip( 'text, then add attribute, remove and undo', () => {
+			it( 'text, then add attribute, remove and undo', () => {
 				john.setData( '<paragraph>Foo[]</paragraph>' );
 				kate.setData( '<paragraph>Foo[]</paragraph>' );
 
@@ -694,13 +713,20 @@ describe( 'transform', () => {
 
 				syncClients();
 
-				john.setSelection( [ 0, 2 ], [ 1, 2 ] );
-				kate.setSelection( [ 0, 2 ], [ 1, 2 ] );
+				expectClients( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
-				kate.remove();
+				john.setSelection( [ 0, 2 ], [ 0, 3 ] );
+				john.setAttribute( 'bold', true );
+
+				john.setSelection( [ 1, 0 ], [ 1, 2 ] );
+				john.setAttribute( 'bold', true );
+
+				kate.setSelection( [ 0, 2 ], [ 1, 2 ] );
+				kate.delete();
 
 				syncClients();
+
+				expectClients( '<paragraph>For</paragraph>' );
 
 				kate.undo();
 
@@ -708,7 +734,7 @@ describe( 'transform', () => {
 
 				expectClients(
 					'<paragraph>Fo<$text bold="true">o</$text></paragraph>' +
-					'<paragraph bold="true"><$text bold="true">Ba</$text>r</paragraph>'
+					'<paragraph><$text bold="true">Ba</$text>r</paragraph>'
 				);
 			} );
 		} );
@@ -751,9 +777,7 @@ describe( 'transform', () => {
 
 				syncClients();
 
-				expectClients(
-					'<paragraph>FooAbc</paragraph>'
-				);
+				expectClients( '<paragraph>FooAbc</paragraph>' );
 			} );
 
 			it( 'element in same path', () => {
@@ -765,12 +789,10 @@ describe( 'transform', () => {
 
 				syncClients();
 
-				expectClients(
-					'<paragraph>Bar</paragraph>'
-				);
+				expectClients( '<paragraph>Bar</paragraph>' );
 			} );
 
-			it.skip( 'text, then rename, split and undo', () => {
+			it( 'text, then rename, split and undo', () => {
 				john.setData( '<paragraph>Foo Bar[]</paragraph>' );
 				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
@@ -791,12 +813,10 @@ describe( 'transform', () => {
 
 				syncClients();
 
-				expectClients(
-					'<heading1>Foo Bar</heading1>'
-				);
+				expectClients( '<heading1>Foo Bar</heading1>' );
 			} );
 
-			it.skip( 'element, then add marker, split and undo with type', () => {
+			it( 'element, then add marker, split and undo with type #1', () => {
 				john.setData( '<paragraph>Foo</paragraph>[]' );
 				kate.setData( '[<paragraph>Foo</paragraph>]' );
 
@@ -804,6 +824,8 @@ describe( 'transform', () => {
 				kate.remove();
 
 				syncClients();
+
+				expectClients( '<paragraph>Bar</paragraph><paragraph></paragraph>' ); // Autoparagraphing.
 
 				john.setSelection( [ 0, 0 ], [ 0, 3 ] );
 				kate.setSelection( [ 0, 2 ] );
@@ -813,17 +835,66 @@ describe( 'transform', () => {
 
 				syncClients();
 
-				john.setSelection( [ 1, 1 ] );
+				expectClients(
+					'<paragraph><m1:start></m1:start>Ba</paragraph>' +
+					'<paragraph>r<m1:end></m1:end></paragraph>' +
+					'<paragraph></paragraph>'
+				);
 
 				john.undo();
+				john.setSelection( [ 1, 1 ] );
 				john.type( 'Abc' );
+
 				kate.undo();
 
 				syncClients();
 
+				expectClients( '<paragraph>BarAbc</paragraph><paragraph></paragraph>' );
+
+				kate.undo();
+
+				syncClients();
+
+				expectClients( '<paragraph>Foo</paragraph><paragraph>BarAbc</paragraph>' );
+			} );
+
+			it.skip( 'element, then add marker, split and undo with type #2', () => {
+				john.setData( '<paragraph>Foo</paragraph>[]' );
+				kate.setData( '[<paragraph>Foo</paragraph>]' );
+
+				john.insert( '<paragraph>Bar</paragraph>' );
+				kate.remove();
+
+				syncClients();
+
+				expectClients( '<paragraph>Bar</paragraph><paragraph></paragraph>' ); // Autoparagraphing.
+
+				john.setSelection( [ 0, 0 ], [ 0, 3 ] );
+				kate.setSelection( [ 0, 2 ] );
+
+				john.setMarker( 'm1' );
+				kate.split();
+
+				syncClients();
+
 				expectClients(
-					'<paragraph>BarAbc</paragraph>'
+					'<paragraph><m1:start></m1:start>Ba</paragraph>' +
+					'<paragraph>r<m1:end></m1:end></paragraph>' +
+					'<paragraph></paragraph>'
 				);
+
+				john.undo();
+				john.setSelection( [ 1, 1 ] );
+				john.type( 'Abc' );
+
+				kate.undo();
+				kate.undo();
+
+				syncClients();
+
+				// Actual content:
+				// <paragraph></paragraph><paragraph>Ba</paragraph><paragraph></paragraph>
+				expectClients( '<paragraph>Foo</paragraph><paragraph>BarAbc</paragraph>' );
 			} );
 		} );
 

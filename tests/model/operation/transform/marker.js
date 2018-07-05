@@ -48,7 +48,7 @@ describe( 'transform', () => {
 				);
 			} );
 
-			it.skip( 'in same range', () => {
+			it( 'in same range', () => {
 				john.setData( '<paragraph>[Foo]</paragraph>' );
 				kate.setData( '<paragraph>[Foo]</paragraph>' );
 
@@ -59,7 +59,7 @@ describe( 'transform', () => {
 
 				expectClients(
 					'<paragraph>' +
-						'<m2:start></m2:start><m1:start></m1:start>Foo<m1:end></m1:end><m2:end></m2:end>' +
+						'<m1:start></m1:start><m2:start></m2:start>Foo<m1:end></m1:end><m2:end></m2:end>' +
 					'</paragraph>'
 				);
 			} );
@@ -167,22 +167,29 @@ describe( 'transform', () => {
 
 				syncClients();
 
-				john.setSelection( [ 0, 0 ], [ 0, 3 ] );
-				kate.setSelection( [ 0, 2 ], [ 0, 7 ] );
+				expectClients(
+					'<paragraph>' +
+						'<m1:start></m1:start>Fo<m2:start></m2:start>o<m1:end></m1:end> Bar<m2:end></m2:end>' +
+					'</paragraph>'
+				);
 
 				john.remove();
 				kate.remove();
 
 				syncClients();
 
+				expectClients( '<paragraph></paragraph>' );
+
 				john.undo();
 				kate.undo();
 
 				syncClients();
 
+				// Actual result for Kate:
+				// <paragraph><m1:start></m1:start>Fo<m1:end></m1:end><m2:start></m2:start>o<m2:end></m2:end> Bar</paragraph>
 				expectClients(
 					'<paragraph>' +
-						'<m1:start></m1:start>Fo<m2:start></m2:start>o<m1:end></m1:end> Bar<m2:end></m2:end>' +
+						'<m1:start></m1:start>Foo<m1:end></m1:end><m2:start></m2:start> Bar<m2:end></m2:end>' +
 					'</paragraph>'
 				);
 			} );
@@ -418,8 +425,10 @@ describe( 'transform', () => {
 
 				syncClients();
 
+				// Actual result for Kate:
+				// <paragraph>Ba<m1:start></m1:start>Foo r<m1:end></m1:end></paragraph>
 				expectClients(
-					'<paragraph>Ba<m1:start></m1:start>Foo r<m1:end></m1:end></paragraph>'
+					'<paragraph><m1:start></m1:start>BaFoo r<m1:end></m1:end></paragraph>'
 				);
 			} );
 		} );
@@ -589,7 +598,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Ba]r</paragraph>' );
 
 				john.setMarker( 'm1' );
-				kate.setAttribute( 'bold', 'true' );
+				kate.setAttribute( 'bold', true );
 
 				syncClients();
 
@@ -604,7 +613,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
 				john.setMarker( 'm1' );
-				kate.setAttribute( 'bold', 'true' );
+				kate.setAttribute( 'bold', true );
 
 				syncClients();
 
@@ -621,7 +630,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>[Foo]</paragraph>' );
 
 				john.setMarker( 'm1' );
-				kate.setAttribute( 'bold', 'true' );
+				kate.setAttribute( 'bold', true );
 
 				syncClients();
 
@@ -637,7 +646,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>Fo[o B]ar</paragraph>' );
 
 				john.setMarker( 'm1' );
-				kate.setAttribute( 'bold', 'true' );
+				kate.setAttribute( 'bold', true );
 
 				syncClients();
 
@@ -653,7 +662,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>[Foo]</paragraph>' );
 
 				john.setMarker( 'm1' );
-				kate.setAttribute( 'bold', 'true' );
+				kate.setAttribute( 'bold', true );
 
 				syncClients();
 

@@ -3,6 +3,7 @@ import ModelTestEditor from '@ckeditor/ckeditor5-core/tests/_utils/modeltestedit
 import BoldEditing from '@ckeditor/ckeditor5-basic-styles/src/bold/boldediting';
 import ListEditing from '@ckeditor/ckeditor5-list/src/listediting';
 import Paragraph from '@ckeditor/ckeditor5-paragraph/src/paragraph';
+import Typing from '@ckeditor/ckeditor5-typing/src/typing';
 import UndoEditing from '@ckeditor/ckeditor5-undo/src/undoediting';
 import BlockQuoteEditing from '@ckeditor/ckeditor5-block-quote/src/blockquoteediting';
 
@@ -23,7 +24,7 @@ export class Client {
 
 	init() {
 		return ModelTestEditor.create( {
-			plugins: [ Paragraph, BoldEditing, ListEditing, UndoEditing, BlockQuoteEditing ]
+			plugins: [ Typing, Paragraph, BoldEditing, ListEditing, UndoEditing, BlockQuoteEditing ]
 		} ).then( editor => {
 			this.editor = editor;
 			this.document = editor.model.document;
@@ -33,7 +34,32 @@ export class Client {
 	}
 
 	setData( initModelString ) {
-		setData( this.editor.model, initModelString );
+		const model = this.editor.model;
+		const modelRoot = model.document.getRoot();
+
+		// Parse data string to model.
+		const parsedResult = parse( initModelString, model.schema, { context: [ modelRoot.name ] } );
+
+		// Retrieve DocumentFragment and Selection from parsed model.
+		const modelDocumentFragment = parsedResult.model;
+		const selection = parsedResult.selection;
+
+		model.change( writer => {
+			// Replace existing model in document by new one.
+			writer.remove( Range.createIn( modelRoot ) );
+			writer.insert( modelDocumentFragment, modelRoot );
+		} );
+
+		const ranges = [];
+
+		for ( const range of selection.getRanges() ) {
+			const start = new Position( modelRoot, range.start.path );
+			const end = new Position( modelRoot, range.end.path );
+
+			ranges.push( new Range( start, end ) );
+		}
+
+		model.document.selection._setTo( ranges );
 
 		this.syncedVersion = this.document.version;
 	}
@@ -46,7 +72,7 @@ export class Client {
 		const startPos = this._getPosition( start );
 		const endPos = this._getPosition( end );
 
-		this._processAction( 'setSelection', new Range( startPos, endPos ) );
+		this.editor.model.document.selection._setTo( new Range( startPos, endPos ) );
 	}
 
 	insert( itemString, path ) {
@@ -67,6 +93,10 @@ export class Client {
 		const endPos = this._getPosition( end, 'end' );
 
 		this._processAction( 'remove', new Range( startPos, endPos ) );
+	}
+
+	delete() {
+		this._processExecute( 'delete' );
 	}
 
 	move( target, start, end ) {
@@ -146,9 +176,13 @@ export class Client {
 	}
 
 	undo() {
+		this._processExecute( 'undo' );
+	}
+
+	_processExecute( commandName, commandArgs ) {
 		const oldVersion = this.document.version;
 
-		this.editor.execute( 'undo' );
+		this.editor.execute( commandName, commandArgs );
 
 		const deltas = this.document.history.getDeltas( oldVersion );
 
@@ -236,7 +270,7 @@ export function syncClients() {
 				remoteDeltasTransformed = deltaTransform.transformDeltaSets( remoteDeltas, clientDeltas ).deltasA;
 			}
 
-			client.editor.model.change( writer => {
+			client.editor.model.enqueueChange( 'transparent', writer => {
 				for ( const delta of remoteDeltasTransformed ) {
 					writer.batch.addDelta( delta );
 

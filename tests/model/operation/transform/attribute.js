@@ -20,8 +20,8 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
-				kate.setAttribute( 'italic', 'true' );
+				john.setAttribute( 'bold', true );
+				kate.setAttribute( 'italic', true );
 
 				syncClients();
 
@@ -32,8 +32,8 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>F[o]o</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[a]r</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
-				kate.setAttribute( 'italic', 'true' );
+				john.setAttribute( 'bold', true );
+				kate.setAttribute( 'italic', true );
 
 				syncClients();
 
@@ -47,8 +47,8 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
 				kate.setData( '<paragraph>Fo[o B]ar</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
-				kate.setAttribute( 'italic', 'true' );
+				john.setAttribute( 'bold', true );
+				kate.setAttribute( 'italic', true );
 
 				syncClients();
 
@@ -63,8 +63,8 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>F[oo</paragraph><paragraph>Ba]r</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
-				kate.setAttribute( 'italic', 'true' );
+				john.setAttribute( 'bold', true );
+				kate.setAttribute( 'italic', true );
 
 				syncClients();
 
@@ -80,8 +80,8 @@ describe( 'transform', () => {
 				john.setData( '<paragraph><$text bold="true">[Foo Bar]</$text></paragraph>' );
 				kate.setData( '<paragraph><$text bold="true">Fo[o] Bar</$text></paragraph>' );
 
-				john.setAttribute( 'italic', 'true' );
-				kate.setAttribute( 'underline', 'true' );
+				john.setAttribute( 'italic', true );
+				kate.setAttribute( 'underline', true );
 
 				syncClients();
 
@@ -98,8 +98,8 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
 				kate.setData( '<paragraph>[Foo Bar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
-				kate.setAttribute( 'italic', 'true' );
+				john.setAttribute( 'bold', true );
+				kate.setAttribute( 'italic', true );
 
 				syncClients();
 
@@ -110,8 +110,8 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo Bar</paragraph>]' );
 				kate.setData( '[<paragraph>Foo Bar</paragraph>]' );
 
-				john.setAttribute( 'bold', 'true' );
-				kate.setAttribute( 'italic', 'true' );
+				john.setAttribute( 'bold', true );
+				kate.setAttribute( 'italic', true );
 
 				syncClients();
 
@@ -122,8 +122,8 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>F[]oo Bar</paragraph>' );
 				kate.setData( '<paragraph>F[]oo Bar</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
-				kate.setAttribute( 'italic', 'true' );
+				john.setAttribute( 'bold', true );
+				kate.setAttribute( 'italic', true );
 
 				syncClients();
 
@@ -134,8 +134,8 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' ) ;
 
-				john.setAttribute( 'bold', 'true' );
-				kate.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
+				kate.setAttribute( 'bold', true );
 
 				syncClients();
 
@@ -151,7 +151,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>[]Bar</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.type( 'Abc' );
 
 				syncClients();
@@ -163,7 +163,7 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>[]Bar</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.type( 'Abc' );
 
 				syncClients();
@@ -175,7 +175,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[F]oo</paragraph>' );
 				kate.setData( '<paragraph>Foo[]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.type( 'Abc' );
 
 				syncClients();
@@ -187,7 +187,7 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo</paragraph>]' );
 				kate.setData( '<paragraph>Foo[]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.type( 'Abc' );
 
 				syncClients();
@@ -199,7 +199,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph>' );
 				kate.setData( '<paragraph>Fo[]o</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.type( 'Abc' );
 
 				syncClients();
@@ -211,7 +211,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>[]' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.insert( '<paragraph>Abc</paragraph>' );
 
 				syncClients();
@@ -227,7 +227,7 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>[]' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.insert( '<paragraph>Abc</paragraph>' );
 
 				syncClients();
@@ -245,7 +245,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[ar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.move( [ 1, 0 ] );
 
 				syncClients();
@@ -260,7 +260,7 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[ar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.move( [ 1, 0 ] );
 
 				syncClients();
@@ -275,7 +275,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo B[ar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.move( [ 0, 4 ] );
 
 				syncClients();
@@ -287,7 +287,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.move( [ 0, 1 ] );
 
 				syncClients();
@@ -299,7 +299,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
 				kate.setData( '<paragraph>F[oo] Bar</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.move( [ 0, 7 ], [ 0, 1 ], [ 0, 3 ] );
 
 				syncClients();
@@ -311,7 +311,7 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo Bar</paragraph>]' );
 				kate.setData( '<paragraph>F[oo] Bar</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.move( [ 0, 7 ] );
 
 				syncClients();
@@ -325,7 +325,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.wrap( 'blockQuote' );
 
 				syncClients();
@@ -340,7 +340,7 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.wrap( 'blockQuote' );
 
 				syncClients();
@@ -355,7 +355,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph>' );
 				kate.setData( '[<paragraph>Foo</paragraph>]' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.wrap( 'blockQuote' );
 
 				syncClients();
@@ -371,7 +371,7 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo</paragraph>]' );
 				kate.setData( '[<paragraph>Foo</paragraph>]' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.wrap( 'blockQuote' );
 
 				syncClients();
@@ -389,7 +389,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><blockQuote><paragraph>Bar</paragraph></blockQuote>' );
 				kate.setData( '<paragraph>Foo</paragraph><blockQuote>[<paragraph>Bar</paragraph>]</blockQuote>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.unwrap();
 
 				syncClients();
@@ -404,7 +404,7 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo</paragraph>]<blockQuote><paragraph>Bar</paragraph></blockQuote>' );
 				kate.setData( '<paragraph>Foo</paragraph><blockQuote>[<paragraph>Bar</paragraph>]</blockQuote>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.unwrap();
 
 				syncClients();
@@ -419,7 +419,7 @@ describe( 'transform', () => {
 				john.setData( '<blockQuote><paragraph>[Foo]</paragraph></blockQuote>' );
 				kate.setData( '<blockQuote>[<paragraph>Foo</paragraph>]</blockQuote>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.unwrap();
 
 				syncClients();
@@ -433,7 +433,7 @@ describe( 'transform', () => {
 				john.setData( '<blockQuote>[<paragraph>Foo</paragraph>]</blockQuote>' );
 				kate.setData( '<blockQuote>[<paragraph>Foo</paragraph>]</blockQuote>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.unwrap();
 
 				syncClients();
@@ -449,7 +449,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>Ba[]r</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.split();
 
 				syncClients();
@@ -465,7 +465,7 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>Ba[]r</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.split();
 
 				syncClients();
@@ -481,7 +481,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo B[]ar</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.split();
 
 				syncClients();
@@ -496,7 +496,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph>' );
 				kate.setData( '<paragraph>Fo[]o</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.split();
 
 				syncClients();
@@ -511,7 +511,7 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo Bar</paragraph>]' );
 				kate.setData( '<paragraph>Foo B[]ar</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.split();
 
 				syncClients();
@@ -528,7 +528,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.remove();
 
 				syncClients();
@@ -543,7 +543,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Fo]o</paragraph>' );
 				kate.setData( '<paragraph>Fo[o]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.remove();
 
 				syncClients();
@@ -557,7 +557,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph>' );
 				kate.setData( '<paragraph>F[oo]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.remove();
 
 				syncClients();
@@ -573,7 +573,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><paragraph bold="true"><$text bold="true">Bar</$text></paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph>[<paragraph bold="true"><$text bold="true">Bar</$text></paragraph>]' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.removeAttribute( 'bold' );
 
 				syncClients();
@@ -588,7 +588,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo]</paragraph><paragraph><$text bold="true">Bar</$text></paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph><$text bold="true">[Bar]</$text></paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.removeAttribute( 'bold' );
 
 				syncClients();
@@ -603,7 +603,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Fo]<$text bold="true">o</$text></paragraph>' );
 				kate.setData( '<paragraph>Fo<$text bold="true">[o]</$text></paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.removeAttribute( 'bold' );
 
 				syncClients();
@@ -617,7 +617,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph bold="true"><$text bold="true">[Fo]o</$text></paragraph>' );
 				kate.setData( '[<paragraph bold="true"><$text bold="true">Foo</$text></paragraph>]' );
 
-				john.setAttribute( 'italic', 'true' );
+				john.setAttribute( 'italic', true );
 				kate.removeAttribute( 'bold' );
 
 				syncClients();
@@ -631,7 +631,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Fo]<$text bold="true" italic="true">o</$text></paragraph>' );
 				kate.setData( '<paragraph>Fo<$text bold="true" italic="true">[o]</$text></paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.removeAttribute( 'bold' );
 
 				syncClients();
@@ -645,7 +645,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph><$text bold="true">[Foo]</$text></paragraph>' );
 				kate.setData( '<paragraph><$text bold="true">[Foo]</$text></paragraph>' );
 
-				john.setAttribute( 'italic', 'true' );
+				john.setAttribute( 'italic', true );
 				kate.removeAttribute( 'bold' );
 
 				syncClients();
@@ -661,7 +661,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.setMarker( 'm1' );
 
 				syncClients();
@@ -673,7 +673,7 @@ describe( 'transform', () => {
 				john.setData( '[<paragraph>Foo Bar</paragraph>]' );
 				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.setMarker( 'm1' );
 
 				syncClients();
@@ -690,7 +690,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>F[o]o</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[a]r</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.setMarker( 'm1' );
 
 				syncClients();
@@ -705,7 +705,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
 				kate.setData( '<paragraph>Fo[o B]ar</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.setMarker( 'm1' );
 
 				syncClients();
@@ -722,7 +722,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>F[oo</paragraph><paragraph>Ba]r</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>[Bar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.setMarker( 'm1' );
 
 				syncClients();
@@ -739,7 +739,7 @@ describe( 'transform', () => {
 				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
 				kate.setData( '<paragraph>[Foo Bar]</paragraph>' );
 
-				john.setAttribute( 'bold', 'true' );
+				john.setAttribute( 'bold', true );
 				kate.setMarker( 'm1' );
 
 				syncClients();

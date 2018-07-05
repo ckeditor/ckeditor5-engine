@@ -362,6 +362,8 @@ describe( 'transform', () => {
 			} );
 
 			it.skip( 'text in other user\'s selection', () => {
+				// OT Error.
+				// Actual result: <paragraph>Foo</paragraph><paragraph> Bar</paragraph>
 				john.setData( '<paragraph>[Foo] Bar</paragraph>' );
 				kate.setData( '<paragraph>F[]oo Bar</paragraph>' );
 
@@ -611,7 +613,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>Foo [Bar]</paragraph>' );
 
 				john.move( [ 0, 7 ] );
-				kate.setAttribute( 'italic', 'true' );
+				kate.setAttribute( 'italic', true );
 
 				syncClients();
 
@@ -623,7 +625,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[a]r</paragraph>' );
 
 				john.move( [ 1, 3 ] );
-				kate.setAttribute( 'italic', 'true' );
+				kate.setAttribute( 'italic', true );
 
 				syncClients();
 
@@ -638,7 +640,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>Fo[o] Bar</paragraph><paragraph></paragraph>' );
 
 				john.move( [ 1, 0 ] );
-				kate.setAttribute( 'italic', 'true' );
+				kate.setAttribute( 'italic', true );
 
 				syncClients();
 
@@ -653,7 +655,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>F[]oo Bar</paragraph>' );
 
 				john.move( [ 0, 7 ] );
-				kate.setAttribute( 'italic', 'true' );
+				kate.setAttribute( 'italic', true );
 
 				syncClients();
 
