@@ -117,6 +117,20 @@ describe( 'transform', () => {
 
 				expectClients( '<paragraph>Foo Bar</paragraph>' );
 			} );
+
+			it( 'in same range, then change attribute', () => {
+				john.setData( '<paragraph>[Foo Bar]</paragraph>' );
+				kate.setData( '<paragraph>[Foo Bar]</paragraph>' );
+
+				john.setAttribute( 'contentEditable', true );
+				kate.setAttribute( 'contentEditable', false );
+
+				syncClients();
+
+				kate.setAttribute( 'contentEditable', false );
+
+				expectClients( '<paragraph><$text contentEditable="false">Foo Bar</$text></paragraph>' );
+			} );
 		} );
 
 		describe( 'by insert', () => {

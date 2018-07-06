@@ -67,6 +67,18 @@ describe( 'transform', () => {
 				expectClients( '<paragraph>BarFoo </paragraph>' );
 			} );
 
+			it( 'text in same path #4', () => {
+				john.setData( '<paragraph>F[oo] Bar</paragraph>' );
+				kate.setData( '<paragraph>Foo B[ar]</paragraph>' );
+
+				john.move( [ 0, 6 ] );
+				kate.move( [ 0, 2 ] );
+
+				syncClients();
+
+				expectClients( '<paragraph>Foo Bar</paragraph>' );
+			} );
+
 			it( 'text at different paths #1', () => {
 				john.setData( '<paragraph>F[oo]</paragraph><paragraph>Bar</paragraph>' );
 				kate.setData( '<paragraph>Foo</paragraph><paragraph>B[ar]</paragraph>' );
