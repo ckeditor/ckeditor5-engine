@@ -29,8 +29,9 @@ describe( 'Selection post-fixer', () => {
 
 			model.schema.register( 'table', {
 				allowWhere: '$block',
-				isObject: true,
-				isLimit: true
+				allowAttributes: [ 'headingRows', 'headingColumns' ],
+				isLimit: true,
+				isObject: true
 			} );
 
 			model.schema.register( 'tableRow', {
@@ -40,13 +41,16 @@ describe( 'Selection post-fixer', () => {
 
 			model.schema.register( 'tableCell', {
 				allowIn: 'tableRow',
-				allowContentOf: '$block',
+				allowAttributes: [ 'colspan', 'rowspan' ],
 				isLimit: true
 			} );
 
+			model.schema.extend( '$block', { allowIn: 'tableCell' } );
+
 			model.schema.register( 'image', {
-				allowIn: '$root',
-				isObject: true
+				isObject: true,
+				isBlock: true,
+				allowWhere: '$block',
 			} );
 
 			model.schema.register( 'caption', {
@@ -100,7 +104,10 @@ describe( 'Selection post-fixer', () => {
 				setModelData( model,
 					'<paragraph>[]foo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>bar</paragraph>'
 				);
@@ -118,7 +125,10 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>f[oo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>]' +
 					'<paragraph>bar</paragraph>'
 				);
@@ -136,7 +146,10 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>foo</paragraph>' +
 					'[<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>b]ar</paragraph>'
 				);
@@ -154,7 +167,10 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>f[oo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>]' +
 					'<paragraph>bar</paragraph>'
 				);
@@ -164,15 +180,18 @@ describe( 'Selection post-fixer', () => {
 				// <paragraph>foo</paragraph><table><tableRow><tableCell>a[aa</tableCell><tableCell>b]bb</tableCell>
 				model.change( writer => {
 					writer.setSelection( ModelRange.createFromParentsAndOffsets(
-						modelRoot.getChild( 1 ).getChild( 0 ).getChild( 0 ), 1,
-						modelRoot.getChild( 1 ).getChild( 0 ).getChild( 1 ), 2
+						modelRoot.getNodeByPath( [ 1, 0, 0, 0 ] ), 1,
+						modelRoot.getNodeByPath( [ 1, 0, 1, 0 ] ), 2
 					) );
 				} );
 
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>foo</paragraph>' +
 					'[<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>]' +
 					'<paragraph>bar</paragraph>'
 				);
@@ -182,11 +201,17 @@ describe( 'Selection post-fixer', () => {
 				setModelData( model,
 					'<paragraph>foo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'[]' +
 					'<table>' +
-						'<tableRow><tableCell>xxx</tableCell><tableCell>yyy</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>xxx</paragraph></tableCell>' +
+							'<tableCell><paragraph>yyy</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>baz</paragraph>'
 				);
@@ -194,10 +219,16 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>foo</paragraph>' +
 					'[<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>]' +
 					'<table>' +
-						'<tableRow><tableCell>xxx</tableCell><tableCell>yyy</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>xxx</paragraph></tableCell>' +
+							'<tableCell><paragraph>yyy</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>baz</paragraph>'
 				);
@@ -210,7 +241,10 @@ describe( 'Selection post-fixer', () => {
 				setModelData( model,
 					'<paragraph>foo</paragraph>' +
 					'<table>' +
-						'[<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>]' +
+						'[<tableRow' +
+							'><tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell><' +
+						'/tableRow>]' +
 					'</table>' +
 					'<paragraph>baz</paragraph>'
 				);
@@ -218,7 +252,10 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>foo</paragraph>' +
 					'[<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>]' +
 					'<paragraph>baz</paragraph>'
 				);
@@ -228,9 +265,18 @@ describe( 'Selection post-fixer', () => {
 				setModelData( model,
 					'<paragraph>foo</paragraph>' +
 					'<table>' +
-						'[<tableRow><tableCell>1</tableCell><tableCell>2</tableCell></tableRow>' +
-						'<tableRow><tableCell>3</tableCell><tableCell>4</tableCell>]</tableRow>' +
-						'<tableRow><tableCell>5</tableCell><tableCell>6</tableCell></tableRow>' +
+						'[<tableRow>' +
+							'<tableCell><paragraph>1</paragraph></tableCell>' +
+							'<tableCell><paragraph>2</paragraph></tableCell>' +
+						'</tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>3</paragraph></tableCell>' +
+							'<tableCell><paragraph>4</paragraph></tableCell>]' +
+						'</tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>5</paragraph></tableCell>' +
+							'<tableCell><paragraph>6</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>baz</paragraph>'
 				);
@@ -238,9 +284,18 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>foo</paragraph>' +
 					'[<table>' +
-						'<tableRow><tableCell>1</tableCell><tableCell>2</tableCell></tableRow>' +
-						'<tableRow><tableCell>3</tableCell><tableCell>4</tableCell></tableRow>' +
-						'<tableRow><tableCell>5</tableCell><tableCell>6</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>1</paragraph></tableCell>' +
+							'<tableCell><paragraph>2</paragraph></tableCell>' +
+						'</tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>3</paragraph></tableCell>' +
+							'<tableCell><paragraph>4</paragraph></tableCell>' +
+						'</tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>5</paragraph></tableCell>' +
+							'<tableCell><paragraph>6</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>]' +
 					'<paragraph>baz</paragraph>'
 				);
@@ -276,7 +331,10 @@ describe( 'Selection post-fixer', () => {
 				setModelData( model,
 					'<paragraph>foo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>b[ar</paragraph>' +
 					'<paragraph>ba]z</paragraph>'
@@ -285,7 +343,10 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>foo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>b[ar</paragraph>' +
 					'<paragraph>ba]z</paragraph>'
@@ -304,7 +365,10 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>f[oo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>]' +
 					'<paragraph>bar</paragraph>'
 				);
@@ -323,7 +387,10 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>f[oo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>ba]r</paragraph>'
 				);
@@ -333,10 +400,22 @@ describe( 'Selection post-fixer', () => {
 				setModelData( model,
 					'<paragraph>foo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>[aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
-						'<tableRow>]<tableCell>[aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
-						'<tableRow>]<tableCell>[aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
-						'<tableRow>]<tableCell>[aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>[aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
+						'<tableRow>]' +
+							'<tableCell><paragraph>[aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
+						'<tableRow>]' +
+							'<tableCell><paragraph>[aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
+						'<tableRow>]' +
+							'<tableCell><paragraph>[aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>b]az</paragraph>'
 				);
@@ -344,10 +423,22 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>foo</paragraph>' +
 					'[<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>b]az</paragraph>'
 				);
@@ -367,9 +458,42 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>f[oo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>bar]</paragraph>'
+				);
+			} );
+
+			it( 'should allow selection on block - limit element', () => {
+				model.schema.extend( '$block', { allowIn: 'tableCell' } );
+
+				setModelData( model,
+					'<table>' +
+					'<tableRow><tableCell>[<paragraph>aaa</paragraph>]</tableCell></tableRow>' +
+					'</table>'
+				);
+
+				expect( getModelData( model ) ).to.equal(
+					'<table>' +
+					'<tableRow><tableCell><paragraph>[aaa]</paragraph></tableCell></tableRow>' +
+					'</table>'
+				);
+			} );
+
+			it( 'should allow selection on block - limit element adfa', () => {
+				setModelData( model,
+					'<table>' +
+					'<tableRow><tableCell>[<image></image>]</tableCell></tableRow>' +
+					'</table>'
+				);
+
+				expect( getModelData( model ) ).to.equal(
+					'<table>' +
+					'<tableRow><tableCell>[<image></image>]</tableCell></tableRow>' +
+					'</table>'
 				);
 			} );
 		} );
@@ -703,7 +827,10 @@ describe( 'Selection post-fixer', () => {
 				setModelData( model,
 					'<paragraph>[]foo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>bar</paragraph>'
 				);
@@ -720,7 +847,10 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>foo[]</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>bar</paragraph>'
 				);
@@ -739,7 +869,10 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>foo</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>[]aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>[]aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>bar</paragraph>'
 				);
@@ -759,7 +892,10 @@ describe( 'Selection post-fixer', () => {
 				expect( getModelData( model ) ).to.equal(
 					'<paragraph>[foo]</paragraph>' +
 					'<table>' +
-						'<tableRow><tableCell>aaa</tableCell><tableCell>bbb</tableCell></tableRow>' +
+						'<tableRow>' +
+							'<tableCell><paragraph>aaa</paragraph></tableCell>' +
+							'<tableCell><paragraph>bbb</paragraph></tableCell>' +
+						'</tableRow>' +
 					'</table>' +
 					'<paragraph>bar</paragraph>'
 				);
