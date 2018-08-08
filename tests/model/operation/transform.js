@@ -20,6 +20,8 @@ import RemoveOperation from '../../../src/model/operation/removeoperation';
 import RenameOperation from '../../../src/model/operation/renameoperation';
 import NoOperation from '../../../src/model/operation/nooperation';
 
+import log from '@ckeditor/ckeditor5-utils/src/log';
+
 describe( 'transform', () => {
 	let model, doc, root, op, nodeA, nodeB, expected;
 
@@ -52,6 +54,33 @@ describe( 'transform', () => {
 			}
 		}
 	}
+
+	const contextIsStrong = {
+		aIsStrong: true,
+		wasUndone: () => false,
+		getRelation: () => false
+	};
+
+	it( 'error logging', () => {
+		const spy = sinon.spy( log, 'error' );
+
+		const nodeA = new Node();
+		const nodeB = new Node();
+
+		const position = new Position( root, [ 0 ] );
+
+		const a = new InsertOperation( position, [ nodeA ], 0 );
+		const b = new InsertOperation( position, [ nodeB ], 0 );
+
+		// Modify an operation so it will throw an error.
+		a.position = null;
+
+		expect( () => {
+			transform.transform( a, b );
+		} ).to.throw();
+
+		sinon.assert.called( spy );
+	} );
 
 	describe( 'InsertOperation', () => {
 		let nodeC, nodeD, position;
@@ -119,7 +148,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 				expectOperation( transOp[ 0 ], expected );
@@ -310,7 +339,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 				expected.position.offset += 2;
 
 				expect( transOp.length ).to.equal( 1 );
@@ -862,7 +891,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expected.oldValue = 'xyz';
 
@@ -1102,7 +1131,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 				expectOperation( transOp[ 0 ], expected );
@@ -1241,7 +1270,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 				expectOperation( transOp[ 0 ], expected );
@@ -1567,7 +1596,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expected.sourcePosition.path = [ 4, 1, 0 ];
 
@@ -1599,7 +1628,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expected.sourcePosition.path = [ 4, 1, 1 ];
 
@@ -1637,7 +1666,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 
@@ -1675,7 +1704,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 2 );
 
@@ -1714,7 +1743,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 2 );
 
@@ -1765,7 +1794,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 2 );
 
@@ -1805,7 +1834,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 2 );
 
@@ -1830,7 +1859,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 2 );
 
@@ -1901,7 +1930,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 3 );
 
@@ -1952,7 +1981,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 
@@ -1975,7 +2004,7 @@ describe( 'transform', () => {
 			} );
 
 			it( 'should skip context.aIsStrong and be less important than RemoveOperation', () => {
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 
@@ -2318,7 +2347,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 
@@ -2611,7 +2640,7 @@ describe( 'transform', () => {
 				const anotherRange = Range.createFromParentsAndOffsets( root, 2, root, 2 );
 				const transformBy = new MarkerOperation( 'name', oldRange, anotherRange, model.markers, 0 );
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expected.oldRange = anotherRange;
 
