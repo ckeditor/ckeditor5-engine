@@ -53,6 +53,12 @@ describe( 'transform', () => {
 		}
 	}
 
+	const contextIsStrong = {
+		aIsStrong: true,
+		wasUndone: () => false,
+		getRelation: () => false
+	};
+
 	describe( 'InsertOperation', () => {
 		let nodeC, nodeD, position;
 
@@ -119,7 +125,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 				expectOperation( transOp[ 0 ], expected );
@@ -310,7 +316,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 				expected.position.offset += 2;
 
 				expect( transOp.length ).to.equal( 1 );
@@ -676,8 +682,8 @@ describe( 'transform', () => {
 
 				expectOperation( transOp[ 0 ], expected );
 
-				expected.range.start.path = [ 0, 2, 1 ];
-				expected.range.end.path = [ 0, 2, 2 ];
+				expected.range.start.path = [ 0, 2, 3 ];
+				expected.range.end.path = [ 0, 2, 4 ];
 
 				expectOperation( transOp[ 1 ], expected );
 
@@ -685,56 +691,6 @@ describe( 'transform', () => {
 				expected.range.end.path = [ 0, 2, 3 ];
 
 				expectOperation( transOp[ 2 ], expected );
-			} );
-		} );
-
-		describe( 'by RemoveOperation', () => {
-			beforeEach( () => {
-				start = new Position( doc.graveyard, [ 2, 0 ] );
-				end = new Position( doc.graveyard, [ 2, 4 ] );
-
-				range = new Range( start, end );
-
-				op = new AttributeOperation( range, 'foo', 'abc', 'bar', 0 );
-
-				expected.range = new Range( start, end );
-			} );
-
-			it( 'remove operation inserted elements before attribute operation range: increment path', () => {
-				const transformBy = new RemoveOperation(
-					new Position( root, [ 0 ] ),
-					2,
-					new Position( doc.graveyard, [ 0 ] ),
-					0
-				);
-
-				transformBy.targetPosition.path = [ 0 ];
-
-				const transOp = transform.transform( op, transformBy );
-
-				expect( transOp.length ).to.equal( 1 );
-
-				expected.range.start.path = [ 4, 0 ];
-				expected.range.end.path = [ 4, 4 ];
-
-				expectOperation( transOp[ 0 ], expected );
-			} );
-
-			it( 'remove operation inserted elements after attribute operation range: do nothing', () => {
-				const transformBy = new RemoveOperation(
-					new Position( root, [ 0 ] ),
-					2,
-					new Position( doc.graveyard, [ 0 ] ),
-					0
-				);
-
-				transformBy.targetPosition.path = [ 4 ];
-
-				const transOp = transform.transform( op, transformBy );
-
-				expect( transOp.length ).to.equal( 1 );
-
-				expectOperation( transOp[ 0 ], expected );
 			} );
 		} );
 	} );
@@ -862,7 +818,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expected.oldValue = 'xyz';
 
@@ -1102,7 +1058,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 				expectOperation( transOp[ 0 ], expected );
@@ -1241,7 +1197,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 				expectOperation( transOp[ 0 ], expected );
@@ -1567,7 +1523,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expected.sourcePosition.path = [ 4, 1, 0 ];
 
@@ -1599,7 +1555,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expected.sourcePosition.path = [ 4, 1, 1 ];
 
@@ -1637,7 +1593,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 
@@ -1675,7 +1631,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 2 );
 
@@ -1714,7 +1670,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 2 );
 
@@ -1765,7 +1721,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 2 );
 
@@ -1805,7 +1761,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 2 );
 
@@ -1830,7 +1786,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 2 );
 
@@ -1901,7 +1857,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 3 );
 
@@ -1952,7 +1908,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 
@@ -1975,7 +1931,7 @@ describe( 'transform', () => {
 			} );
 
 			it( 'should skip context.aIsStrong and be less important than RemoveOperation', () => {
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 
@@ -2318,7 +2274,7 @@ describe( 'transform', () => {
 					0
 				);
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expect( transOp.length ).to.equal( 1 );
 
@@ -2611,7 +2567,7 @@ describe( 'transform', () => {
 				const anotherRange = Range.createFromParentsAndOffsets( root, 2, root, 2 );
 				const transformBy = new MarkerOperation( 'name', oldRange, anotherRange, model.markers, 0 );
 
-				const transOp = transform.transform( op, transformBy, { aIsStrong: true } );
+				const transOp = transform.transform( op, transformBy, contextIsStrong );
 
 				expected.oldRange = anotherRange;
 

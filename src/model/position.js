@@ -599,15 +599,24 @@ export default class Position {
 			unwrappedRange.start.isEqual( this ) ||
 			unwrappedRange.end.isEqual( this );
 
-		if ( isContained ) {
-			return this._getCombined( operation.position, operation.targetPosition );
-		} else if ( this.isEqual( operation.targetPosition ) ) {
-			return Position.createFromPosition( this );
-		} else {
-			const pos = this._getTransformedByInsertion( operation.targetPosition, operation.howMany - 1 );
+		let pos;
 
-			return pos._getTransformedByInsertion( operation.graveyardPosition, 1 );
+		if ( isContained ) {
+			pos = this._getCombined( operation.position, operation.targetPosition );
+		} else if ( this.isEqual( operation.targetPosition ) ) {
+			pos = Position.createFromPosition( this );
+		} else {
+			pos = this._getTransformedByInsertion( operation.targetPosition, operation.howMany );
 		}
+
+		const targetPosition = operation.targetPosition.getShiftedBy( operation.howMany );
+
+		if ( !targetPosition.isEqual( operation.graveyardPosition ) ) {
+			pos = pos._getTransformedByDeletion( targetPosition, 1 );
+			pos = pos._getTransformedByInsertion( operation.graveyardPosition, 1 );
+		}
+
+		return pos;
 	}
 
 	/**
@@ -761,6 +770,7 @@ export default class Position {
 
 		// The first part of a path to combined position is a path to the place where nodes were moved.
 		const combined = Position.createFromPosition( target );
+		combined.stickiness = this.stickiness;
 
 		// Then we have to update the rest of the path.
 
