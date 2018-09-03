@@ -16,11 +16,12 @@ import { _move } from './utils';
 import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 
 /**
- * Operation to merge two {@link module:engine/model/element~Element elements}. The merged elements are a parent of given
- * {@link module:engine/model/position~Position position} and the next element.
+ * Operation to merge two {@link module:engine/model/element~Element elements}.
  *
- * Technically, the content of the next element is moved at given {@link module:engine/model/position~Position position}
- * and the element is removed.
+ * The merged element is the parent of {@link ~MergeOperation#sourcePosition} and it is merged into the parent of
+ * {@link ~MergeOperation#targetPosition}. All nodes from the merged element are moved to {@link ~MergeOperation#targetPosition}.
+ *
+ * The merged element is moved to the graveyard at {@link ~MergeOperation#graveyardPosition}.
  *
  * @extends module:engine/model/operation/operation~Operation
  */
@@ -30,12 +31,13 @@ export default class MergeOperation extends Operation {
 	 *
 	 * @param {module:engine/model/position~Position} sourcePosition Position inside the merged element. All nodes from that
 	 * element after that position will be moved to {@link ~#targetPosition}.
+	 * @param {Number} howMany Summary offset size of nodes which will be moved from the merged element to the new parent.
 	 * @param {module:engine/model/position~Position} targetPosition Position which the nodes from the merged elements will be moved to.
 	 * @param {module:engine/model/position~Position} graveyardPosition Position in graveyard to which the merged element will be moved.
 	 * @param {Number|null} baseVersion Document {@link module:engine/model/document~Document#version} on which operation
 	 * can be applied or `null` if the operation operates on detached (non-document) tree.
 	 */
-	constructor( sourcePosition, targetPosition, graveyardPosition, baseVersion ) {
+	constructor( sourcePosition, howMany, targetPosition, graveyardPosition, baseVersion ) {
 		super( baseVersion );
 
 		/**
@@ -44,7 +46,15 @@ export default class MergeOperation extends Operation {
 		 * @member {module:engine/model/position~Position} module:engine/model/operation/mergeoperation~MergeOperation#sourcePosition
 		 */
 		this.sourcePosition = Position.createFromPosition( sourcePosition );
-		this.sourcePosition.stickiness = 'toPrevious'; // This is, and should always remain, the first position in its parent.
+		// This is, and should always remain, the first position in its parent.
+		this.sourcePosition.stickiness = 'toPrevious';
+
+		/**
+		 * Summary offset size of nodes which will be moved from the merged element to the new parent.
+		 *
+		 * @member {Number} module:engine/model/operation/mergeoperation~MergeOperation#howMany
+		 */
+		this.howMany = howMany;
 
 		/**
 		 * Position which the nodes from the merged elements will be moved to.
@@ -52,9 +62,15 @@ export default class MergeOperation extends Operation {
 		 * @member {module:engine/model/position~Position} module:engine/model/operation/mergeoperation~MergeOperation#targetPosition
 		 */
 		this.targetPosition = Position.createFromPosition( targetPosition );
-		this.targetPosition.stickiness = 'toNext'; // This is, and should always remain, the last position in its parent.
-		// is it? think about reversed split operations, undo, etc.
+		// Except of a rare scenario in `MergeOperation` x `MergeOperation` transformation,
+		// this is, and should always remain, the last position in its parent.
+		this.targetPosition.stickiness = 'toNext';
 
+		/**
+		 * Position in graveyard to which the merged element will be moved.
+		 *
+		 * @member {module:engine/model/position~Position} module:engine/model/operation/mergeoperation~MergeOperation#graveyardPosition
+		 */
 		this.graveyardPosition = Position.createFromPosition( graveyardPosition );
 	}
 
@@ -66,7 +82,7 @@ export default class MergeOperation extends Operation {
 	}
 
 	/**
-	 * Position before the merged element (which will be removed). Calculated based on the split position.
+	 * Position before the merged element (which will be deleted).
 	 *
 	 * @readonly
 	 * @type {module:engine/model/position~Position}
@@ -76,8 +92,8 @@ export default class MergeOperation extends Operation {
 	}
 
 	/**
-	 * Artificial range that contains all the nodes from the merged element that will be moved to {@link ~#sourcePosition}.
-	 * The range starts at {@link ~#sourcePosition} and ends in the same parent, at `POSITIVE_INFINITY` offset.
+	 * Artificial range that contains all the nodes from the merged element that will be moved to {@link ~MergeOperation#sourcePosition}.
+	 * The range starts at {@link ~MergeOperation#sourcePosition} and ends in the same parent, at `POSITIVE_INFINITY` offset.
 	 *
 	 * @readonly
 	 * @type {module:engine/model/range~Range}
@@ -94,7 +110,7 @@ export default class MergeOperation extends Operation {
 	 * @returns {module:engine/model/operation/mergeoperation~MergeOperation} Clone of this operation.
 	 */
 	clone() {
-		return new this.constructor( this.sourcePosition, this.targetPosition, this.graveyardPosition, this.baseVersion );
+		return new this.constructor( this.sourcePosition, this.howMany, this.targetPosition, this.graveyardPosition, this.baseVersion );
 	}
 
 	/**
@@ -103,7 +119,7 @@ export default class MergeOperation extends Operation {
 	 * @returns {module:engine/model/operation/splitoperation~SplitOperation}
 	 */
 	getReversed() {
-		return new SplitOperation( this.targetPosition, this.graveyardPosition, this.baseVersion + 1 );
+		return new SplitOperation( this.targetPosition, this.howMany, this.graveyardPosition, this.baseVersion + 1 );
 	}
 
 	/**
@@ -128,6 +144,13 @@ export default class MergeOperation extends Operation {
 			 * @error merge-operation-target-position-invalid
 			 */
 			throw new CKEditorError( 'merge-operation-target-position-invalid: Merge target position is invalid.' );
+		} else if ( this.howMany != sourceElement.maxOffset ) {
+			/**
+			 * Merge operation specifies wrong number of nodes to move.
+			 *
+			 * @error merge-operation-how-many-invalid
+			 */
+			throw new CKEditorError( 'merge-operation-how-many-invalid: Merge operation specifies wrong number of nodes to move.' );
 		}
 	}
 
@@ -145,8 +168,21 @@ export default class MergeOperation extends Operation {
 	/**
 	 * @inheritDoc
 	 */
+	toJSON() {
+		const json = super.toJSON();
+
+		json.sourcePosition = json.sourcePosition.toJSON();
+		json.targetPosition = json.targetPosition.toJSON();
+		json.graveyardPosition = json.graveyardPosition.toJSON();
+
+		return json;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	static get className() {
-		return 'engine.model.operation.MergeOperation';
+		return 'MergeOperation';
 	}
 
 	/**
@@ -161,6 +197,6 @@ export default class MergeOperation extends Operation {
 		const targetPosition = Position.fromJSON( json.targetPosition, document );
 		const graveyardPosition = Position.fromJSON( json.graveyardPosition, document );
 
-		return new this( sourcePosition, targetPosition, graveyardPosition, json.baseVersion );
+		return new this( sourcePosition, json.howMany, targetPosition, graveyardPosition, json.baseVersion );
 	}
 }

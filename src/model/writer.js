@@ -12,7 +12,6 @@ import DetachOperation from './operation/detachoperation';
 import InsertOperation from './operation/insertoperation';
 import MarkerOperation from './operation/markeroperation';
 import MoveOperation from './operation/moveoperation';
-import RemoveOperation from './operation/removeoperation';
 import RenameOperation from './operation/renameoperation';
 import RootAttributeOperation from './operation/rootattributeoperation';
 import SplitOperation from './operation/splitoperation';
@@ -544,6 +543,7 @@ export default class Writer {
 	 * Performs merge action in a detached tree.
 	 *
 	 * @private
+	 * @param {module:engine/model/position~Position} position Position between merged elements.
 	 */
 	_mergeDetached( position ) {
 		const nodeBefore = position.nodeBefore;
@@ -568,7 +568,7 @@ export default class Writer {
 
 		const version = position.root.document.version;
 
-		const merge = new MergeOperation( sourcePosition, targetPosition, graveyardPosition, version );
+		const merge = new MergeOperation( sourcePosition, position.nodeAfter.maxOffset, targetPosition, graveyardPosition, version );
 
 		this.batch.addOperation( merge );
 		this.model.applyOperation( merge );
@@ -645,7 +645,8 @@ export default class Writer {
 
 		do {
 			const version = splitElement.root.document ? splitElement.root.document.version : null;
-			const split = new SplitOperation( position, null, version );
+			const howMany = splitElement.maxOffset - position.offset;
+			const split = new SplitOperation( position, howMany, null, version );
 
 			this.batch.addOperation( split );
 			this.model.applyOperation( split );
@@ -1222,6 +1223,8 @@ export default class Writer {
 // Because attribute operation needs to have the same attribute value on the whole range, this function splits
 // the range into smaller parts.
 //
+// Given `range` must be flat.
+//
 // @private
 // @param {module:engine/model/writer~Writer} writer
 // @param {String} key Attribute key.
@@ -1330,13 +1333,13 @@ function applyMarkerOperation( writer, name, oldRange, newRange, affectsData ) {
 	model.applyOperation( operation );
 }
 
-// Creates `RemoveOperation` or `DetachOperation` that removes `howMany` nodes starting from `position`.
+// Creates `MoveOperation` or `DetachOperation` that removes `howMany` nodes starting from `position`.
 // The operation will be applied on given model instance and added to given operation instance.
 //
 // @private
 // @param {module:engine/model/position~Position} position Position from which nodes are removed.
 // @param {Number} howMany Number of nodes to remove.
-// @param {Batch} batch
+// @param {Batch} batch Batch to which the operation will be added.
 // @param {module:engine/model/model~Model} model Model instance on which operation will be applied.
 function applyRemoveOperation( position, howMany, batch, model ) {
 	let operation;
@@ -1345,7 +1348,7 @@ function applyRemoveOperation( position, howMany, batch, model ) {
 		const doc = model.document;
 		const graveyardPosition = new Position( doc.graveyard, [ 0 ] );
 
-		operation = new RemoveOperation( position, howMany, graveyardPosition, doc.version );
+		operation = new MoveOperation( position, howMany, graveyardPosition, doc.version );
 	} else {
 		operation = new DetachOperation( position, howMany );
 	}

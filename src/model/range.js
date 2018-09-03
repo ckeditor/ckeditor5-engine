@@ -41,6 +41,8 @@ export default class Range {
 		 */
 		this.end = end ? Position.createFromPosition( end ) : Position.createFromPosition( start );
 
+		// If the range is collapsed, treat in a similar way as a position and set its boundaries stickiness to 'toNone'.
+		// In other case, make the boundaries stick to the "inside" of the range.
 		this.start.stickiness = this.isCollapsed ? 'toNone' : 'toNext';
 		this.end.stickiness = this.isCollapsed ? 'toNone' : 'toPrevious';
 	}
@@ -421,10 +423,7 @@ export default class Range {
 	/**
 	 * Returns a range that is a result of transforming this range by multiple `operations`.
 	 *
-	 * **Note:** transformation may break one range into multiple ranges (e.g. when a part of the range is
-	 * moved to a different part of document tree). For this reason, an array is returned by this method and it
-	 * may contain one or more `Range` instances.
-	 *
+	 * @see ~Range#getTransformedByOperation
 	 * @param {Iterable.<module:engine/model/operation/operation~Operation>} operations Operations to transform the range by.
 	 * @returns {Array.<module:engine/model/range~Range>} Range which is the result of transformation.
 	 */
@@ -469,12 +468,38 @@ export default class Range {
 		return this.start.getCommonAncestor( this.end );
 	}
 
+	/**
+	 * Converts `Range` to plain object and returns it.
+	 *
+	 * @returns {Object} `Node` converted to plain object.
+	 */
+	toJSON() {
+		return {
+			start: this.start.toJSON(),
+			end: this.end.toJSON()
+		};
+	}
+
+	/**
+	 * Returns a result of transforming a copy of this range by insert operation.
+	 *
+	 * One or more ranges may be returned as a result of this transformation.
+	 *
+	 * @protected
+	 * @param {module:engine/model/operation/insertoperation~InsertOperation} operation
+	 * @returns {Array.<module:engine/model/range~Range>}
+	 */
 	_getTransformedByInsertOperation( operation, spread = false ) {
 		return this._getTransformedByInsertion( operation.position, operation.howMany, spread );
 	}
 
 	/**
+	 * Returns a result of transforming a copy of this range by move operation.
+	 *
+	 * One or more ranges may be returned as a result of this transformation.
+	 *
 	 * @protected
+	 * @param {module:engine/model/operation/moveoperation~MoveOperation} operation
 	 * @returns {Array.<module:engine/model/range~Range>}
 	 */
 	_getTransformedByMoveOperation( operation, spread = false ) {
@@ -485,6 +510,15 @@ export default class Range {
 		return this._getTransformedByMove( sourcePosition, targetPosition, howMany, spread );
 	}
 
+	/**
+	 * Returns a result of transforming a copy of this range by split operation.
+	 *
+	 * Always one range is returned. The transformation is done in a way to not break the range.
+	 *
+	 * @protected
+	 * @param {module:engine/model/operation/splitoperation~SplitOperation} operation
+	 * @returns {module:engine/model/range~Range}
+	 */
 	_getTransformedBySplitOperation( operation ) {
 		const start = this.start._getTransformedBySplitOperation( operation );
 		const end = this.end._getTransformedBySplitOperation( operation );
@@ -492,22 +526,73 @@ export default class Range {
 		return new Range( start, end );
 	}
 
+	/**
+	 * Returns a result of transforming a copy of this range by merge operation.
+	 *
+	 * Always one range is returned. The transformation is done in a way to not break the range.
+	 *
+	 * @protected
+	 * @param {module:engine/model/operation/mergeoperation~MergeOperation} operation
+	 * @returns {module:engine/model/range~Range}
+	 */
 	_getTransformedByMergeOperation( operation ) {
-		const start = this.start._getTransformedByMergeOperation( operation );
-		const end = this.end._getTransformedByMergeOperation( operation );
+		let start = this.start._getTransformedByMergeOperation( operation );
+		let end = this.end._getTransformedByMergeOperation( operation );
+
+		if ( start.root != end.root ) {
+			// This happens when only start or end was next to the merged (deleted) element. In this case we need to fix
+			// the range cause its boundaries would be in different roots.
+			if ( start.root != this.root ) {
+				// Fix start position root at it was the only one that was moved.
+				start = this.start;
+			} else {
+				// Fix end position root.
+				end = this.end.getShiftedBy( -1 );
+			}
+		}
 
 		if ( start.isAfter( end ) ) {
-			// This happens in the following case:
+			// This happens in the following two, similar cases:
 			//
-			// <p>abc</p>{<p>x}yz</p> -> <p>abcx}yz</p>{
-			//                           <p>abcx{yz</p>}
+			// Case 1: Range start is directly before merged node.
+			//         Resulting range should include only nodes from the merged element:
 			//
-			return new Range( end, start );
+			// Before: <p>aa</p>{<p>b}b</p><p>cc</p>
+			// Merge:  <p>aab}b</p>{<p>cc</p>
+			// Fix:    <p>aa{b}b</p><p>cc</p>
+			//
+			// Case 2: Range start is not directly before merged node.
+			//         Result should include all nodes that were in the original range.
+			//
+			// Before: <p>aa</p>{<p>cc</p><p>b}b</p>
+			// Merge:  <p>aab}b</p>{<p>cc</p>
+			// Fix:    <p>aa{bb</p><p>cc</p>}
+			//
+			//         The range is expanded by an additional `b` letter but it is better than dropping the whole `cc` paragraph.
+			//
+			if ( !operation.deletionPosition.isEqual( start ) ) {
+				// Case 2.
+				end = operation.deletionPosition;
+			}
+
+			// In both cases start is at the end of the merge-to element.
+			start = operation.targetPosition;
+
+			return new Range( start, end );
 		}
 
 		return new Range( start, end );
 	}
 
+	/**
+	 * Returns a result of transforming a copy of this range by wrap operation.
+	 *
+	 * Always one range is returned. The transformation is done in a way to not break the range.
+	 *
+	 * @protected
+	 * @param {module:engine/model/operation/wrapoperation~WrapOperation} operation
+	 * @returns {module:engine/model/range~Range}
+	 */
 	_getTransformedByWrapOperation( operation ) {
 		const start = this.start._getTransformedByWrapOperation( operation );
 		const end = this.end._getTransformedByWrapOperation( operation );
@@ -515,6 +600,15 @@ export default class Range {
 		return new Range( start, end );
 	}
 
+	/**
+	 * Returns a result of transforming a copy of this range by unwrap operation.
+	 *
+	 * Always one range is returned. The transformation is done in a way to not break the range.
+	 *
+	 * @protected
+	 * @param {module:engine/model/operation/unwrapoperation~UnwrapOperation} operation
+	 * @returns {module:engine/model/range~Range}
+	 */
 	_getTransformedByUnwrapOperation( operation ) {
 		const start = this.start._getTransformedByUnwrapOperation( operation );
 		const end = this.end._getTransformedByUnwrapOperation( operation );
@@ -580,7 +674,7 @@ export default class Range {
 	 * @param {module:engine/model/position~Position} sourcePosition Position from which nodes are moved.
 	 * @param {module:engine/model/position~Position} targetPosition Position to where nodes are moved.
 	 * @param {Number} howMany How many nodes are moved.
-	 * @param {Boolean} [spread=false]
+	 * @param {Boolean} [spread=false] Whether the range should be spread if the move points inside the range.
 	 * @returns {Array.<module:engine/model/range~Range>} Result of the transformation.
 	 */
 	_getTransformedByMove( sourcePosition, targetPosition, howMany, spread = false ) {
@@ -661,6 +755,18 @@ export default class Range {
 		return result;
 	}
 
+	/**
+	 * Returns a copy of this range that is transformed by deletion of `howMany` nodes from `deletePosition`.
+	 *
+	 * If the deleted range is intersecting with the transformed range, the transformed range will be shrank.
+	 *
+	 * If the deleted range contains transformed range, `null` will be returned.
+	 *
+	 * @protected
+	 * @param {module:engine/model/position~Position} deletionPosition Position from which nodes are removed.
+	 * @param {Number} howMany How many nodes are removed.
+	 * @returns {module:engine/model/range~Range|null} Result of the transformation.
+	 */
 	_getTransformedByDeletion( deletePosition, howMany ) {
 		let newStart = this.start._getTransformedByDeletion( deletePosition, howMany );
 		let newEnd = this.end._getTransformedByDeletion( deletePosition, howMany );

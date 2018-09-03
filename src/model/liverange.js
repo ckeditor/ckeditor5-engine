@@ -83,12 +83,9 @@ export default class LiveRange extends Range {
 	 * @event change:range
 	 * @param {module:engine/model/range~Range} oldRange Range with start and end position equal to start and end position of this live
 	 * range before it got changed.
-	 * @param {Object} data Object with additional information about the change. Those parameters are passed from
-	 * {@link module:engine/model/document~Document#event:change document change event}.
-	 * @param {String} data.type Change type.
-	 * @param {module:engine/model/batch~Batch} data.batch Batch which changed the live range.
-	 * @param {module:engine/model/range~Range} data.range Range containing the result of applied change.
-	 * @param {module:engine/model/position~Position} data.sourcePosition Source position for move, remove and reinsert change types.
+	 * @param {Object} data Object with additional information about the change.
+	 * @param {module:engine/model/position~Position|null} data.deletionPosition Source position for remove and merge changes.
+	 * Available if the range was moved to the graveyard root, `null` otherwise.
 	 */
 
 	/**
@@ -98,23 +95,16 @@ export default class LiveRange extends Range {
 	 * @event change:content
 	 * @param {module:engine/model/range~Range} range Range with start and end position equal to start and end position of
 	 * change range.
-	 * @param {Object} data Object with additional information about the change. Those parameters are passed from
-	 * {@link module:engine/model/document~Document#event:change document change event}.
-	 * @param {String} data.type Change type.
-	 * @param {module:engine/model/batch~Batch} data.batch Batch which changed the live range.
-	 * @param {module:engine/model/range~Range} data.range Range containing the result of applied change.
-	 * @param {module:engine/model/position~Position} data.sourcePosition Source position for move, remove and reinsert change types.
+	 * @param {Object} data Object with additional information about the change.
+	 * @param {null} data.deletionPosition Due to the nature of this event, this property is always set to `null`. It is passed
+	 * for compatibility with the {@link module:engine/model/liverange~LiveRange#event:change:range} event.
 	 */
 }
 
-/**
- * Binds this `LiveRange` to the {@link module:engine/model/document~Document document}
- * that owns this range's {@link module:engine/model/range~Range#root root}.
- *
- * @ignore
- * @private
- * @method module:engine/model/liverange~LiveRange#bindWithDocument
- */
+// Binds this `LiveRange` to the {@link module:engine/model/document~Document document}
+// that owns this range's {@link module:engine/model/range~Range#root root}.
+//
+// @private
 function bindWithDocument() {
 	this.listenTo(
 		this.root.document.model,
@@ -132,34 +122,51 @@ function bindWithDocument() {
 	);
 }
 
-/**
- * Updates this range accordingly to the updates applied to the model. Bases on change events.
- *
- * @ignore
- * @private
- * @method transform
- * @param {module:engine/model/operation/operation~Operation} operation Executed operation.
- */
+// Updates this range accordingly to the updates applied to the model. Bases on change events.
+//
+// @private
+// @param {module:engine/model/operation/operation~Operation} operation Executed operation.
 function transform( operation ) {
+	// Transform the range by the operation. Join the result ranges if needed.
 	const ranges = this.getTransformedByOperation( operation );
 	const result = Range.createFromRanges( ranges );
+
 	const boundariesChanged = !result.isEqual( this );
 	const contentChanged = doesOperationChangeRangeContent( this, operation );
 
+	let deletionPosition = null;
+
 	if ( boundariesChanged ) {
 		// If range boundaries have changed, fire `change:range` event.
+		//
+		if ( result.root.rootName == '$graveyard' ) {
+			// If the range was moved to the graveyard root, set `deletionPosition`.
+			if ( operation.type == 'remove' ) {
+				deletionPosition = operation.sourcePosition;
+			} else {
+				// Merge operation.
+				deletionPosition = operation.deletionPosition;
+			}
+		}
+
 		const oldRange = Range.createFromRange( this );
 
 		this.start = result.start;
 		this.end = result.end;
 
-		this.fire( 'change:range', oldRange, operation );
+		this.fire( 'change:range', oldRange, { deletionPosition } );
 	} else if ( contentChanged ) {
 		// If range boundaries have not changed, but there was change inside the range, fire `change:content` event.
-		this.fire( 'change:content', Range.createFromRange( this ), operation );
+		this.fire( 'change:content', Range.createFromRange( this ), { deletionPosition } );
 	}
 }
 
+// Checks whether given operation changes something inside the range (even if it does not change boundaries).
+//
+// @private
+// @param {module:engine/model/range~Range} range Range to check.
+// @param {module:engine/model/operation/operation~Operation} operation Executed operation.
+// @returns {Boolean}
 function doesOperationChangeRangeContent( range, operation ) {
 	switch ( operation.type ) {
 		case 'insert':

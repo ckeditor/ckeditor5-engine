@@ -38,6 +38,7 @@ export default class RenameOperation extends Operation {
 		 * @member {module:engine/model/position~Position} module:engine/model/operation/renameoperation~RenameOperation#position
 		 */
 		this.position = position;
+		// This position sticks to the next node because it is a position before the node that we want to change.
 		this.position.stickiness = 'toNext';
 
 		/**
@@ -119,8 +120,19 @@ export default class RenameOperation extends Operation {
 	/**
 	 * @inheritDoc
 	 */
+	toJSON() {
+		const json = super.toJSON();
+
+		json.position = this.position.toJSON();
+
+		return json;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	static get className() {
-		return 'engine.model.operation.RenameOperation';
+		return 'RenameOperation';
 	}
 
 	/**

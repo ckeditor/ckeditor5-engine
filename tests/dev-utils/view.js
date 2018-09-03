@@ -22,23 +22,22 @@ import createViewRoot from '../view/_utils/createroot';
 
 describe( 'view test utils', () => {
 	describe( 'getData, setData', () => {
-		let sandbox;
-
-		beforeEach( () => {
-			sandbox = sinon.sandbox.create();
-		} );
-
 		afterEach( () => {
-			sandbox.restore();
+			sinon.restore();
 		} );
 
 		describe( 'getData', () => {
 			it( 'should use stringify method', () => {
 				const element = document.createElement( 'div' );
-				const stringifySpy = sandbox.spy( getData, '_stringify' );
+				const stringifySpy = sinon.spy( getData, '_stringify' );
 				const view = new View();
 				const viewDocument = view.document;
-				const options = { showType: false, showPriority: false, withoutSelection: true };
+				const options = {
+					showType: false,
+					showPriority: false,
+					withoutSelection: true,
+					renderUIElements: false
+				};
 				const root = createAttachedRoot( viewDocument, element );
 				root._appendChild( new Element( 'p' ) );
 
@@ -50,13 +49,14 @@ describe( 'view test utils', () => {
 				expect( stringifyOptions ).to.have.property( 'showType' ).that.equals( false );
 				expect( stringifyOptions ).to.have.property( 'showPriority' ).that.equals( false );
 				expect( stringifyOptions ).to.have.property( 'ignoreRoot' ).that.equals( true );
+				expect( stringifyOptions ).to.have.property( 'renderUIElements' ).that.equals( false );
 
 				view.destroy();
 			} );
 
 			it( 'should use stringify method with selection', () => {
 				const element = document.createElement( 'div' );
-				const stringifySpy = sandbox.spy( getData, '_stringify' );
+				const stringifySpy = sinon.spy( getData, '_stringify' );
 				const view = new View();
 				const viewDocument = view.document;
 				const options = { showType: false, showPriority: false };
@@ -91,7 +91,7 @@ describe( 'view test utils', () => {
 				const view = new View();
 				const viewDocument = view.document;
 				const data = 'foobar<b>baz</b>';
-				const parseSpy = sandbox.spy( setData, '_parse' );
+				const parseSpy = sinon.spy( setData, '_parse' );
 
 				createAttachedRoot( viewDocument, document.createElement( 'div' ) );
 				setData( view, data );
@@ -110,7 +110,7 @@ describe( 'view test utils', () => {
 				const view = new View();
 				const viewDocument = view.document;
 				const data = '[<b>baz</b>]';
-				const parseSpy = sandbox.spy( setData, '_parse' );
+				const parseSpy = sinon.spy( setData, '_parse' );
 
 				createAttachedRoot( viewDocument, document.createElement( 'div' ) );
 				setData( view, data );
@@ -362,6 +362,38 @@ describe( 'view test utils', () => {
 			const p = new ContainerElement( 'p', null, span );
 			expect( stringify( p, null, { showType: true } ) )
 				.to.equal( '<container:p><ui:span></ui:span></container:p>' );
+		} );
+
+		it( 'should not stringify inner UIElement content (renderUIElements=false)', () => {
+			const span = new UIElement( 'span' );
+
+			span.render = function( domDocument ) {
+				const domElement = this.toDomElement( domDocument );
+
+				domElement.innerHTML = '<b>foo</b>';
+
+				return domElement;
+			};
+
+			const p = new ContainerElement( 'p', null, span );
+			expect( stringify( p, null, { showType: true } ) )
+				.to.equal( '<container:p><ui:span></ui:span></container:p>' );
+		} );
+
+		it( 'should stringify UIElement, (renderUIElements=true)', () => {
+			const span = new UIElement( 'span' );
+
+			span.render = function( domDocument ) {
+				const domElement = this.toDomElement( domDocument );
+
+				domElement.innerHTML = '<b>foo</b>';
+
+				return domElement;
+			};
+
+			const p = new ContainerElement( 'p', null, span );
+			expect( stringify( p, null, { showType: true, renderUIElements: true } ) )
+				.to.equal( '<container:p><ui:span><b>foo</b></ui:span></container:p>' );
 		} );
 
 		it( 'should sort classes in specified element', () => {

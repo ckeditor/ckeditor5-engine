@@ -42,7 +42,6 @@ export default class MoveOperation extends Operation {
 		 */
 		this.sourcePosition = Position.createFromPosition( sourcePosition );
 		this.sourcePosition.stickiness = 'toNext';
-		// maybe lets change sourcePosition + howMany to a range? flattness will be guaranteed by writer anyway
 
 		/**
 		 * Offset size of moved range.
@@ -64,6 +63,12 @@ export default class MoveOperation extends Operation {
 	 * @inheritDoc
 	 */
 	get type() {
+		if ( this.targetPosition.root.rootName == '$graveyard' ) {
+			return 'remove';
+		} else if ( this.sourcePosition.root.rootName == '$graveyard' ) {
+			return 'reinsert';
+		}
+
 		return 'move';
 	}
 
@@ -172,8 +177,20 @@ export default class MoveOperation extends Operation {
 	/**
 	 * @inheritDoc
 	 */
+	toJSON() {
+		const json = super.toJSON();
+
+		json.sourcePosition = this.sourcePosition.toJSON();
+		json.targetPosition = this.targetPosition.toJSON();
+
+		return json;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	static get className() {
-		return 'engine.model.operation.MoveOperation';
+		return 'MoveOperation';
 	}
 
 	/**

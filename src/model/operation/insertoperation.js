@@ -10,7 +10,7 @@
 import Operation from './operation';
 import Position from '../position';
 import NodeList from '../nodelist';
-import RemoveOperation from './removeoperation';
+import MoveOperation from './moveoperation';
 import { _insert, _normalizeNodes } from './utils';
 import Text from '../text';
 import Element from '../element';
@@ -51,8 +51,8 @@ export default class InsertOperation extends Operation {
 
 		/**
 		 * Flag deciding how the operation should be transformed. If set to `true`, nodes might get additional attributes
-		 * during operational transformation. This happens, when operation insertion position points to inside a
-		 * range which attributes have changed.
+		 * during operational transformation. This happens when the operation insertion position is inside of a range
+		 * where attributes have changed.
 		 *
 		 * @member {Boolean} module:engine/model/operation/insertoperation~InsertOperation#shouldReceiveAttributes
 		 */
@@ -66,6 +66,11 @@ export default class InsertOperation extends Operation {
 		return 'insert';
 	}
 
+	/**
+	 * Total offset size of inserted nodes.
+	 *
+	 * @returns {Number}
+	 */
 	get howMany() {
 		return this.nodes.maxOffset;
 	}
@@ -87,13 +92,13 @@ export default class InsertOperation extends Operation {
 	/**
 	 * See {@link module:engine/model/operation/operation~Operation#getReversed `Operation#getReversed()`}.
 	 *
-	 * @returns {module:engine/model/operation/removeoperation~RemoveOperation}
+	 * @returns {module:engine/model/operation/moveoperation~MoveOperation}
 	 */
 	getReversed() {
 		const graveyard = this.position.root.document.graveyard;
 		const gyPosition = new Position( graveyard, [ 0 ] );
 
-		return new RemoveOperation( this.position, this.nodes.maxOffset, gyPosition, this.baseVersion + 1 );
+		return new MoveOperation( this.position, this.nodes.maxOffset, gyPosition, this.baseVersion + 1 );
 	}
 
 	/**
@@ -131,8 +136,20 @@ export default class InsertOperation extends Operation {
 	/**
 	 * @inheritDoc
 	 */
+	toJSON() {
+		const json = super.toJSON();
+
+		json.position = this.position.toJSON();
+		json.nodes = this.nodes.toJSON();
+
+		return json;
+	}
+
+	/**
+	 * @inheritDoc
+	 */
 	static get className() {
-		return 'engine.model.operation.InsertOperation';
+		return 'InsertOperation';
 	}
 
 	/**
