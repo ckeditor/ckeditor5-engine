@@ -285,6 +285,7 @@ export function syncClients() {
 			let remoteOperationsTransformed = null;
 
 			const options = {
+				document: localClient.document,
 				useContext: false,
 				padWithNoOps: true
 			};
@@ -324,4 +325,8 @@ export function expectClients( expectedModelString ) {
 
 		expect( client.syncedVersion, client.name + ' version' ).to.equal( syncedVersion );
 	}
+}
+
+export function clearBuffer() {
+	bufferedOperations.clear();
 }
