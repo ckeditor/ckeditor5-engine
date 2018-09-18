@@ -717,10 +717,20 @@ export default class Writer {
 		}
 
 		const version = range.root.document ? range.root.document.version : null;
-		const wrap = new WrapOperation( range.start, range.end.offset - range.start.offset, element, version );
 
-		this.batch.addOperation( wrap );
-		this.model.applyOperation( wrap );
+		const insert = new InsertOperation( range.end, element, version );
+		this.batch.addOperation( insert );
+		this.model.applyOperation( insert );
+
+		const move = new MoveOperation(
+			range.start,
+			range.end.offset - range.start.offset,
+			Position.createAt( element, 0 ),
+			version === null ? null : version + 1
+		);
+
+		this.batch.addOperation( move );
+		this.model.applyOperation( move );
 	}
 
 	/**
