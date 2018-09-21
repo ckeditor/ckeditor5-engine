@@ -1,4 +1,8 @@
 import { Client, syncClients, expectClients, clearBuffer } from './utils.js';
+import { transform } from '../../../../src/model/operation/transform';
+import Position from '../../../../src/model/position';
+import MergeOperation from '../../../../src/model/operation/mergeoperation';
+import SplitOperation from '../../../../src/model/operation/splitoperation';
 
 describe( 'transform', () => {
 	let john, kate;
@@ -102,6 +106,20 @@ describe( 'transform', () => {
 
 				expectClients( '<paragraph>FooBar</paragraph>' );
 			} );
+
+			it( 'remove merge target and undo', () => {
+				john.setData( '<paragraph>A</paragraph><paragraph>B</paragraph>[]<paragraph>C</paragraph>' );
+				kate.setData( '<paragraph>A</paragraph>[<paragraph>B</paragraph>]<paragraph>C</paragraph>' );
+
+				john.merge();
+				john.undo();
+				kate.remove();
+
+				debugger;
+				window.x=1;
+				syncClients();
+				expectClients( '<paragraph>A</paragraph><paragraph>C</paragraph>' );
+			} );
 		} );
 
 		describe( 'by delete', () => {
@@ -127,6 +145,36 @@ describe( 'transform', () => {
 				syncClients();
 
 				expectClients( '<paragraph>Fr</paragraph>' );
+			} );
+
+			it( 'merged same element to different targets', () => {
+				john.setData( '<paragraph>A</paragraph><paragraph>B</paragraph>[]<paragraph>C</paragraph>' );
+				kate.setData( '<paragraph>A</paragraph>[<paragraph>B</paragraph>]<paragraph>C</paragraph>' );
+
+				john.merge();
+				kate.remove();
+				kate.setSelection( [ 1 ] );
+				kate.merge();
+
+				syncClients();
+				expectClients( '<paragraph>AC</paragraph>' );
+			} );
+
+			it( 'merged same element to different targets and undo #1', () => {
+				john.setData( '<paragraph>A</paragraph><paragraph>B</paragraph>[]<paragraph>C</paragraph>' );
+				kate.setData( '<paragraph>A</paragraph>[<paragraph>B</paragraph>]<paragraph>C</paragraph>' );
+
+				john.merge();
+				john.undo();
+				kate.remove();
+				kate.setSelection( [ 1 ] );
+				kate.merge();
+
+				debugger;
+				window.x = 1;
+				syncClients();
+				expectClients( '<paragraph>AC</paragraph>' );
+				window.x = 0;
 			} );
 		} );
 

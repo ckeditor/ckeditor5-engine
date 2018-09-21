@@ -198,7 +198,12 @@ export default class SplitOperation extends Operation {
 		const splitElement = this.position.parent;
 
 		if ( this.graveyardPosition ) {
-			_move( Range.createFromPositionAndShift( this.graveyardPosition, 1 ), this.insertionPosition );
+			const insertionPositionPath = this.position.path.slice( 0, -1 );
+			insertionPositionPath[ insertionPositionPath.length - 1 ]++;
+
+			const insertionPosition = new Position( this.position.root, insertionPositionPath );
+
+			_move( Range.createFromPositionAndShift( this.graveyardPosition, 1 ), insertionPosition );
 		} else {
 			const newElement = splitElement._clone();
 

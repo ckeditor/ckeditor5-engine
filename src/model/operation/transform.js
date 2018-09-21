@@ -310,6 +310,8 @@ export function transformSets( operationsA, operationsB, options ) {
 	// Index of currently transformed operation `a`.
 	let i = 0;
 
+	if ( window.x ) debugger;
+
 	// While not all `operationsA` are transformed...
 	while ( i < operationsA.length ) {
 		// Get "current" operation `a`.
@@ -1274,7 +1276,9 @@ setTransformation( MergeOperation, MergeOperation, ( a, b, context ) => {
 	//
 	// If neither or both operations point to graveyard, then let `aIsStrong` decide.
 	//
-	if ( a.sourcePosition.isEqual( b.sourcePosition ) && !a.targetPosition.isEqual( b.targetPosition ) && !context.bWasUndone ) {
+	const undone = context.bWasUndone;
+
+	if ( a.sourcePosition.isEqual( b.sourcePosition ) && !a.targetPosition.isEqual( b.targetPosition ) ) {
 		const aToGraveyard = a.targetPosition.root.rootName == '$graveyard';
 		const bToGraveyard = b.targetPosition.root.rootName == '$graveyard';
 
@@ -1288,13 +1292,55 @@ setTransformation( MergeOperation, MergeOperation, ( a, b, context ) => {
 		const forceMove = bIsWeak || ( !aIsWeak && context.aIsStrong );
 
 		if ( forceMove ) {
-			const sourcePosition = b.targetPosition._getTransformedByMergeOperation( b );
-			const targetPosition = a.targetPosition._getTransformedByMergeOperation( b );
+			if ( undone ) {
+				// const sourcePosition = a.sourcePosition._getTransformedByMove( b.deletionPosition, b.graveyardPosition, 1 );
+				// const targetPosition = a.targetPosition._getTransformedByMergeOperation( b );
+				debugger;
 
-			return [ new MoveOperation( sourcePosition, a.howMany, targetPosition, 0 ) ];
+				const sourcePosition = b.targetPosition._getTransformedByMergeOperation( b );
+				const targetPosition = a.targetPosition._getTransformedByMergeOperation( b );
+				const graveyardPosition = a.graveyardPosition._getTransformedByMergeOperation( b );
+
+				const merge = new MergeOperation( sourcePosition, a.howMany, targetPosition, graveyardPosition );
+
+				return [ merge ];
+			} else {
+				debugger;
+				// This works.
+				const sourcePosition = b.targetPosition._getTransformedByMergeOperation( b );
+				const targetPosition = a.targetPosition._getTransformedByMergeOperation( b );
+
+				return [ new MoveOperation( sourcePosition, a.howMany, targetPosition, 0 ) ];
+			}
 		} else {
-			return [ new NoOperation( 0 ) ];
+			if ( undone ) {
+				debugger;
+				return [ new NoOperation( 0 ) ];
+			} else {
+				debugger;
+				return [ new NoOperation( 0 ) ];
+			}
 		}
+
+		// if ( forceMove ) {
+		// 	const sourcePosition = b.targetPosition._getTransformedByMergeOperation( b );
+		// 	const targetPosition = a.targetPosition._getTransformedByMergeOperation( b );
+		//
+		// 	const parentMove = new MoveOperation( b.graveyardPosition, 1, b.graveyardPosition, 0 );
+		// 	const childrenMove = new MoveOperation( sourcePosition, a.howMany, targetPosition, 0 );
+		//
+		// 	if ( window.x ) debugger;
+		//
+		// 	return [ parentMove, childrenMove ];
+		// } else {
+		// 	return [ new NoOperation( 0 ) ];
+		// }
+	}
+
+	// Handle positions in graveyard.
+	// If graveyard positions are same and `a` operation is strong - do not transform.
+	if ( !a.graveyardPosition.isEqual( b.graveyardPosition ) || !context.aIsStrong ) {
+		a.graveyardPosition = a.graveyardPosition._getTransformedByMergeOperation( b );
 	}
 
 	// The default case.
@@ -1305,12 +1351,6 @@ setTransformation( MergeOperation, MergeOperation, ( a, b, context ) => {
 
 	a.sourcePosition = a.sourcePosition._getTransformedByMergeOperation( b );
 	a.targetPosition = a.targetPosition._getTransformedByMergeOperation( b );
-
-	// Handle positions in graveyard.
-	// If graveyard positions are same and `a` operation is strong - do not transform.
-	if ( !a.graveyardPosition.isEqual( b.graveyardPosition ) || !context.aIsStrong ) {
-		a.graveyardPosition = a.graveyardPosition._getTransformedByMergeOperation( b );
-	}
 
 	return [ a ];
 } );
@@ -1360,6 +1400,20 @@ setTransformation( MergeOperation, MoveOperation, ( a, b, context ) => {
 } );
 
 setTransformation( MergeOperation, SplitOperation, ( a, b, context ) => {
+	// Case 1:
+	//
+	if ( b.position.hasSameParentAs( a.sourcePosition ) && b.position.offset > 0 && b.position.offset >= a.sourcePosition.offset ) {
+		debugger;
+
+		const sourcePositionPath = b.insertionPosition.path.slice();
+		sourcePositionPath.push( b.position.offset - a.sourcePosition.offset );
+
+		const sourcePosition = new Position( b.position.root, sourcePositionPath );
+		const targetPosition = a.targetPosition._getTransformedBySplitOperation( b );
+
+		return [ new MergeOperation( sourcePosition, a.howMany, targetPosition, b.insertionPosition, 0 ) ];
+	}
+
 	if ( b.graveyardPosition ) {
 		// If `b` operation defines graveyard position, a node from graveyard will be moved. This means that we need to
 		// transform `a.graveyardPosition` accordingly.
@@ -1380,7 +1434,7 @@ setTransformation( MergeOperation, SplitOperation, ( a, b, context ) => {
 		}
 	}
 
-	// Case 1:
+	// Case 2:
 	//
 	// Merge operation moves nodes to the place where split happens.
 	// This is a classic situation when there are two paragraphs, and there is a split (enter) after the first
@@ -1443,7 +1497,7 @@ setTransformation( MergeOperation, SplitOperation, ( a, b, context ) => {
 		}
 	}
 
-	// Case 2:
+	// Case 3:
 	//
 	// When merge operation source position is at the same place as split position it needs to be decided whether
 	// the source position should stay in the original node or it should be moved as well to the new parent.
@@ -1796,7 +1850,6 @@ setTransformation( MoveOperation, SplitOperation, ( a, b, context ) => {
 	// In this case the default range transformation will not work correctly as the element created by
 	// split operation would be outside the range. The range to move needs to be fixed manually.
 	// Do it only if this is a "natural" split, not a one that comes from undo.
-	// TODO: this should be done on relations
 	//
 	const moveRange = Range.createFromPositionAndShift( a.sourcePosition, a.howMany );
 
@@ -2195,6 +2248,17 @@ setTransformation( SplitOperation, MergeOperation, ( a, b, context ) => {
 		return [ additionalSplit, a ];
 	}
 
+	// Case 2:
+	//
+	if ( a.position.hasSameParentAs( b.sourcePosition ) && a.position.offset > 0 && a.position.offset >= b.sourcePosition.offset ) {
+		debugger;
+		const splitPosition = a.position._getTransformedByMove( b.deletionPosition, b.graveyardPosition, 1 );
+		const howMany = b.sourcePosition.offset - a.position.offset;
+		const graveyardPosition = a.graveyardPosition._getTransformedByMergeOperation( b );
+
+		return [ new SplitOperation( splitPosition, howMany, graveyardPosition, 0 ) ];
+	}
+
 	// The default case.
 	//
 	if ( a.position.hasSameParentAs( b.deletionPosition ) && !a.position.isAfter( b.deletionPosition ) ) {
@@ -2263,6 +2327,36 @@ setTransformation( SplitOperation, MoveOperation, ( a, b, context ) => {
 		a.position = a.position._getTransformedByDeletion( b.sourcePosition, b.howMany );
 
 		return [ a ];
+	}
+
+	// Case 3:
+	//
+	// Split element got moved. If the split comes from undo it has to be treated differently than in the default case.
+	// The split element cannot be just split at the place where it was moved. Instead we need more exact transformation.
+	// See similar scenario in `MoveOperation` x `SplitOperation` case.
+	//
+	if ( a.graveyardPosition && a.insertionPosition.hasSameParentAs( b.sourcePosition ) && rangeToMove.containsPosition( a.position ) ) {
+		// // In this case, treat `SplitOperation` like two move operations. First move operation brings an element from graveyard,
+		// // the second moves some nodes to that element.
+		// const graveyardPosition = a.graveyardPosition._getTransformedByMoveOperation( b );
+		// const insertionPosition = a.insertionPosition._getTransformedByMoveOperation( b );
+		//
+		// const reinsert = new MoveOperation( graveyardPosition, 1, insertionPosition, 0 );
+		//
+		// const splitPosition = a.position._getTransformedByMoveOperation( b )._getTransformedByMoveOperation( reinsert );
+		// const moveTargetPosition = a.moveTargetPosition._getTransformedByMoveOperation( b );
+		//
+		// const move = new MoveOperation( splitPosition, a.howMany, moveTargetPosition, 0 );
+		//
+		// return [ reinsert, move ];
+
+		a.position = a.position._getTransformedByMoveOperation( b );
+
+		const extraMove = new MoveOperation( a.insertionPosition, 1, b.sourcePosition, 0 );
+
+		if ( window.x ) debugger;
+
+		return [ a, extraMove ];
 	}
 
 	// The default case.

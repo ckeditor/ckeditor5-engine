@@ -590,7 +590,12 @@ export default class Position {
 			return this._getCombined( operation.position, operation.moveTargetPosition );
 		} else {
 			if ( operation.graveyardPosition ) {
-				return this._getTransformedByMove( operation.graveyardPosition, operation.insertionPosition, 1 );
+				const insertionPositionPath = operation.position.path.slice( 0, -1 );
+				insertionPositionPath[ insertionPositionPath.length - 1 ]++;
+
+				const insertionPosition = new Position( operation.position.root, insertionPositionPath );
+
+				return this._getTransformedByMove( operation.graveyardPosition, insertionPosition, 1 );
 			} else {
 				return this._getTransformedByInsertion( operation.insertionPosition, 1 );
 			}

@@ -239,6 +239,7 @@ describe( 'transform', () => {
 	} );
 
 	it( 'delete split paragraphs', () => {
+		window.x=1;
 		john.setData( '<paragraph>Foo</paragraph><paragraph>B[]ar</paragraph>' );
 
 		john.split();
