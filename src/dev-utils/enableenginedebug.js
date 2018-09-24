@@ -358,7 +358,7 @@ function enableLoggingTools() {
 
 	sandbox.mock( SplitOperation.prototype, 'toString', function() {
 		return getClassName( this ) + `( ${ this.baseVersion } ): ` +
-			`${ this.position } ( ${ this.howMany } )${ this.graveyardPosition ? ', ' + this.graveyardPosition : '' }`;
+			`${ this.splitPosition } ( ${ this.howMany } ) -> ${ this.insertionPosition }${ this.graveyardPosition ? ' with ' + this.graveyardPosition : '' }`;
 	} );
 
 	sandbox.mock( WrapOperation.prototype, 'toString', function() {

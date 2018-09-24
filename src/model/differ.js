@@ -181,11 +181,11 @@ export default class Differ {
 				break;
 			}
 			case 'split': {
-				const splitElement = operation.position.parent;
+				const splitElement = operation.splitPosition.parent;
 
 				// Mark that children of the split element were removed.
 				if ( !this._isInInsertedElement( splitElement ) ) {
-					this._markRemove( splitElement, operation.position.offset, operation.howMany );
+					this._markRemove( splitElement, operation.splitPosition.offset, operation.howMany );
 				}
 
 				// Mark that the new element (split copy) was inserted.
