@@ -310,6 +310,8 @@ export function transformSets( operationsA, operationsB, options ) {
 	// Index of currently transformed operation `a`.
 	let i = 0;
 
+	if(window.x)debugger;
+
 	// While not all `operationsA` are transformed...
 	while ( i < operationsA.length ) {
 		// Get "current" operation `a`.

@@ -718,12 +718,13 @@ export default class Writer {
 
 		const version = range.root.document ? range.root.document.version : null;
 
-		const insert = new InsertOperation( range.end, element, version );
+		// Has to be `range.start` not `range.end` for better transformations.
+		const insert = new InsertOperation( range.start, element, version );
 		this.batch.addOperation( insert );
 		this.model.applyOperation( insert );
 
 		const move = new MoveOperation(
-			range.start,
+			range.start.getShiftedBy( 1 ),
 			range.end.offset - range.start.offset,
 			Position.createAt( element, 0 ),
 			version === null ? null : version + 1
@@ -776,16 +777,19 @@ export default class Writer {
 	 * @param {module:engine/model/element~Element} element Element to unwrap.
 	 */
 	_unwrap( element ) {
-		const position = Position.createAt( element, 0 );
-		const version = position.root.document.version;
+		// const position = Position.createAt( element, 0 );
+		// const version = position.root.document.version;
+		//
+		// const graveyard = position.root.document.graveyard;
+		// const graveyardPosition = new Position( graveyard, [ 0 ] );
+		//
+		// const unwrap = new UnwrapOperation( position, element.maxOffset, graveyardPosition, version );
+		//
+		// this.batch.addOperation( unwrap );
+		// this.model.applyOperation( unwrap );
 
-		const graveyard = position.root.document.graveyard;
-		const graveyardPosition = new Position( graveyard, [ 0 ] );
-
-		const unwrap = new UnwrapOperation( position, element.maxOffset, graveyardPosition, version );
-
-		this.batch.addOperation( unwrap );
-		this.model.applyOperation( unwrap );
+		this.move( Range.createIn( element ), Position.createAfter( element ) );
+		this.remove( element );
 	}
 
 	/**
