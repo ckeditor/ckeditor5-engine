@@ -339,19 +339,8 @@ export function syncClients() {
 }
 
 export function expectClients( expectedModelString ) {
-	// for ( const client of clients ) {
-	// 	expect( client.getModelString(), client.name + ' content' ).to.equal( expectedModelString );
-	// }
-
-	let modelString = null;
-
 	for ( const client of clients ) {
-		if ( modelString === null ) {
-			modelString = client.getModelString();
-			continue;
-		}
-
-		expect( client.getModelString(), client.name + ' content' ).to.equal( modelString );
+		expect( client.getModelString(), client.name + ' content' ).to.equal( expectedModelString );
 	}
 
 	let syncedVersion = null;

@@ -119,10 +119,12 @@ export default class MergeOperation extends Operation {
 	 * @returns {module:engine/model/operation/splitoperation~SplitOperation}
 	 */
 	getReversed() {
-		const path = this.sourcePosition.path.slice( 0, -1 );
-		const insertionPosition = new Position( this.sourcePosition.root, path );
+		const targetPosition = this.targetPosition._getTransformedByMergeOperation( this );
 
-		return new SplitOperation( this.targetPosition, this.howMany, insertionPosition, this.graveyardPosition, this.baseVersion + 1 );
+		const path = this.sourcePosition.path.slice( 0, -1 );
+		const insertionPosition = new Position( this.sourcePosition.root, path )._getTransformedByMergeOperation( this );
+
+		return new SplitOperation( targetPosition, this.howMany, insertionPosition, this.graveyardPosition, this.baseVersion + 1 );
 	}
 
 	/**

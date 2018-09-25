@@ -207,7 +207,7 @@ describe( 'transform', () => {
 				expectClients( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
 			} );
 
-			it.only( 'merge to unwrapped element with undo #1', () => {
+			it( 'merge to unwrapped element with undo #1', () => {
 				john.setData( '<blockQuote><paragraph>Foo</paragraph></blockQuote>[]<blockQuote><paragraph>Bar</paragraph></blockQuote>' );
 				kate.setData( '<blockQuote>[]<paragraph>Foo</paragraph></blockQuote><blockQuote><paragraph>Bar</paragraph></blockQuote>' );
 
@@ -215,8 +215,6 @@ describe( 'transform', () => {
 				john.undo();
 				kate.unwrap();
 
-				debugger;
-				window.x=1;
 				syncClients();
 				expectClients( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph>' );
 			} );

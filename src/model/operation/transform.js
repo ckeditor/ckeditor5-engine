@@ -1660,7 +1660,7 @@ setTransformation( MoveOperation, MoveOperation, ( a, b, context ) => {
 	//
 	// Special case #2.
 	//
-	// Check if `b` operation targets inside `rangeA`. Use stickiness if possible.
+	// Check if `b` operation targets inside `rangeA`.
 	const bTargetsToA = rangeA.containsPosition( b.targetPosition );
 
 	// If `b` targets to `rangeA` and `rangeA` contains `rangeB`, `b` operation has no influence on `a` operation.
@@ -1750,7 +1750,7 @@ setTransformation( MoveOperation, MoveOperation, ( a, b, context ) => {
 	// Then, we have to manage the "common part" of both move ranges.
 	const common = rangeA.getIntersection( rangeB );
 
-	if ( common !== null && aIsStrong && !bTargetsToA ) {
+	if ( common !== null && aIsStrong ) {
 		// Calculate the new position of that part of original range.
 		common.start = common.start._getCombined( b.sourcePosition, b.getMovedRangeStart() );
 		common.end = common.end._getCombined( b.sourcePosition, b.getMovedRangeStart() );
@@ -1789,7 +1789,14 @@ setTransformation( MoveOperation, MoveOperation, ( a, b, context ) => {
 } );
 
 setTransformation( MoveOperation, SplitOperation, ( a, b, context ) => {
-	let newTargetPosition = a.targetPosition._getTransformedBySplitOperation( b );
+	let newTargetPosition = Position.createFromPosition( a.targetPosition );
+
+	// Do not transform if target position is same as split insertion position and this split comes from undo.
+	// This should be done on relations but it is too much work for now as it would require relations working in collaboration.
+	// We need to make a decision how we will resolve such conflict and this is less harmful way.
+	if ( !a.targetPosition.isEqual( b.insertionPosition ) || !b.graveyardPosition ) {
+		newTargetPosition = a.targetPosition._getTransformedBySplitOperation( b );
+	}
 
 	// Case 1:
 	//
@@ -2285,12 +2292,25 @@ setTransformation( SplitOperation, MoveOperation, ( a, b, context ) => {
 		a.howMany += b.howMany;
 	}
 
+	// console.log( a.splitPosition.path );
+
 	// Change position stickiness to force a correct transformation.
 	a.splitPosition.stickiness = 'toNone';
 	a.splitPosition = a.splitPosition._getTransformedByMoveOperation( b );
 	a.splitPosition.stickiness = 'toNext';
 
-	a.insertionPosition = SplitOperation.getInsertionPosition( a.splitPosition );
+	// console.log( a.splitPosition.path );
+	// console.log( a.insertionPosition.path );
+
+	if ( a.graveyardPosition ) {
+		a.insertionPosition = a.insertionPosition._getTransformedByMoveOperation( b );
+	} else {
+		a.insertionPosition = SplitOperation.getInsertionPosition( a.splitPosition );
+	}
+
+	// console.log( a.insertionPosition.path );
+	// console.log( SplitOperation.getInsertionPosition( a.splitPosition ).path );
+	// console.log( '--' );
 
 	return [ a ];
 } );

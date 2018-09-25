@@ -127,6 +127,7 @@ function bindWithDocument() {
 // @private
 // @param {module:engine/model/operation/operation~Operation} operation Executed operation.
 function transform( operation ) {
+	if(window.xxx) debugger;
 	// Transform the range by the operation. Join the result ranges if needed.
 	const ranges = this.getTransformedByOperation( operation );
 	const result = Range.createFromRanges( ranges );

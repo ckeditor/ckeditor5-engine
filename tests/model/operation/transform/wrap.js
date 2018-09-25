@@ -7,7 +7,10 @@ describe( 'transform', () => {
 		return Promise.all( [
 			Client.get( 'john' ).then( client => ( john = client ) ),
 			Client.get( 'kate' ).then( client => ( kate = client ) )
-		] );
+		] ).then( () => {
+			john.editor.model.schema.register( 'div', { inheritAllFrom: 'blockQuote' } );
+			kate.editor.model.schema.register( 'div', { inheritAllFrom: 'blockQuote' } );
+		} );
 	} );
 
 	afterEach( () => {
@@ -23,13 +26,13 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph>]' );
 
 				john.wrap( 'blockQuote' );
-				kate.wrap( 'blockQuote2' );
+				kate.wrap( 'div' );
 
 				syncClients();
 
 				expectClients(
 					'<blockQuote><paragraph>Foo</paragraph></blockQuote>' +
-					'<blockQuote2><paragraph>Bar</paragraph></blockQuote2>'
+					'<div><paragraph>Bar</paragraph></div>'
 				);
 			} );
 
@@ -38,7 +41,7 @@ describe( 'transform', () => {
 				kate.setData( '[<paragraph>Foo</paragraph>]' );
 
 				john.wrap( 'blockQuote' );
-				kate.wrap( 'blockQuote2' );
+				kate.wrap( 'div' );
 
 				syncClients();
 
@@ -46,8 +49,8 @@ describe( 'transform', () => {
 			} );
 
 			it( 'intersecting wrap #1', () => {
-				john.setData( '[<paragraph>Foo</paragraph><paragraph>Bar</paragraph>]<paragraph>Abc</paragraph>' );
-				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph><paragraph>Abc</paragraph>]' );
+				john.setData( '[<paragraph>Foo</paragraph><paragraph>Bar</paragraph>]<paragraph>Xyz</paragraph>' );
+				kate.setData( '<paragraph>Foo</paragraph>[<paragraph>Bar</paragraph><paragraph>Xyz</paragraph>]' );
 
 				john.wrap( 'blockQuote' );
 				kate.wrap( 'div' );
@@ -60,7 +63,7 @@ describe( 'transform', () => {
 						'<paragraph>Bar</paragraph>' +
 					'</blockQuote>' +
 					'<div>' +
-						'<paragraph>Abc</paragraph>' +
+						'<paragraph>Xyz</paragraph>' +
 					'</div>'
 				);
 			} );
@@ -154,7 +157,7 @@ describe( 'transform', () => {
 				expectClients( '<paragraph>Foo</paragraph><paragraph>Bar</paragraph><paragraph>Abc</paragraph>' );
 			} );
 
-			it( 'intersecting wrap #3, then undo', () => {
+			it( 'intersecting wrap, then undo #3', () => {
 				john.setData( '[<paragraph>Foo</paragraph><paragraph>Bar</paragraph>]<paragraph>Abc</paragraph>' );
 				kate.setData( '[<paragraph>Foo</paragraph>]<paragraph>Bar</paragraph><paragraph>Abc</paragraph>' );
 

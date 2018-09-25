@@ -138,7 +138,7 @@ describe( 'transform', () => {
 				kate.setData( '<paragraph>F[oo]</paragraph>' );
 
 				john.split();
-				kate.wrap( 'div' );
+				kate.wrap( 'blockQuote' );
 
 				syncClients();
 				expectClients(
