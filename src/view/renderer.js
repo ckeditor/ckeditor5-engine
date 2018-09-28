@@ -314,8 +314,9 @@ export default class Renderer {
 		this.domConverter.unbindDomElement( domElement );
 		this.domConverter.bindElements( domElement, viewElement );
 
-		// View element may have children which needs to be updated, but are not marked, mark them to update.
+		// View element may have children and attributes which needs to be updated, but are not marked, mark them to update.
 		this.markedChildren.add( viewElement );
+		this.markedAttributes.add( viewElement );
 	}
 
 	/**
