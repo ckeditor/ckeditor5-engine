@@ -346,6 +346,12 @@ describe( 'SelectionObserver', () => {
 		viewDocument.once( 'selectionChange', () => {
 			// 2. Selection change has been handled.
 
+			// Enforce selection change on Edge 18.
+			if ( env.isEdge ) {
+				domDocument.getSelection().collapse( domText, 2 );
+				domDocument.getSelection().extend( domText, 3 );
+			}
+
 			selectionObserver.listenTo( domDocument, 'selectionchange', () => {
 				// 4. Check if view was re-rendered.
 				expect( view.render.called ).to.be.true;
