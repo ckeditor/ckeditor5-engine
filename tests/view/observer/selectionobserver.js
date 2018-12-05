@@ -15,6 +15,7 @@ import FocusObserver from '../../../src/view/observer/focusobserver';
 import log from '@ckeditor/ckeditor5-utils/src/log';
 import createViewRoot from '../_utils/createroot';
 import { parse } from '../../../src/dev-utils/view';
+import env from '@ckeditor/ckeditor5-utils/src/env';
 
 describe( 'SelectionObserver', () => {
 	let view, viewDocument, viewRoot, selectionObserver, domRoot, domMain, domDocument;
@@ -185,6 +186,10 @@ describe( 'SelectionObserver', () => {
 
 			while ( counter > 0 ) {
 				changeDomSelection();
+
+				if ( env.isEdge ) {
+					extendDomSelection();
+				}
 				counter--;
 			}
 		} );
@@ -362,5 +367,12 @@ describe( 'SelectionObserver', () => {
 		const offset = domSelection.anchorOffset;
 
 		domSelection.collapse( domFoo, offset == 2 ? 3 : 2 );
+	}
+
+	function extendDomSelection() {
+		const domFoo = domMain.childNodes[ 1 ].childNodes[ 0 ];
+		const selection = domDocument.getSelection();
+		const offset = selection.anchorOffset;
+		selection.extend( domFoo, offset == 2 ? 3 : 2 );
 	}
 } );
