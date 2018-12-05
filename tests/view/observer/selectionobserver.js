@@ -260,7 +260,12 @@ describe( 'SelectionObserver', () => {
 		view.getObserver( FocusObserver ).disable();
 
 		// Change selection.
-		changeDomSelection();
+		setDomSelection( 2 );
+
+		// Dunno why but Edge 18 does require this...
+		if ( env.isEdge ) {
+			setDomSelection( 3 );
+		}
 
 		// Wait 100ms.
 		setTimeout( () => {
@@ -268,7 +273,7 @@ describe( 'SelectionObserver', () => {
 			expect( spy.notCalled ).to.true;
 
 			// Change selection one more time.
-			changeDomSelection();
+			setDomSelection( 3 );
 
 			// Wait 210ms (debounced function should be called).
 			setTimeout( () => {
@@ -375,6 +380,13 @@ describe( 'SelectionObserver', () => {
 		const offset = domSelection.anchorOffset;
 
 		domSelection.collapse( domFoo, offset == 2 ? 3 : 2 );
+	}
+
+	function setDomSelection( offset ) {
+		const domSelection = domDocument.getSelection();
+		const domFoo = domMain.childNodes[ 1 ].childNodes[ 0 ];
+
+		domSelection.collapse( domFoo, offset );
 	}
 
 	function extendDomSelection() {
