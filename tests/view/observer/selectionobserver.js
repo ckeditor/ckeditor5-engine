@@ -207,6 +207,10 @@ describe( 'SelectionObserver', () => {
 
 		for ( let i = 0; i < 10; i++ ) {
 			changeDomSelection();
+
+			if ( env.isEdge ) {
+				extendDomSelection();
+			}
 		}
 	} );
 
