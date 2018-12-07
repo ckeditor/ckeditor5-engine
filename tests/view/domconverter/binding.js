@@ -291,6 +291,26 @@ describe( 'DomConverter', () => {
 		} );
 	} );
 
+	describe( 'unbindFakeSelection', () => {
+		it( 'should unbind DOM element from selection', () => {
+			const viewElement = new ViewElement();
+			const domEl = document.createElement( 'div' );
+			const selection = new ViewDocumentSelection( viewElement, 'in' );
+
+			converter.bindFakeSelection( domEl, selection );
+
+			const bindSelectionBefore = converter.fakeSelectionToView( domEl );
+
+			expect( bindSelectionBefore ).to.not.be.undefined;
+			expect( bindSelectionBefore.isEqual( selection ) ).to.be.true;
+
+			converter.unbindFakeSelection( domEl );
+			const bindSelectionAfter = converter.fakeSelectionToView( domEl );
+
+			expect( bindSelectionAfter ).to.be.undefined;
+		} );
+	} );
+
 	describe( 'unbindDomElement', () => {
 		it( 'should unbind elements', () => {
 			const domElement = document.createElement( 'p' );
@@ -338,6 +358,21 @@ describe( 'DomConverter', () => {
 
 			expect( converter.mapDomToView( domElement ) ).to.be.undefined;
 			expect( converter.mapViewToDom( viewElement ) ).to.be.undefined;
+		} );
+
+		it( 'should unbind element\'s fake selection', () => {
+			const domElement = document.createElement( 'div' );
+			const viewElement = new ViewElement();
+			const selection = new ViewDocumentSelection( viewElement, 'in' );
+			converter.bindFakeSelection( domElement, selection );
+			const bindSelection = converter.fakeSelectionToView( domElement );
+
+			expect( bindSelection ).to.not.be.undefined;
+			expect( bindSelection.isEqual( selection ) ).to.be.true;
+
+			converter.unbindDomElement( domElement );
+
+			expect( converter.fakeSelectionToView( domElement ) ).to.be.undefined;
 		} );
 	} );
 } );

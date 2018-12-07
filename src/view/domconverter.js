@@ -116,6 +116,18 @@ export default class DomConverter {
 	}
 
 	/**
+	 * Unbinds given `domElement` from the fake selection it was bound to.
+	 *
+	 * @param {HTMLElement} domElement DOM element to unbind.
+	 */
+	unbindFakeSelection( domElement ) {
+		const viewSelection = this.fakeSelectionToView( domElement );
+		if ( viewSelection ) {
+			this._fakeSelectionMapping.delete( domElement );
+		}
+	}
+
+	/**
 	 * Returns {@link module:engine/view/selection~Selection view selection} instance corresponding to
 	 * given DOM element that represents fake selection. Returns `undefined` if binding to given DOM element does not exists.
 	 *
@@ -157,6 +169,8 @@ export default class DomConverter {
 				this.unbindDomElement( child );
 			}
 		}
+
+		this.unbindFakeSelection( domElement );
 	}
 
 	/**
