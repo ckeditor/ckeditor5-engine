@@ -278,6 +278,11 @@ export default class Renderer {
 					// which will always result in rendering empty element).
 					if ( viewChild && !viewChild.is( 'uiElement' ) ) {
 						this._updateElementMappings( viewChild, actualDomChildren[ deleteIndex ] );
+						// Clear this._fakeSelectionContainer if its DOM element is re-used to
+						// render the view.
+						if ( this._fakeSelectionContainer === actualDomChildren[ deleteIndex ] ) {
+							this._fakeSelectionContainer = null;
+						}
 					}
 
 					remove( expectedDomChildren[ insertIndex ] );
