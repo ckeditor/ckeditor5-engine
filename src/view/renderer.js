@@ -172,8 +172,9 @@ export default class Renderer {
 		let inlineFillerPosition;
 
 		// Remove unneeded fake selection container from the DOM so it will not affect the DOM nodes diffing.
-		// It will be re-added if needed when rendering the selection.
-		this._removeFakeSelection();
+		if ( !this.selection.isFake && isInDom( this._fakeSelectionContainer ) ) {
+			this._removeFakeSelection();
+		}
 
 		// Refresh mappings.
 		for ( const element of this.markedChildren ) {
@@ -956,4 +957,8 @@ function fixGeckoSelectionAfterBr( focus, domSelection ) {
 	if ( childAtOffset && childAtOffset.tagName == 'BR' ) {
 		domSelection.addRange( domSelection.getRangeAt( 0 ) );
 	}
+}
+
+function isInDom( fakeSelectionContainer ) {
+	return fakeSelectionContainer && fakeSelectionContainer.parentElement;
 }
