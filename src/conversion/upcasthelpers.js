@@ -676,7 +676,7 @@ function prepareToAttributeConverter( config, shallow ) {
 			return;
 		}
 
-		const modelKey = config.model.key;
+		const modelKey = typeof config.model.key == 'function' ? config.model.key(data.viewItem) : config.model.key;
 		const modelValue = typeof config.model.value == 'function' ? config.model.value( data.viewItem ) : config.model.value;
 
 		// Do not convert if attribute building function returned falsy value.
