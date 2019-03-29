@@ -485,8 +485,7 @@ export default class Schema {
 
 	/**
 	 * This method allows assigning additional metadata to the model attributes. For example,
-	 * {@link module:engine/model/schema~AttributeProperties `AttributeProperties#isFormatting` property} is
-	 * used to mark formatting attributes (like `bold` or `italic`).
+	 * `isFormatting` property is used to mark formatting attributes (like `bold` or `italic`).
 	 *
 	 *		// Mark bold as a formatting attribute.
 	 *		schema.setAttributeProperties( 'bold', {
@@ -518,7 +517,10 @@ export default class Schema {
 	 *		// Logs: { one: 1, two: 2 }
 	 *
 	 * @param {String} attributeName A name of the attribute to receive the properties.
-	 * @param {module:engine/model/schema~AttributeProperties} properties A dictionary of properties.
+	 * @param {Object} properties A structure containing additional metadata describing the attribute.
+	 * @param {Boolean} properties.isFormatting Indicates that the attribute should be considered as a visual formatting, like
+	 * `bold`, `italic` or `fontSize` rather than semantic attribute (such as `src`, `listType`, etc.). For example, it is used by
+	 * the "Remove format" feature.
 	 */
 	setAttributeProperties( attributeName, properties ) {
 		this._attributeProperties[ attributeName ] = Object.assign( this.getAttributeProperties( attributeName ) || {}, properties );
@@ -528,7 +530,10 @@ export default class Schema {
 	 * Returns properties associated with a given model attribute. See {@link #setAttributeProperties `setAttributeProperties()`}.
 	 *
 	 * @param {String} attributeName A name of the attribute.
-	 * @returns {module:engine/model/schema~AttributeProperties}
+	 * @returns {Object} A structure containing additional metadata describing the attribute.
+	 * @returns {Boolean} [ret.isFormatting] Indicates that the attribute should be considered as a visual formatting, like
+	 * `bold`, `italic` or `fontSize` rather than semantic attribute (such as `src`, `listType`, etc.). For example, it is used by
+	 * the "Remove format" feature.
 	 */
 	getAttributeProperties( attributeName ) {
 		return this._attributeProperties[ attributeName ];
@@ -1342,16 +1347,6 @@ export class SchemaContext {
  *		} );
  *
  * @typedef {Object} module:engine/model/schema~SchemaContextItem
- */
-
-/**
- * A structure containing additional metadata describing the attribute.
- *
- * See {@link module:engine/model/schema~Schema#setAttributeProperties `Schema#setAttributeProperties()`} for usage examples.
- *
- * @typedef {Object} module:engine/model/schema~AttributeProperties
- * @property {Boolean} [isFormatting] Indicates that the attribute should be considered as a visual formatting, like `bold`, `italic` or
- * `fontSize` rather than semantic attribute (such as `src`, `listType`, etc.). For example, it is used by the "Remove format" feature.
  */
 
 function compileBaseItemRule( sourceItemRules, itemName ) {
