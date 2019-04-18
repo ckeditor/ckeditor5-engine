@@ -141,14 +141,14 @@ export default class Range {
 	 *
 	 * @returns {module:engine/view/range~Range} Shrink range.
 	 */
-	getTrimmed() {
-		let start = this.start.getLastMatchingPosition( enlargeTrimSkip );
+	getTrimmed( trimNodes = enlargeTrimSkip ) {
+		let start = this.start.getLastMatchingPosition( trimNodes );
 
 		if ( start.isAfter( this.end ) || start.isEqual( this.end ) ) {
 			return new Range( start, start );
 		}
 
-		let end = this.end.getLastMatchingPosition( enlargeTrimSkip, { direction: 'backward' } );
+		let end = this.end.getLastMatchingPosition( trimNodes, { direction: 'backward' } );
 		const nodeAfterStart = start.nodeAfter;
 		const nodeBeforeEnd = end.nodeBefore;
 

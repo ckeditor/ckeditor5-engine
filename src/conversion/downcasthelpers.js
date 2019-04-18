@@ -447,11 +447,19 @@ export function convertRangeSelection() {
 
 		for ( const range of selection.getRanges() ) {
 			const viewRange = conversionApi.mapper.toViewRange( range );
-			viewRanges.push( viewRange );
+			viewRanges.push( viewRange.getTrimmed( trimUIElements ) );
 		}
 
 		conversionApi.writer.setSelection( viewRanges, { backward: selection.isBackward } );
 	};
+
+	function trimUIElements( value ) {
+		if ( value.item.is( 'uiElement' ) ) {
+			return true;
+		}
+
+		return false;
+	}
 }
 
 /**
