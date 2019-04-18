@@ -89,6 +89,11 @@ export default class HtmlDataProcessor {
 	_toDom( data ) {
 		const document = this._domParser.parseFromString( data, 'text/html' );
 		const fragment = document.createDocumentFragment();
+
+		if ( data == '' ) {
+			return fragment;
+		}
+
 		const nodes = document.body.childNodes;
 
 		while ( nodes.length > 0 ) {

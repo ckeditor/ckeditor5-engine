@@ -3,7 +3,7 @@
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
-/* globals Node */
+/* globals Node, document */
 
 /**
  * @module engine/view/renderer
@@ -697,13 +697,19 @@ export default class Renderer {
 		if ( !container ) {
 			this._fakeSelectionContainer = container = domDocument.createElement( 'div' );
 
-			Object.assign( container.style, {
-				position: 'fixed',
-				top: 0,
-				left: '-9999px',
-				// See https://github.com/ckeditor/ckeditor5/issues/752.
-				width: '42px'
-			} );
+			if ( env.isIe11 ) {
+				Object.assign( container.style, {
+					display: 'none'
+				} );
+			} else {
+				Object.assign( container.style, {
+					position: 'fixed',
+					top: 0,
+					left: '-9999px',
+					// See https://github.com/ckeditor/ckeditor5/issues/752.
+					width: '42px'
+				} );
+			}
 
 			// Fill it with a text node so we can update it later.
 			container.textContent = '\u00A0';
@@ -754,8 +760,24 @@ export default class Renderer {
 		// Otherwise, FF may throw an error (https://github.com/ckeditor/ckeditor5/issues/721).
 		domRoot.focus();
 
-		domSelection.collapse( anchor.parent, anchor.offset );
-		domSelection.extend( focus.parent, focus.offset );
+		if ( env.isIe11 ) {
+			// IE 11 does not support `Selection#extend()`.
+			// I tried to simply polyfill it but it was failing for some reason in unit tests.
+			const domRange = document.createRange();
+
+			domRange.setStart( anchor.parent, anchor.offset );
+			domRange.setEnd( focus.parent, focus.offset );
+
+			if ( domRange.collapsed ) {
+				domRange.setEnd( anchor.parent, anchor.offset );
+			}
+
+			domSelection.removeAllRanges();
+			domSelection.addRange( domRange );
+		} else {
+			domSelection.collapse( anchor.parent, anchor.offset );
+			domSelection.extend( focus.parent, focus.offset );
+		}
 
 		// Firefox–specific hack (https://github.com/ckeditor/ckeditor5-engine/issues/1439).
 		if ( env.isGecko ) {

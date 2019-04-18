@@ -56,7 +56,9 @@ describe( 'SelectionObserver', () => {
 	} );
 
 	afterEach( () => {
-		domRoot.parentElement.removeChild( domRoot );
+		if ( domRoot.parentElement ) {
+			domRoot.parentElement.removeChild( domRoot );
+		}
 
 		view.destroy();
 	} );

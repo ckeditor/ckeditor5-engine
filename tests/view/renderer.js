@@ -3795,7 +3795,12 @@ describe( 'Renderer', () => {
 
 		// Checks if every node in DOM tree is mapped to the view.
 		function checkMappings() {
-			const domWalker = document.createTreeWalker( domRoot, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT );
+			const domWalker = document.createTreeWalker(
+				domRoot,
+				NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT,
+				env.isIe11 ? () => true : null,
+				false
+			);
 
 			while ( domWalker.nextNode() ) {
 				const node = domWalker.currentNode;

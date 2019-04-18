@@ -7,7 +7,7 @@
  * @module engine/view/domconverter
  */
 
-/* globals document, Node, NodeFilter, Text */
+/* globals document, Node, NodeFilter */
 
 import ViewText from './text';
 import ViewElement from './element';
@@ -24,6 +24,7 @@ import getAncestors from '@ckeditor/ckeditor5-utils/src/dom/getancestors';
 import getCommonAncestor from '@ckeditor/ckeditor5-utils/src/dom/getcommonancestor';
 import isText from '@ckeditor/ckeditor5-utils/src/dom/istext';
 import { isElement } from 'lodash-es';
+import env from '@ckeditor/ckeditor5-utils/src/env';
 
 /**
  * DomConverter is a set of tools to do transformations between DOM nodes and view nodes. It also handles
@@ -995,7 +996,7 @@ export default class DomConverter {
 		// This means that the text node starts/end with normal space instead of non-breaking space.
 		// This causes a problem because the normal space would be removed in `.replace` calls above. To prevent that,
 		// the inline filler is removed only after the data is initially processed (by the `.replace` above). See ckeditor5#692.
-		data = getDataWithoutFiller( new Text( data ) );
+		data = getDataWithoutFiller( document.createTextNode( data ) );
 
 		// At this point we should have removed all whitespaces from DOM text data.
 
@@ -1121,19 +1122,24 @@ export default class DomConverter {
 		const document = node.ownerDocument;
 		const topmostParent = getAncestors( node )[ 0 ];
 
-		const treeWalker = document.createTreeWalker( topmostParent, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT, {
-			acceptNode( node ) {
-				if ( isText( node ) ) {
-					return NodeFilter.FILTER_ACCEPT;
-				}
-
-				if ( node.tagName == 'BR' ) {
-					return NodeFilter.FILTER_ACCEPT;
-				}
-
-				return NodeFilter.FILTER_SKIP;
+		const acceptNode = node => {
+			if ( isText( node ) ) {
+				return NodeFilter.FILTER_ACCEPT;
 			}
-		} );
+
+			if ( node.tagName == 'BR' ) {
+				return NodeFilter.FILTER_ACCEPT;
+			}
+
+			return NodeFilter.FILTER_SKIP;
+		};
+
+		const treeWalker = document.createTreeWalker(
+			topmostParent,
+			NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
+			env.isIe11 ? acceptNode : { acceptNode },
+			false
+		);
 
 		treeWalker.currentNode = node;
 
