@@ -102,6 +102,10 @@ export default class Mapper {
 		}, { priority: 'low' } );
 	}
 
+	destroy() {
+		this.stopListening();
+	}
+
 	/**
 	 * Marks model and view elements as corresponding. Corresponding elements can be retrieved by using
 	 * the {@link module:engine/conversion/mapper~Mapper#toModelElement toModelElement} and

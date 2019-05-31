@@ -316,6 +316,7 @@ export default class DocumentSelection {
 	 */
 	destroy() {
 		this._selection.destroy();
+		this.stopListening();
 	}
 
 	/**

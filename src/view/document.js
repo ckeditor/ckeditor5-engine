@@ -130,6 +130,7 @@ export default class Document {
 	destroy() {
 		this.roots.map( root => root.destroy() );
 		this.stopListening();
+		this._destroyObservable();
 	}
 
 	/**

@@ -128,8 +128,13 @@ export default class EditingController {
 	 * by `EditingController` that need to be destroyed.
 	 */
 	destroy() {
-		this.view.destroy();
+		this.view && this.view.destroy();
+		this.view = null;
+		this.mapper.destroy();
+		this.mapper = null;
+		this.downcastDispatcher.destroy();
 		this.stopListening();
+		this._destroyObservable();
 	}
 }
 

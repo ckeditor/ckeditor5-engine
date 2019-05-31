@@ -376,6 +376,9 @@ export default class DataController {
 	 */
 	destroy() {
 		this.stopListening();
+		this._destroyObservable();
+		this.upcastDispatcher.destroy();
+		this.downcastDispatcher.destroy();
 	}
 
 	/**

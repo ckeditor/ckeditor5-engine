@@ -216,6 +216,15 @@ export default class Document {
 	 */
 	destroy() {
 		this.selection.destroy();
+		this.selection = null;
+		this.roots.clear();
+		this.roots = null;
+		this._postFixers.clear();
+		this._postFixers = null;
+		this.differ = null;
+		this.model = null;
+		this.history.destroy();
+		this.history = null;
 		this.stopListening();
 	}
 

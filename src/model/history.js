@@ -44,6 +44,12 @@ export default class History {
 		this._undoneOperations = new Set();
 	}
 
+	destroy() {
+		this.operations = [];
+		this._undoPairs.clear();
+		this._undoneOperations.clear();
+	}
+
 	/**
 	 * Adds an operation to the history.
 	 *

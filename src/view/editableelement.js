@@ -79,6 +79,7 @@ export default class EditableElement extends ContainerElement {
 
 	destroy() {
 		this.stopListening();
+		this._destroyObservable();
 	}
 
 	/**

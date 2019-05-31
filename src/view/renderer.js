@@ -118,6 +118,11 @@ export default class Renderer {
 		this._fakeSelectionContainer = null;
 	}
 
+	destroy() {
+		this.stopListening();
+		this._destroyObservable();
+	}
+
 	/**
 	 * Marks a view node to be updated in the DOM by {@link #render `render()`}.
 	 *

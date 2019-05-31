@@ -60,6 +60,11 @@ export default class Schema {
 		}, { priority: 'highest' } );
 	}
 
+	destroy() {
+		this.stopListening();
+		this._destroyObservable();
+	}
+
 	/**
 	 * Registers schema item. Can only be called once for every item name.
 	 *

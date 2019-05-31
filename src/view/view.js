@@ -502,8 +502,10 @@ export default class View {
 		}
 
 		this.document.destroy();
+		this._renderer.destroy();
 
 		this.stopListening();
+		this._destroyObservable();
 	}
 
 	/**

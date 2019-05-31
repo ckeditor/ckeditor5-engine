@@ -118,6 +118,10 @@ export default class DowncastDispatcher {
 		this.conversionApi = extend( { dispatcher: this }, conversionApi );
 	}
 
+	destroy() {
+		this.stopListening();
+	}
+
 	/**
 	 * Takes {@link module:engine/model/differ~Differ model differ} object with buffered changes and fires conversion basing on it.
 	 *

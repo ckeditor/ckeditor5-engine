@@ -142,6 +142,10 @@ export default class UpcastDispatcher {
 		this.conversionApi.getSplitParts = this._getSplitParts.bind( this );
 	}
 
+	destroy() {
+		this.stopListening();
+	}
+
 	/**
 	 * Starts the conversion process. The entry point for the conversion.
 	 *

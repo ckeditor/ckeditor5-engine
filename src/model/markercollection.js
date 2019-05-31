@@ -213,7 +213,7 @@ export default class MarkerCollection {
 
 		this._markers = null;
 
-		this.stopListening();
+		this.stopListening();this._destroyObservable();
 	}
 
 	/**

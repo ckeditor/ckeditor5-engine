@@ -714,6 +714,10 @@ export default class Model {
 	destroy() {
 		this.document.destroy();
 		this.stopListening();
+		this._destroyObservable();
+		this.schema.destroy();
+		this.schema = null;
+		this.markers = null;
 	}
 
 	/**
