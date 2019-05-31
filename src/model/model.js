@@ -718,6 +718,8 @@ export default class Model {
 		this.schema.destroy();
 		this.schema = null;
 		this.markers = null;
+		this._pendingChanges = null;
+		this._currentWriter = null;
 	}
 
 	/**
