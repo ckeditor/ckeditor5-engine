@@ -124,6 +124,7 @@ export default class MutationObserver extends Observer {
 		super.destroy();
 
 		this._mutationObserver.disconnect();
+		this._mutationObserver = null;
 	}
 
 	/**

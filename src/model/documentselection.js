@@ -316,6 +316,7 @@ export default class DocumentSelection {
 	 */
 	destroy() {
 		this._selection.destroy();
+		this._selection = null;
 		this.stopListening();
 	}
 
@@ -698,6 +699,12 @@ class LiveSelection extends Selection {
 		}
 
 		this.stopListening();
+		this._ranges = [];
+		this._overriddenGravityRegister.clear();
+		this._model = null;
+		this._document = null;
+		this._attributePriority = null
+		this._fixGraveyardRangesData = [];
 	}
 
 	* getRanges() {
