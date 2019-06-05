@@ -213,7 +213,8 @@ export default class MarkerCollection {
 
 		this._markers = null;
 
-		this.stopListening();this._destroyObservable();
+		this.stopListening();
+		this._destroyObservable();
 	}
 
 	/**
@@ -478,7 +479,7 @@ class Marker {
 		this._liveRange.stopDelegating( 'change:range', this );
 		this._liveRange.stopDelegating( 'change:content', this );
 		this._liveRange.detach();
-		this._liveRange = null;
+		// this._liveRange = null;
 	}
 
 	/**

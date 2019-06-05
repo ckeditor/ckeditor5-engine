@@ -104,10 +104,6 @@ export default class Mapper {
 
 	destroy() {
 		this.stopListening();
-		this._modelToViewMapping = null;
-		this._viewToModelMapping = null;
-		this._markerNameToElements = null;
-		this._viewToModelLengthCallbacks = null;
 	}
 
 	/**

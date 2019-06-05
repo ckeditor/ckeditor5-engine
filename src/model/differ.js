@@ -526,7 +526,6 @@ export default class Differ {
 		this._changesInElement.clear();
 		this._elementSnapshots.clear();
 		this._changedMarkers.clear();
-		this._cachedChanges = null;
 	}
 
 	/**

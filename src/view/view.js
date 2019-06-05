@@ -502,14 +502,10 @@ export default class View {
 		}
 
 		this._observers.clear();
-		this._observers = null;
 		this.document.destroy();
 		this._renderer.destroy();
 		this.domRoots.clear();
-		this.domRoots = null;
-		this._renderer = null;
 		this.domConverter.destroy();
-		this.domConverter = null;
 
 		this.stopListening();
 		this._destroyObservable();

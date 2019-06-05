@@ -105,12 +105,7 @@ export default class DomConverter {
 		this._fakeSelectionMapping = new WeakMap();
 	}
 
-	destroy() {
-		this._domToViewMapping = null;
-		this._viewToDomMapping = null;
-		this._fakeSelectionMapping = null;
-		this.blockFiller = null;
-	}
+	destroy() {}
 
 	/**
 	 * Binds given DOM element that represents fake selection to {@link module:engine/view/documentselection~DocumentSelection

@@ -315,9 +315,9 @@ export default class DocumentSelection {
 	 * Unbinds all events previously bound by document selection.
 	 */
 	destroy() {
-		this._selection.destroy();
-		this._selection = null;
 		this.stopListening();
+		this._selection.destroy();
+		// this._selection = null;
 	}
 
 	/**
@@ -699,12 +699,9 @@ class LiveSelection extends Selection {
 		}
 
 		this.stopListening();
-		this._ranges = [];
 		this._overriddenGravityRegister.clear();
-		this._model = null;
-		this._document = null;
-		this._attributePriority = null
-		this._fixGraveyardRangesData = [];
+		this._ranges = null;
+		this._fixGraveyardRangesData = null;
 	}
 
 	* getRanges() {
