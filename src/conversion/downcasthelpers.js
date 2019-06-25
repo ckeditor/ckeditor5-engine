@@ -839,6 +839,7 @@ function changeAttribute( attributeCreator ) {
 					viewWriter.removeClass( className, viewElement );
 				}
 			} else if ( oldAttribute.key == 'style' ) {
+				// TODO: tests
 				const keys = Object.keys( oldAttribute.value );
 
 				for ( const key of keys ) {
@@ -858,10 +859,18 @@ function changeAttribute( attributeCreator ) {
 					viewWriter.addClass( className, viewElement );
 				}
 			} else if ( newAttribute.key == 'style' ) {
-				const keys = Object.keys( newAttribute.value );
+				if ( typeof newAttribute.value == 'object' ) {
+					const keys = Object.keys( newAttribute.value );
 
-				for ( const key of keys ) {
-					viewWriter.setStyle( key, newAttribute.value[ key ], viewElement );
+					for ( const key of keys ) {
+						viewWriter.setStyle( key, newAttribute.value[ key ], viewElement );
+					}
+				} else {
+					const entries = newAttribute.value.split( ';' );
+
+					console.log( 'values', entries );
+
+					viewWriter.setAttribute( 'style', newAttribute.value, viewElement );
 				}
 			} else {
 				viewWriter.setAttribute( newAttribute.key, newAttribute.value, viewElement );
@@ -1270,9 +1279,13 @@ function getFromAttributeCreator( config ) {
 //
 // @param {Object} view View configuration.
 function normalizeToAttributeConfig( view ) {
+	console.log( 'normalizeToAttributeConfig' );
+
 	if ( typeof view == 'string' ) {
+		console.log( 'Ret:', { key: view, value: 'modelAttributeValue' } );
 		return modelAttributeValue => ( { key: view, value: modelAttributeValue } );
 	} else if ( typeof view == 'object' ) {
+		console.log( 'object' );
 		// { key, value, ... }
 		if ( view.value ) {
 			return () => view;

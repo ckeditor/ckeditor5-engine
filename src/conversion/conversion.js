@@ -556,8 +556,9 @@ export default class Conversion {
 	 */
 	attributeToAttribute( definition ) {
 		// Set up downcast converter.
+		console.group( 'downcast' );
+		console.log( definition );
 		this.for( 'downcast' ).attributeToAttribute( definition );
-
 		// Set up upcast converter.
 		for ( const { model, view } of _getAllUpcastDefinitions( definition ) ) {
 			this.for( 'upcast' )
@@ -566,6 +567,7 @@ export default class Conversion {
 					model
 				} );
 		}
+		console.groupEnd();
 	}
 
 	/**
