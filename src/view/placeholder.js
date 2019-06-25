@@ -153,6 +153,11 @@ export function needsPlaceholder( element ) {
 		return false;
 	}
 
+	// If the element is a Widget always consider it a non-empty and thus not needing a placeholder.
+	if ( element.getCustomProperty( 'widget' ) ) {
+		return false;
+	}
+
 	// The element is empty only as long as it contains nothing but uiElements.
 	const isEmptyish = !Array.from( element.getChildren() )
 		.some( element => !element.is( 'uiElement' ) );

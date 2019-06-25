@@ -389,6 +389,20 @@ describe( 'placeholder', () => {
 			expect( needsPlaceholder( element ) ).to.be.false;
 		} );
 
+		it( 'should return false if element is a widget', () => {
+			// Widget with ui-only elements inside (emptyish).
+			setData( view, '<div><ui:span></ui:span></div>' );
+			viewDocument.isFocused = false;
+
+			const element = viewRoot.getChild( 0 );
+
+			view.change( writer => {
+				writer.setCustomProperty( 'widget', true, element );
+			} );
+
+			expect( needsPlaceholder( element ) ).to.be.false;
+		} );
+
 		it( 'should return true if element is empty and document is blurred', () => {
 			setData( view, '<p></p>' );
 			viewDocument.isFocused = false;
