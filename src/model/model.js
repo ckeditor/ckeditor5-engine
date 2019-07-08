@@ -89,18 +89,23 @@ export default class Model {
 		this.schema.register( '$root', {
 			isLimit: true
 		} );
+		this.schema.register( '$inlineRoot', {
+			isLimit: true,
+			isInline: true
+		} );
 		this.schema.register( '$block', {
 			allowIn: '$root',
 			isBlock: true
 		} );
 		this.schema.register( '$text', {
-			allowIn: '$block',
+			allowIn: [ '$block', '$inlineRoot' ],
 			isInline: true
 		} );
 		this.schema.register( '$clipboardHolder', {
 			allowContentOf: '$root',
 			isLimit: true
 		} );
+
 		this.schema.extend( '$text', { allowIn: '$clipboardHolder' } );
 
 		// An element needed by the `upcastElementToMarker` converter.
