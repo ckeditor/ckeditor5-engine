@@ -1177,7 +1177,7 @@ describe( 'DowncastHelpers', () => {
 					expect( viewToString( viewRoot ) ).to.equal( '<div><p>foo</p><p>bar</p></div>' );
 				} );
 
-				it( 'should correctly wrap and unwrap multiple, intersecting markers', () => {
+				it.only( 'should correctly wrap and unwrap multiple, intersecting markers', () => {
 					downcastHelpers.markerToHighlight( {
 						model: 'markerFoo',
 						view: { classes: 'foo' }

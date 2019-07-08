@@ -908,24 +908,6 @@ export default class DowncastWriter {
 	}
 
 	/**
-	 * Cleans up memory by removing obsolete cloned elements group from the writer.
-	 *
-	 * Should be used whenever all {@link module:engine/view/attributeelement~AttributeElement attribute elements}
-	 * with the same {@link module:engine/view/attributeelement~AttributeElement#id id} are going to be removed from the view and
-	 * the group will no longer be needed.
-	 *
-	 * Cloned elements group are not removed automatically in case if the group is still needed after all its elements
-	 * were removed from the view.
-	 *
-	 * Keep in mind that group names are equal to the `id` property of the attribute element.
-	 *
-	 * @param {String} groupName Name of the group to clear.
-	 */
-	clearClonedElementsGroup( groupName ) {
-		this._cloneGroups.delete( groupName );
-	}
-
-	/**
 	 * Creates position at the given location. The location can be specified as:
 	 *
 	 * * a {@link module:engine/view/position~Position position},
@@ -1662,7 +1644,6 @@ export default class DowncastWriter {
 	 *
 	 * Does nothing if the element has no {@link module:engine/view/attributeelement~AttributeElement#id id}.
 	 *
-	 * @private
 	 * @param {module:engine/view/attributeelement~AttributeElement} element Attribute element to remove.
 	 */
 	_removeFromClonedElementsGroup( element ) {

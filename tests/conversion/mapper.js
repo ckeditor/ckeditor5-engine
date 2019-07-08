@@ -643,21 +643,21 @@ describe( 'Mapper', () => {
 			expect( elements ).to.deep.equal( [ viewA, viewB, viewC ] );
 		} );
 
-		it( 'should unbind all elements from a marker name', () => {
-			const viewA = new ViewElement( 'a' );
-			const viewB = new ViewElement( 'b' );
-			const viewC = new ViewElement( 'c' );
-
-			mapper.bindElementToMarker( viewA, 'marker' );
-			mapper.bindElementToMarker( viewB, 'marker' );
-			mapper.bindElementToMarker( viewC, 'marker' );
-
-			mapper.unbindElementsFromMarkerName( 'marker' );
-
-			const elements = mapper.markerNameToElements( 'marker' );
-
-			expect( elements ).to.be.null;
-		} );
+		// it( 'should unbind all elements from a marker name', () => {
+		// 	const viewA = new ViewElement( 'a' );
+		// 	const viewB = new ViewElement( 'b' );
+		// 	const viewC = new ViewElement( 'c' );
+		//
+		// 	mapper.bindElementToMarker( viewA, 'marker' );
+		// 	mapper.bindElementToMarker( viewB, 'marker' );
+		// 	mapper.bindElementToMarker( viewC, 'marker' );
+		//
+		// 	mapper.unbindElementsFromMarkerName( 'marker' );
+		//
+		// 	const elements = mapper.markerNameToElements( 'marker' );
+		//
+		// 	expect( elements ).to.be.null;
+		// } );
 	} );
 
 	it( 'should pass isPhantom flag to model-to-view position mapping callback', () => {

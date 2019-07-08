@@ -730,13 +730,10 @@ function removeUIElement() {
 			return;
 		}
 
-		conversionApi.mapper.unbindElementsFromMarkerName( data.markerName );
-
 		for ( const element of elements ) {
+			conversionApi.mapper.unbindElementFromMarkerName( element, data.markerName );
 			conversionApi.writer.clear( conversionApi.writer.createRangeOn( element ), element );
 		}
-
-		conversionApi.writer.clearClonedElementsGroup( data.markerName );
 
 		evt.stop();
 	};
@@ -1030,9 +1027,10 @@ function removeHighlight( highlightDescriptor ) {
 			return;
 		}
 
-		conversionApi.mapper.unbindElementsFromMarkerName( data.markerName );
-
 		for ( const element of elements ) {
+			conversionApi.mapper.unbindElementFromMarkerName( element, data.markerName );
+			// conversionApi.writer._removeFromClonedElementsGroup( element );
+
 			if ( element.is( 'attributeElement' ) ) {
 				conversionApi.writer.unwrap( conversionApi.writer.createRangeOn( element ), viewHighlightElement );
 			} else {
@@ -1040,8 +1038,6 @@ function removeHighlight( highlightDescriptor ) {
 				element.getCustomProperty( 'removeHighlight' )( element, descriptor.id, conversionApi.writer );
 			}
 		}
-
-		conversionApi.writer.clearClonedElementsGroup( data.markerName );
 
 		evt.stop();
 	};
