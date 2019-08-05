@@ -7,10 +7,8 @@
  * @module engine/view/uielement
  */
 
-import Element from './element';
-import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
-import Node from './node';
 import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard';
+import RawElement from './rawelement';
 
 /**
  * UI element class. It should be used to represent editing UI which needs to be injected into the editing view
@@ -32,30 +30,7 @@ import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard';
  *
  * @extends module:engine/view/element~Element
  */
-export default class UIElement extends Element {
-	/**
-	 * Creates new instance of UIElement.
-	 *
-	 * Throws {@link module:utils/ckeditorerror~CKEditorError CKEditorError} `view-uielement-cannot-add` when third parameter is passed,
-	 * to inform that usage of UIElement is incorrect (adding child nodes to UIElement is forbidden).
-	 *
-	 * @see module:engine/view/downcastwriter~DowncastWriter#createUIElement
-	 * @protected
-	 * @param {String} name Node name.
-	 * @param {Object|Iterable} [attributes] Collection of attributes.
-	 */
-	constructor( name, attributes, children ) {
-		super( name, attributes, children );
-
-		/**
-		 * Returns `null` because filler is not needed for UIElements.
-		 *
-		 * @method #getFillerOffset
-		 * @returns {null} Always returns null.
-		 */
-		this.getFillerOffset = getFillerOffset;
-	}
-
+export default class UIElement extends RawElement {
 	/**
 	 * @inheritDoc
 	 */
@@ -65,61 +40,6 @@ export default class UIElement extends Element {
 		} else {
 			return ( type == 'uiElement' && name == this.name ) || super.is( type, name );
 		}
-	}
-
-	/**
-	 * Overrides {@link module:engine/view/element~Element#_insertChild} method.
-	 * Throws {@link module:utils/ckeditorerror~CKEditorError CKEditorError} `view-uielement-cannot-add` to prevent adding any child nodes
-	 * to UIElement.
-	 *
-	 * @protected
-	 */
-	_insertChild( index, nodes ) {
-		if ( nodes && ( nodes instanceof Node || Array.from( nodes ).length > 0 ) ) {
-			/**
-			 * Cannot add children to {@link module:engine/view/uielement~UIElement}.
-			 *
-			 * @error view-uielement-cannot-add
-			 */
-			throw new CKEditorError( 'view-uielement-cannot-add: Cannot add child nodes to UIElement instance.', this );
-		}
-	}
-
-	/**
-	 * Renders this {@link module:engine/view/uielement~UIElement} to DOM. This method is called by
-	 * {@link module:engine/view/domconverter~DomConverter}.
-	 * Do not use inheritance to create custom rendering method, replace `render()` method instead:
-	 *
-	 *		const myUIElement = downcastWriter.createUIElement( 'span' );
-	 *		myUIElement.render = function( domDocument ) {
-	 *			const domElement = this.toDomElement( domDocument );
-	 *			domElement.innerHTML = '<b>this is ui element</b>';
-	 *
-	 *			return domElement;
-	 *		};
-	 *
-	 * @param {Document} domDocument
-	 * @returns {HTMLElement}
-	 */
-	render( domDocument ) {
-		return this.toDomElement( domDocument );
-	}
-
-	/**
-	 * Creates DOM element based on this view UIElement.
-	 * Note that each time this method is called new DOM element is created.
-	 *
-	 * @param {Document} domDocument
-	 * @returns {HTMLElement}
-	 */
-	toDomElement( domDocument ) {
-		const domElement = domDocument.createElement( this.name );
-
-		for ( const key of this.getAttributeKeys() ) {
-			domElement.setAttribute( key, this.getAttribute( key ) );
-		}
-
-		return domElement;
 	}
 }
 
@@ -134,13 +54,6 @@ export default class UIElement extends Element {
  */
 export function injectUiElementHandling( view ) {
 	view.document.on( 'keydown', ( evt, data ) => jumpOverUiElement( evt, data, view.domConverter ) );
-}
-
-// Returns `null` because block filler is not needed for UIElements.
-//
-// @returns {null}
-function getFillerOffset() {
-	return null;
 }
 
 // Selection cannot be placed in a `UIElement`. Whenever it is placed there, it is moved before it. This
