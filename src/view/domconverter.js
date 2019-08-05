@@ -205,7 +205,7 @@ export default class DomConverter {
 				if ( options.bind ) {
 					this.bindDocumentFragments( domElement, viewNode );
 				}
-			} else if ( viewNode.is( 'uiElement' ) ) {
+			} else if ( viewNode.is( 'uiElement' ) || viewNode.is('rawElement') ) {
 				// UIElement has its own render() method (see #799).
 				domElement = viewNode.render( domDocument );
 
@@ -379,6 +379,12 @@ export default class DomConverter {
 
 		if ( uiElement ) {
 			return uiElement;
+		}
+
+		const rawElement = this.getParentRawElement( domNode, this._domToViewMapping );
+
+		if ( rawElement ) {
+			return rawElement;
 		}
 
 		if ( isText( domNode ) ) {
@@ -835,6 +841,24 @@ export default class DomConverter {
 		return null;
 	}
 
+	getParentRawElement( domNode ) {
+		const ancestors = getAncestors( domNode );
+
+		// Remove domNode from the list.
+		ancestors.pop();
+
+		while ( ancestors.length ) {
+			const domNode = ancestors.pop();
+			const viewNode = this._domToViewMapping.get( domNode );
+
+			if ( viewNode && viewNode.is( 'rawElement' ) ) {
+				return viewNode;
+			}
+		}
+
+		return null;
+	}
+
 	/**
 	 * Checks if given selection's boundaries are at correct places.
 	 *
@@ -875,6 +899,10 @@ export default class DomConverter {
 		// If selection is in `view.UIElement`, it is incorrect. Note that `mapDomToView()` returns `view.UIElement`
 		// also for any dom element that is inside the view ui element (so we don't need to perform any additional checks).
 		if ( viewParent && viewParent.is( 'uiElement' ) ) {
+			return false;
+		}
+
+		if ( viewParent && viewParent.is( 'rawElement' ) ) {
 			return false;
 		}
 

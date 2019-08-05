@@ -276,7 +276,7 @@ export default class Renderer {
 					// The 'uiElement' is a special one and its children are not stored in a view (#799),
 					// so we cannot use it with replacing flow (since it uses view children during rendering
 					// which will always result in rendering empty element).
-					if ( viewChild && !viewChild.is( 'uiElement' ) ) {
+					if ( viewChild && !( viewChild.is( 'uiElement' ) || viewChild.is( 'rawElement' ) ) ) {
 						this._updateElementMappings( viewChild, actualDomChildren[ deleteIndex ] );
 					}
 

@@ -20,6 +20,7 @@ import isIterable from '@ckeditor/ckeditor5-utils/src/isiterable';
 import Text from './text';
 import EditableElement from './editableelement';
 import { isPlainObject } from 'lodash-es';
+import RawElement from './rawelement';
 
 /**
  * View downcast writer.
@@ -254,6 +255,23 @@ export default class DowncastWriter {
 		}
 
 		return uiElement;
+	}
+
+	/**
+	 * @todo
+	 * @param {String} name Name of the element.
+	 * @param {Object} [attributes] Elements attributes.
+	 * @param {Function} [renderFunction] Custom render function.
+	 * @returns {module:engine/view/uielement~UIElement} Created element.
+	 */
+	createRawElement( name, attributes, renderFunction ) {
+		const rawElement = new RawElement( name, attributes );
+
+		if ( renderFunction ) {
+			rawElement.render = renderFunction;
+		}
+
+		return rawElement;
 	}
 
 	/**
@@ -1084,6 +1102,7 @@ export default class DowncastWriter {
 			const isAttribute = child.is( 'attributeElement' );
 			const isEmpty = child.is( 'emptyElement' );
 			const isUI = child.is( 'uiElement' );
+			const isRaw = child.is( 'rawElement' );
 
 			//
 			// (In all examples, assume that `wrapElement` is `<span class="foo">` element.)
@@ -1103,7 +1122,7 @@ export default class DowncastWriter {
 			// <p>abc</p>                   -->  <p><span class="foo">abc</span></p>
 			// <p><strong>abc</strong></p>  -->  <p><span class="foo"><strong>abc</strong></span></p>
 			//
-			else if ( isText || isEmpty || isUI || ( isAttribute && shouldABeOutsideB( wrapElement, child ) ) ) {
+			else if ( isText || isEmpty || isUI || isRaw || ( isAttribute && shouldABeOutsideB( wrapElement, child ) ) ) {
 				// Clone attribute.
 				const newAttribute = wrapElement._clone();
 
@@ -1848,7 +1867,7 @@ function validateNodesToInsert( nodes, errorContext ) {
 	}
 }
 
-const validNodesToInsert = [ Text, AttributeElement, ContainerElement, EmptyElement, UIElement ];
+const validNodesToInsert = [ Text, AttributeElement, ContainerElement, EmptyElement, UIElement, RawElement ];
 
 // Checks if node is ContainerElement or DocumentFragment, because in most cases they should be treated the same way.
 //
