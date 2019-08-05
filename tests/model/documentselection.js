@@ -15,16 +15,13 @@ import InsertOperation from '../../src/model/operation/insertoperation';
 import MoveOperation from '../../src/model/operation/moveoperation';
 import AttributeOperation from '../../src/model/operation/attributeoperation';
 import SplitOperation from '../../src/model/operation/splitoperation';
-import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 import Collection from '@ckeditor/ckeditor5-utils/src/collection';
 import count from '@ckeditor/ckeditor5-utils/src/count';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
 import { setData, getData } from '../../src/dev-utils/model';
+import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
 
 describe( 'DocumentSelection', () => {
 	let model, doc, root, selection, liveRange, range;
-
-	testUtils.createSinonSandbox();
 
 	const fooStoreAttrKey = DocumentSelection._getStoreAttributeKey( 'foo' );
 	const abcStoreAttrKey = DocumentSelection._getStoreAttributeKey( 'abc' );
@@ -54,6 +51,7 @@ describe( 'DocumentSelection', () => {
 	} );
 
 	afterEach( () => {
+		sinon.restore();
 		model.destroy();
 		liveRange.detach();
 	} );
@@ -457,9 +455,6 @@ describe( 'DocumentSelection', () => {
 
 			expect( ranges[ 0 ].detach.called ).to.be.true;
 			expect( ranges[ 1 ].detach.called ).to.be.true;
-
-			ranges[ 0 ].detach.restore();
-			ranges[ 1 ].detach.restore();
 		} );
 	} );
 
@@ -512,7 +507,7 @@ describe( 'DocumentSelection', () => {
 		it( 'detaches all existing ranges', () => {
 			selection._setTo( [ range, liveRange ] );
 
-			const spy = testUtils.sinon.spy( LiveRange.prototype, 'detach' );
+			const spy = sinon.spy( LiveRange.prototype, 'detach' );
 			selection._setTo( root, 0 );
 
 			expect( spy.calledTwice ).to.be.true;
@@ -534,7 +529,7 @@ describe( 'DocumentSelection', () => {
 			const startPos = Position._createAt( root, 1 );
 			const endPos = Position._createAt( root, 2 );
 			const newEndPos = Position._createAt( root, 4 );
-			const spy = testUtils.sinon.spy( LiveRange.prototype, 'detach' );
+			const spy = sinon.spy( LiveRange.prototype, 'detach' );
 
 			selection._setTo( new Range( startPos, endPos ) );
 
@@ -569,11 +564,6 @@ describe( 'DocumentSelection', () => {
 			selection._setTo( null );
 		} );
 
-		afterEach( () => {
-			ranges[ 0 ].detach.restore();
-			ranges[ 1 ].detach.restore();
-		} );
-
 		it( 'should remove all stored ranges (and reset to default range)', () => {
 			expect( Array.from( selection.getRanges() ).length ).to.equal( 1 );
 			expect( selection.anchor.isEqual( new Position( root, [ 0, 0 ] ) ) ).to.be.true;
@@ -596,24 +586,18 @@ describe( 'DocumentSelection', () => {
 
 	describe( '_setTo()', () => {
 		it( 'should throw an error when range is invalid', () => {
-			expect( () => {
+			expectToThrowCKEditorError( () => {
 				selection._setTo( [ { invalid: 'range' } ] );
-			} ).to.throw( CKEditorError, /model-selection-set-ranges-not-range/ );
+			}, /model-selection-set-ranges-not-range/, model );
 		} );
 
-		it( 'should log a warning when trying to set selection to the graveyard', () => {
-			// eslint-disable-next-line no-undef
-			const warnStub = sinon.stub( console, 'warn' );
-
-			const range = new Range( new Position( model.document.graveyard, [ 0 ] ) );
-			selection._setTo( range );
-
-			expect( warnStub.calledOnce ).to.equal( true );
-			expect( warnStub.getCall( 0 ).args[ 0 ] ).to.match( /model-selection-range-in-graveyard/ );
+		it( 'should not do nothing when trying to set selection to the graveyard', () => {
+			expect( () => {
+				const range = new Range( new Position( model.document.graveyard, [ 0 ] ) );
+				selection._setTo( range );
+			} ).to.not.throw();
 
 			expect( selection._ranges ).to.deep.equal( [] );
-
-			warnStub.restore();
 		} );
 
 		it( 'should detach removed ranges', () => {
@@ -1094,19 +1078,19 @@ describe( 'DocumentSelection', () => {
 			selection._restoreGravity( overrideUid );
 
 			// Wrong UID
-			expect( () => {
+			expectToThrowCKEditorError( () => {
 				selection._restoreGravity( 'foo' );
-			} ).to.throw( CKEditorError, /^document-selection-gravity-wrong-restore/ );
+			}, /^document-selection-gravity-wrong-restore/, model );
 
 			// Already restored
-			expect( () => {
+			expectToThrowCKEditorError( () => {
 				selection._restoreGravity( overrideUid );
-			} ).to.throw( CKEditorError, /^document-selection-gravity-wrong-restore/ );
+			}, /^document-selection-gravity-wrong-restore/, model );
 
 			// No UID
-			expect( () => {
+			expectToThrowCKEditorError( () => {
 				selection._restoreGravity();
-			} ).to.throw( CKEditorError, /^document-selection-gravity-wrong-restore/ );
+			}, /^document-selection-gravity-wrong-restore/, model );
 		} );
 
 		it( 'should revert default gravity when is overridden', () => {
@@ -1601,41 +1585,41 @@ describe( 'DocumentSelection', () => {
 		root._removeChildren( 0, root.childCount );
 		root._appendChild( '\uD83D\uDCA9' );
 
-		expect( () => {
+		expectToThrowCKEditorError( () => {
 			doc.selection._setTo( new Range( Position._createAt( root, 0 ), Position._createAt( root, 1 ) ) );
-		} ).to.throw( CKEditorError, /document-selection-wrong-position/ );
+		}, /document-selection-wrong-position/, model );
 
-		expect( () => {
+		expectToThrowCKEditorError( () => {
 			doc.selection._setTo( new Range( Position._createAt( root, 1 ), Position._createAt( root, 2 ) ) );
-		} ).to.throw( CKEditorError, /document-selection-wrong-position/ );
+		}, /document-selection-wrong-position/, model );
 	} );
 
 	it( 'should throw if one of ranges starts or ends between base character and combining mark', () => {
 		root._removeChildren( 0, root.childCount );
 		root._appendChild( 'foo̻̐ͩbar' );
 
-		expect( () => {
+		expectToThrowCKEditorError( () => {
 			doc.selection._setTo( new Range( Position._createAt( root, 3 ), Position._createAt( root, 9 ) ) );
-		} ).to.throw( CKEditorError, /document-selection-wrong-position/ );
+		}, /document-selection-wrong-position/, model );
 
-		expect( () => {
+		expectToThrowCKEditorError( () => {
 			doc.selection._setTo( new Range( Position._createAt( root, 4 ), Position._createAt( root, 9 ) ) );
-		} ).to.throw( CKEditorError, /document-selection-wrong-position/ );
+		}, /document-selection-wrong-position/, model );
 
-		expect( () => {
+		expectToThrowCKEditorError( () => {
 			doc.selection._setTo( new Range( Position._createAt( root, 5 ), Position._createAt( root, 9 ) ) );
-		} ).to.throw( CKEditorError, /document-selection-wrong-position/ );
+		}, /document-selection-wrong-position/, model );
 
-		expect( () => {
+		expectToThrowCKEditorError( () => {
 			doc.selection._setTo( new Range( Position._createAt( root, 1 ), Position._createAt( root, 3 ) ) );
-		} ).to.throw( CKEditorError, /document-selection-wrong-position/ );
+		}, /document-selection-wrong-position/, model );
 
-		expect( () => {
+		expectToThrowCKEditorError( () => {
 			doc.selection._setTo( new Range( Position._createAt( root, 1 ), Position._createAt( root, 4 ) ) );
-		} ).to.throw( CKEditorError, /document-selection-wrong-position/ );
+		}, /document-selection-wrong-position/, model );
 
-		expect( () => {
+		expectToThrowCKEditorError( () => {
 			doc.selection._setTo( new Range( Position._createAt( root, 1 ), Position._createAt( root, 5 ) ) );
-		} ).to.throw( CKEditorError, /document-selection-wrong-position/ );
+		}, /document-selection-wrong-position/, model );
 	} );
 } );

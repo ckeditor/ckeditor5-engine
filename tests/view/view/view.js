@@ -3,12 +3,13 @@
  * For licensing, see LICENSE.md or https://ckeditor.com/legal/ckeditor-oss-license
  */
 
-/* globals document */
+/* globals document, console */
 
 import View from '../../../src/view/view';
 import Observer from '../../../src/view/observer/observer';
 import MutationObserver from '../../../src/view/observer/mutationobserver';
 import KeyObserver from '../../../src/view/observer/keyobserver';
+import InputObserver from '../../../src/view/observer/inputobserver';
 import FakeSelectionObserver from '../../../src/view/observer/fakeselectionobserver';
 import SelectionObserver from '../../../src/view/observer/selectionobserver';
 import FocusObserver from '../../../src/view/observer/focusobserver';
@@ -18,20 +19,17 @@ import ViewElement from '../../../src/view/element';
 import ViewPosition from '../../../src/view/position';
 import ViewSelection from '../../../src/view/selection';
 import { isBlockFiller, BR_FILLER } from '../../../src/view/filler';
-import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
-import log from '@ckeditor/ckeditor5-utils/src/log';
 
 import count from '@ckeditor/ckeditor5-utils/src/count';
 import global from '@ckeditor/ckeditor5-utils/src/dom/global';
 import createViewRoot from '../_utils/createroot';
 import createElement from '@ckeditor/ckeditor5-utils/src/dom/createelement';
-import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
+import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
+import env from '@ckeditor/ckeditor5-utils/src/env';
 
 describe( 'view', () => {
 	const DEFAULT_OBSERVERS_COUNT = 6;
 	let domRoot, view, viewDocument, ObserverMock, instantiated, enabled, ObserverMockGlobalCount;
-
-	testUtils.createSinonSandbox();
 
 	beforeEach( () => {
 		domRoot = createElement( document, 'div', {
@@ -73,6 +71,7 @@ describe( 'view', () => {
 	} );
 
 	afterEach( () => {
+		sinon.restore();
 		domRoot.remove();
 		view.destroy();
 	} );
@@ -85,6 +84,17 @@ describe( 'view', () => {
 		expect( view.getObserver( KeyObserver ) ).to.be.instanceof( KeyObserver );
 		expect( view.getObserver( FakeSelectionObserver ) ).to.be.instanceof( FakeSelectionObserver );
 		expect( view.getObserver( CompositionObserver ) ).to.be.instanceof( CompositionObserver );
+	} );
+
+	it( 'should add InputObserver on Android devices', () => {
+		const oldEnvIsAndroid = env.isAndroid;
+		env.isAndroid = true;
+
+		const newView = new View();
+		expect( newView.getObserver( InputObserver ) ).to.be.instanceof( InputObserver );
+
+		env.isAndroid = oldEnvIsAndroid;
+		newView.destroy();
 	} );
 
 	describe( 'attachDomRoot()', () => {
@@ -353,11 +363,11 @@ describe( 'view', () => {
 	describe( 'scrollToTheSelection()', () => {
 		beforeEach( () => {
 			// Silence the Rect warnings.
-			testUtils.sinon.stub( log, 'warn' );
+			sinon.stub( console, 'warn' );
 		} );
 
 		it( 'does nothing when there are no ranges in the selection', () => {
-			const stub = testUtils.sinon.stub( global.window, 'scrollTo' );
+			const stub = sinon.stub( global.window, 'scrollTo' );
 
 			view.scrollToTheSelection();
 			sinon.assert.notCalled( stub );
@@ -365,7 +375,7 @@ describe( 'view', () => {
 
 		it( 'scrolls to the first range in selection with an offset', () => {
 			const root = createViewRoot( viewDocument, 'div', 'main' );
-			const stub = testUtils.sinon.stub( global.window, 'scrollTo' );
+			const stub = sinon.stub( global.window, 'scrollTo' );
 			const range = ViewRange._createIn( root );
 
 			view.attachDomRoot( domRoot );
@@ -436,8 +446,8 @@ describe( 'view', () => {
 		} );
 
 		it( 'should focus editable with selection', () => {
-			const converterFocusSpy = testUtils.sinon.spy( view.domConverter, 'focus' );
-			const renderSpy = testUtils.sinon.spy( view, 'forceRender' );
+			const converterFocusSpy = sinon.spy( view.domConverter, 'focus' );
+			const renderSpy = sinon.spy( view, 'forceRender' );
 
 			view.focus();
 
@@ -453,8 +463,8 @@ describe( 'view', () => {
 		} );
 
 		it( 'should not focus if document is already focused', () => {
-			const converterFocusSpy = testUtils.sinon.spy( view.domConverter, 'focus' );
-			const renderSpy = testUtils.sinon.spy( view, 'forceRender' );
+			const converterFocusSpy = sinon.spy( view.domConverter, 'focus' );
+			const renderSpy = sinon.spy( view, 'forceRender' );
 			viewDocument.isFocused = true;
 
 			view.focus();
@@ -463,15 +473,14 @@ describe( 'view', () => {
 			expect( renderSpy.called ).to.be.false;
 		} );
 
-		it( 'should log warning when no selection', () => {
-			const logSpy = testUtils.sinon.stub( log, 'warn' );
-			view.change( writer => {
-				writer.setSelection( null );
-			} );
+		it( 'should not crash when there is no selection', () => {
+			expect( () => {
+				view.change( writer => {
+					writer.setSelection( null );
+				} );
 
-			view.focus();
-			expect( logSpy.calledOnce ).to.be.true;
-			expect( logSpy.args[ 0 ][ 0 ] ).to.match( /^view-focus-no-selection/ );
+				view.focus();
+			} ).not.to.throw();
 		} );
 	} );
 
@@ -618,7 +627,9 @@ describe( 'view', () => {
 				const ui = writer.createUIElement( 'span', null, function( domDocument ) {
 					const element = this.toDomElement( domDocument );
 
-					expect( () => view.change( () => {} ) ).to.throw( CKEditorError, /^cannot-change-view-tree/ );
+					expectToThrowCKEditorError( () => {
+						view.change( () => {} );
+					}, /^cannot-change-view-tree/, view );
 					renderingCalled = true;
 
 					return element;
@@ -637,9 +648,9 @@ describe( 'view', () => {
 			view.attachDomRoot( domDiv );
 
 			viewDocument.registerPostFixer( () => {
-				expect( () => {
+				expectToThrowCKEditorError( () => {
 					view.change( () => {} );
-				} ).to.throw( CKEditorError, /^cannot-change-view-tree/ );
+				}, /^cannot-change-view-tree/, view );
 			} );
 
 			view.forceRender();

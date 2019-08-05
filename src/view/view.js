@@ -21,14 +21,15 @@ import FakeSelectionObserver from './observer/fakeselectionobserver';
 import SelectionObserver from './observer/selectionobserver';
 import FocusObserver from './observer/focusobserver';
 import CompositionObserver from './observer/compositionobserver';
+import InputObserver from './observer/inputobserver';
 
 import ObservableMixin from '@ckeditor/ckeditor5-utils/src/observablemixin';
-import log from '@ckeditor/ckeditor5-utils/src/log';
 import mix from '@ckeditor/ckeditor5-utils/src/mix';
 import { scrollViewportToShowTarget } from '@ckeditor/ckeditor5-utils/src/dom/scroll';
 import { injectUiElementHandling } from './uielement';
 import { injectQuirksHandling } from './filler';
 import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
+import env from '@ckeditor/ckeditor5-utils/src/env';
 
 /**
  * Editor's view controller class. Its main responsibility is DOM - View management for editing purposes, to provide
@@ -172,6 +173,10 @@ export default class View {
 		this.addObserver( KeyObserver );
 		this.addObserver( FakeSelectionObserver );
 		this.addObserver( CompositionObserver );
+
+		if ( env.isAndroid ) {
+			this.addObserver( InputObserver );
+		}
 
 		// Inject quirks handlers.
 		injectQuirksHandling( this );
@@ -392,14 +397,11 @@ export default class View {
 				this.domConverter.focus( editable );
 				this.forceRender();
 			} else {
-				/**
-				 * Before focusing view document, selection should be placed inside one of the view's editables.
-				 * Normally its selection will be converted from model document (which have default selection), but
-				 * when using view document on its own, we need to manually place selection before focusing it.
-				 *
-				 * @error view-focus-no-selection
-				 */
-				log.warn( 'view-focus-no-selection: There is no selection in any editable to focus.' );
+				// Before focusing view document, selection should be placed inside one of the view's editables.
+				// Normally its selection will be converted from model document (which have default selection), but
+				// when using view document on its own, we need to manually place selection before focusing it.
+				//
+				// @if CK_DEBUG // console.warn( 'There is no selection in any editable to focus.' );
 			}
 		}
 	}
@@ -449,7 +451,8 @@ export default class View {
 			throw new CKEditorError(
 				'cannot-change-view-tree: ' +
 				'Attempting to make changes to the view when it is in an incorrect state: rendering or post-fixers are in progress. ' +
-				'This may cause some unexpected behavior and inconsistency between the DOM and the view.'
+				'This may cause some unexpected behavior and inconsistency between the DOM and the view.',
+				this
 			);
 		}
 

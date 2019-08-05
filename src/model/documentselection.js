@@ -17,7 +17,6 @@ import TextProxy from './textproxy';
 import toMap from '@ckeditor/ckeditor5-utils/src/tomap';
 import Collection from '@ckeditor/ckeditor5-utils/src/collection';
 import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
-import log from '@ckeditor/ckeditor5-utils/src/log';
 import uid from '@ckeditor/ckeditor5-utils/src/uid';
 
 const storePrefix = 'selection:';
@@ -639,6 +638,7 @@ class LiveSelection extends Selection {
 					 */
 					throw new CKEditorError(
 						'document-selection-wrong-position: Range from document selection starts or ends at incorrect position.',
+						this,
 						{ range }
 					);
 				}
@@ -767,6 +767,7 @@ class LiveSelection extends Selection {
 			 */
 			throw new CKEditorError(
 				'document-selection-gravity-wrong-restore: Attempting to restore the selection gravity for an unknown UID.',
+				this,
 				{ uid }
 			);
 		}
@@ -802,12 +803,7 @@ class LiveSelection extends Selection {
 		this._checkRange( range );
 
 		if ( range.root == this._document.graveyard ) {
-			/**
-			 * Trying to add a Range that is in the graveyard root. Range rejected.
-			 *
-			 * @warning model-selection-range-in-graveyard
-			 */
-			log.warn( 'model-selection-range-in-graveyard: Trying to add a Range that is in the graveyard root. Range rejected.' );
+			// @if CK_DEBUG // console.warn( 'Trying to add a Range that is in the graveyard root. Range rejected.' );
 
 			return;
 		}
