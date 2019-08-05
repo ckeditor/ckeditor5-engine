@@ -1557,6 +1557,7 @@ export default class DowncastWriter {
 			throw new CKEditorError( 'view-writer-cannot-break-empty-element', this.document );
 		}
 
+		// @todo
 		// If position is placed inside UIElement - throw an exception as we cannot break inside.
 		if ( position.parent.is( 'uiElement' ) ) {
 			/**

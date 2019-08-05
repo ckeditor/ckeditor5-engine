@@ -107,7 +107,7 @@ export default class DomConverter {
 
 	/**
 	 * Binds given DOM element that represents fake selection to {@link module:engine/view/documentselection~DocumentSelection
-	 * document selection}. Document selection copy is stored and can be retrieved by
+     * document selection}. Document selection copy is stored and can be retrieved by
 	 * {@link module:engine/view/domconverter~DomConverter#fakeSelectionToView} method.
 	 *
 	 * @param {HTMLElement} domElement
@@ -205,7 +205,8 @@ export default class DomConverter {
 				if ( options.bind ) {
 					this.bindDocumentFragments( domElement, viewNode );
 				}
-			} else if ( viewNode.is( 'uiElement' ) || viewNode.is('rawElement') ) {
+			} else if ( viewNode.is( 'rawElement' ) ) {
+				// todo: covers UIElement.
 				// UIElement has its own render() method (see #799).
 				domElement = viewNode.render( domDocument );
 
@@ -375,12 +376,7 @@ export default class DomConverter {
 		}
 
 		// When node is inside UIElement return that UIElement as it's view representation.
-		const uiElement = this.getParentUIElement( domNode, this._domToViewMapping );
-
-		if ( uiElement ) {
-			return uiElement;
-		}
-
+		// @todo: covers ui element
 		const rawElement = this.getParentRawElement( domNode, this._domToViewMapping );
 
 		if ( rawElement ) {
@@ -898,10 +894,7 @@ export default class DomConverter {
 
 		// If selection is in `view.UIElement`, it is incorrect. Note that `mapDomToView()` returns `view.UIElement`
 		// also for any dom element that is inside the view ui element (so we don't need to perform any additional checks).
-		if ( viewParent && viewParent.is( 'uiElement' ) ) {
-			return false;
-		}
-
+		// @todo: covers uiElement
 		if ( viewParent && viewParent.is( 'rawElement' ) ) {
 			return false;
 		}
@@ -1135,7 +1128,7 @@ export default class DomConverter {
 	 *
 	 * In the following DOM structure:
 	 *
-	 *		<p>foo<b>bar</b><br>bom</p>
+	 *        <p>foo<b>bar</b><br>bom</p>
 	 *
 	 * * `foo` doesn't have its previous touching inline node (`null` is returned),
 	 * * `foo`'s next touching inline node is `bar`
