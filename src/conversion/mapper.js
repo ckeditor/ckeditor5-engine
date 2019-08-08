@@ -77,7 +77,7 @@ export default class Mapper {
 		 */
 		this._markerNameToElements = new Map();
 
-		this._elementToMarkerName = new Map();
+		this._elementToMarkerNames = new Map();
 
 		this.markersToRefresh = new Set();
 
@@ -136,8 +136,10 @@ export default class Mapper {
 
 		this._viewToModelMapping.delete( viewElement );
 
-		if ( this._elementToMarkerName.has( viewElement ) ) {
-			this.markersToRefresh.add( this._elementToMarkerName.get( viewElement ) );
+		if ( this._elementToMarkerNames.has( viewElement ) ) {
+			for ( const markerName of this._elementToMarkerNames.get( viewElement ) ) {
+				this.markersToRefresh.add( markerName );
+			}
 		}
 
 		if ( this._modelToViewMapping.get( modelElement ) == viewElement ) {
@@ -175,11 +177,13 @@ export default class Mapper {
 	 */
 	bindElementToMarker( element, name ) {
 		const elements = this._markerNameToElements.get( name ) || new Set();
-
 		elements.add( element );
 
+		const names = this._elementToMarkerNames.get( element ) || new Set();
+		names.add( name );
+
 		this._markerNameToElements.set( name, elements );
-		this._elementToMarkerName.set( element, name );
+		this._elementToMarkerNames.set( element, names );
 	}
 
 	/**
@@ -194,10 +198,18 @@ export default class Mapper {
 		if ( elements ) {
 			elements.delete( element );
 
-			this._elementToMarkerName.delete( element );
-
 			if ( elements.size == 0 ) {
 				this._markerNameToElements.delete( name );
+			}
+		}
+
+		const names = this._elementToMarkerNames.get( element );
+
+		if ( names ) {
+			names.delete( name );
+
+			if ( name.size == 0 ) {
+				this._elementToMarkerNames.delete( element );
 			}
 		}
 	}
@@ -209,7 +221,7 @@ export default class Mapper {
 		this._modelToViewMapping = new WeakMap();
 		this._viewToModelMapping = new WeakMap();
 		this._markerNameToElements = new Map();
-		this._elementToMarkerName = new Map();
+		this._elementToMarkerNames = new Map();
 	}
 
 	/**
