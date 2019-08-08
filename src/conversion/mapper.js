@@ -77,6 +77,10 @@ export default class Mapper {
 		 */
 		this._markerNameToElements = new Map();
 
+		this._elementToMarkerName = new Map();
+
+		this.markersToRefresh = new Set();
+
 		// Default mapper algorithm for mapping model position to view position.
 		this.on( 'modelToViewPosition', ( evt, data ) => {
 			if ( data.viewPosition ) {
@@ -132,6 +136,10 @@ export default class Mapper {
 
 		this._viewToModelMapping.delete( viewElement );
 
+		if ( this._elementToMarkerName.has( viewElement ) ) {
+			this.markersToRefresh.add( this._elementToMarkerName.get( viewElement ) );
+		}
+
 		if ( this._modelToViewMapping.get( modelElement ) == viewElement ) {
 			this._modelToViewMapping.delete( modelElement );
 		}
@@ -171,6 +179,7 @@ export default class Mapper {
 		elements.add( element );
 
 		this._markerNameToElements.set( name, elements );
+		this._elementToMarkerName.set( element, name );
 	}
 
 	/**
@@ -185,6 +194,8 @@ export default class Mapper {
 		if ( elements ) {
 			elements.delete( element );
 
+			this._elementToMarkerName.delete( element );
+
 			if ( elements.size == 0 ) {
 				this._markerNameToElements.delete( name );
 			}
@@ -198,6 +209,7 @@ export default class Mapper {
 		this._modelToViewMapping = new WeakMap();
 		this._viewToModelMapping = new WeakMap();
 		this._markerNameToElements = new Map();
+		this._elementToMarkerName = new Map();
 	}
 
 	/**
