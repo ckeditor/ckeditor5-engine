@@ -470,6 +470,19 @@ describe( 'DataController utils', () => {
 				expect( stringify( root, affectedRange ) ).to.equal( '[<heading1>bar</heading1>]' );
 			} );
 
+			it.only( 'deletes selection with elements before inserting the content', () => {
+				model.schema.register( 'div', {
+					allowWhere: '$block',
+					allowContentOf: '$root'
+				} );
+
+				setData( model, '<div><paragraph>[Foo</paragraph><paragraph>Bar]</paragraph></div>' );
+				const affectedRange = insertHelper( '<paragraph>FooBar</paragraph>' );
+
+				expect( getData( model ) ).to.equal( '<paragraph>FooBar[]</paragraph>' );
+				expect( stringify( root, affectedRange ) ).to.equal( '[<paragraph>FooBar</paragraph>]' );
+			} );
+
 			describe( 'block to block handling', () => {
 				it( 'inserts one paragraph', () => {
 					setData( model, '<paragraph>f[]oo</paragraph>' );
