@@ -3709,6 +3709,11 @@ describe( 'Renderer', () => {
 
 		// #1782
 		it( 'should leave dom selection untouched while composing', () => {
+			// See #5638.
+			if ( env.isAndroid ) {
+				this.skip();
+			}
+
 			const { view: viewP, selection: newSelection } = parse( '<container:p>[]</container:p>' );
 
 			viewRoot._appendChild( viewP );

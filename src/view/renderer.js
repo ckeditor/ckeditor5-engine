@@ -770,7 +770,8 @@ export default class Renderer {
 	 */
 	_domSelectionNeedsUpdate( domSelection ) {
 		// Remain DOM selection untouched while composing. See #1782.
-		if ( this.isComposing ) {
+		// However, this fix, breaks track changes feature on Android. See #5638.
+		if ( this.isComposing && !env.isAndroid ) {
 			return false;
 		}
 
