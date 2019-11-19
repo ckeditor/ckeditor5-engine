@@ -11,6 +11,7 @@ import Element from './element';
 import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 import Node from './node';
 import { keyCodes } from '@ckeditor/ckeditor5-utils/src/keyboard';
+import removePrefix from '../removeprefix';
 
 /**
  * UI element class. It should be used to represent editing UI which needs to be injected into the editing view
@@ -84,7 +85,7 @@ export default class UIElement extends Element {
 	 * @returns {Boolean}
 	 */
 	is( type, name = null ) {
-		const cutType = type.replace( /^view:/, '' );
+		const cutType = removePrefix( type, 'view:' );
 		if ( !name ) {
 			return cutType == 'uiElement' || super.is( type );
 		} else {

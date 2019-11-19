@@ -12,6 +12,7 @@ import NodeList from './nodelist';
 import Text from './text';
 import TextProxy from './textproxy';
 import isIterable from '@ckeditor/ckeditor5-utils/src/isiterable';
+import removePrefix from '../removeprefix';
 
 // @if CK_DEBUG_ENGINE // const { stringifyMap, convertMapToStringifiedObject, convertMapToTags } = require( '../dev-utils/utils' );
 
@@ -116,7 +117,7 @@ export default class Element extends Node {
 	 * @returns {Boolean}
 	 */
 	is( type, name = null ) {
-		const cutType = type.replace( /^model:/, '' );
+		const cutType = removePrefix( type, 'model:' );
 
 		if ( !name ) {
 			return cutType == 'element' || cutType == this.name || super.is( type );

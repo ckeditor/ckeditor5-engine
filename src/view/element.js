@@ -14,6 +14,7 @@ import objectToMap from '@ckeditor/ckeditor5-utils/src/objecttomap';
 import isIterable from '@ckeditor/ckeditor5-utils/src/isiterable';
 import Matcher from './matcher';
 import { isPlainObject } from 'lodash-es';
+import removePrefix from '../removeprefix';
 
 // @if CK_DEBUG_ENGINE // const { convertMapToTags } = require( '../dev-utils/utils' );
 
@@ -174,7 +175,8 @@ export default class Element extends Node {
 	 * @returns {Boolean}
 	 */
 	is( type, name = null ) {
-		const cutType = type.replace( /^view:/, '' );
+		const cutType = removePrefix( type, 'view:' );
+
 		if ( !name ) {
 			return cutType == 'element' || cutType == this.name || super.is( type );
 		} else {

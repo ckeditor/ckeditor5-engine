@@ -8,6 +8,7 @@
  */
 
 import EditableElement from './editableelement';
+import removePrefix from '../removeprefix';
 
 const rootNameSymbol = Symbol( 'rootName' );
 
@@ -67,7 +68,7 @@ export default class RootEditableElement extends EditableElement {
 	 * @returns {Boolean}
 	 */
 	is( type, name = null ) {
-		const cutType = type.replace( /^view:/, '' );
+		const cutType = removePrefix( type, 'view:' );
 		if ( !name ) {
 			return cutType == 'rootElement' || super.is( type );
 		} else {

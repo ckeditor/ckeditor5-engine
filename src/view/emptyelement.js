@@ -10,6 +10,7 @@
 import Element from './element';
 import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 import Node from './node';
+import removePrefix from '../removeprefix';
 
 /**
  * Empty element class. It is used to represent elements that cannot contain any child nodes (for example `<img>` elements).
@@ -71,7 +72,7 @@ export default class EmptyElement extends Element {
 	 * @returns {Boolean}
 	 */
 	is( type, name = null ) {
-		const cutType = type.replace( /^view:/, '' );
+		const cutType = removePrefix( type, 'view:' );
 		if ( !name ) {
 			return cutType == 'emptyElement' || super.is( type );
 		} else {

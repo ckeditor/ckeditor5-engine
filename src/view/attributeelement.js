@@ -9,6 +9,7 @@
 
 import Element from './element';
 import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
+import removePrefix from '../removeprefix';
 
 // Default attribute priority.
 const DEFAULT_PRIORITY = 10;
@@ -152,7 +153,7 @@ export default class AttributeElement extends Element {
 	 * @returns {Boolean}
 	 */
 	is( type, name = null ) {
-		const cutType = type && type.replace( /^view:/, '' );
+		const cutType = type && removePrefix( type, 'view:' );
 
 		if ( !name ) {
 			return cutType == 'attributeElement' || super.is( type );

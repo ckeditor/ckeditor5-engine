@@ -11,6 +11,7 @@ import ContainerElement from './containerelement';
 import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 import mix from '@ckeditor/ckeditor5-utils/src/mix';
 import ObservableMixin from '@ckeditor/ckeditor5-utils/src/observablemixin';
+import removePrefix from '../removeprefix';
 
 const documentSymbol = Symbol( 'document' );
 
@@ -94,7 +95,7 @@ export default class EditableElement extends ContainerElement {
 	 * @returns {Boolean}
 	 */
 	is( type, name = null ) {
-		const cutType = type && type.replace( /^view:/, '' );
+		const cutType = type && removePrefix( type, 'view:' );
 		if ( !name ) {
 			return cutType == 'editableElement' || super.is( type );
 		} else {

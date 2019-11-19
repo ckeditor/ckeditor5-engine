@@ -8,6 +8,7 @@
  */
 
 import Element from './element';
+import removePrefix from '../removeprefix';
 
 /**
  * Containers are elements which define document structure. They define boundaries for
@@ -78,7 +79,7 @@ export default class ContainerElement extends Element {
 	 * @returns {Boolean}
 	 */
 	is( type, name = null ) {
-		const cutType = type && type.replace( /^view:/, '' );
+		const cutType = type && removePrefix( type, 'view:' );
 		if ( !name ) {
 			return cutType == 'containerElement' || super.is( type );
 		} else {
