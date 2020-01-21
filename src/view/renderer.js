@@ -11,7 +11,7 @@
 
 import ViewText from './text';
 import ViewPosition from './position';
-import { INLINE_FILLER, INLINE_FILLER_LENGTH, startsWithFiller, isInlineFiller, isBlockFiller } from './filler';
+import { INLINE_FILLER, INLINE_FILLER_LENGTH, startsWithFiller, isInlineFiller } from './filler';
 
 import mix from '@ckeditor/ckeditor5-utils/src/mix';
 import diff from '@ckeditor/ckeditor5-utils/src/diff';
@@ -583,7 +583,7 @@ export default class Renderer {
 	_diffNodeLists( actualDomChildren, expectedDomChildren ) {
 		actualDomChildren = filterOutFakeSelectionContainer( actualDomChildren, this._fakeSelectionContainer );
 
-		return diff( actualDomChildren, expectedDomChildren, sameNodes.bind( null, this.domConverter.blockFiller ) );
+		return diff( actualDomChildren, expectedDomChildren, sameNodes.bind( null, this.domConverter ) );
 	}
 
 	/**
@@ -691,41 +691,32 @@ export default class Renderer {
 	 */
 	_updateFakeSelection( domRoot ) {
 		const domDocument = domRoot.ownerDocument;
-		let container = this._fakeSelectionContainer;
 
-		// Create fake selection container if one does not exist.
-		if ( !container ) {
-			this._fakeSelectionContainer = container = domDocument.createElement( 'div' );
+		if ( !this._fakeSelectionContainer ) {
+			this._fakeSelectionContainer = createFakeSelectionContainer( domDocument );
+		}
 
-			Object.assign( container.style, {
-				position: 'fixed',
-				top: 0,
-				left: '-9999px',
-				// See https://github.com/ckeditor/ckeditor5/issues/752.
-				width: '42px'
-			} );
+		const container = this._fakeSelectionContainer;
 
-			// Fill it with a text node so we can update it later.
-			container.textContent = '\u00A0';
+		// Bind fake selection container with the current selection *position*.
+		this.domConverter.bindFakeSelection( container, this.selection );
+
+		if ( !this._fakeSelectionNeedsUpdate( domRoot ) ) {
+			return;
 		}
 
 		if ( !container.parentElement || container.parentElement != domRoot ) {
 			domRoot.appendChild( container );
 		}
 
-		// Update contents.
 		container.textContent = this.selection.fakeSelectionLabel || '\u00A0';
 
-		// Update selection.
 		const domSelection = domDocument.getSelection();
 		const domRange = domDocument.createRange();
 
 		domSelection.removeAllRanges();
 		domRange.selectNodeContents( container );
 		domSelection.addRange( domRange );
-
-		// Bind fake selection container with current selection.
-		this.domConverter.bindFakeSelection( container, this.selection );
 	}
 
 	/**
@@ -790,6 +781,31 @@ export default class Renderer {
 
 		// Selections are not similar.
 		return true;
+	}
+
+	/**
+	 * Checks whether the fake selection needs to be updated.
+	 *
+	 * @private
+	 * @param {HTMLElement} domRoot A valid DOM root where a new fake selection container should be added.
+	 * @returns {Boolean}
+	 */
+	_fakeSelectionNeedsUpdate( domRoot ) {
+		const container = this._fakeSelectionContainer;
+		const domSelection = domRoot.ownerDocument.getSelection();
+
+		// Fake selection needs to be updated if there's no fake selection container, or the container currently sits
+		// in a different root.
+		if ( !container || container.parentElement !== domRoot ) {
+			return true;
+		}
+
+		// Make sure that the selection actually is within the fake selection.
+		if ( domSelection.anchorNode !== container && !container.contains( domSelection.anchorNode ) ) {
+			return true;
+		}
+
+		return container.textContent !== this.selection.fakeSelectionLabel;
 	}
 
 	/**
@@ -911,11 +927,11 @@ function areSimilar( node1, node2 ) {
 //		* Two block filler elements.
 //
 // @private
-// @param {Function} blockFiller Block filler creator function, see {@link module:engine/view/domconverter~DomConverter#blockFiller}.
+// @param {String} blockFillerMode Block filler mode, see {@link module:engine/view/domconverter~DomConverter#blockFillerMode}.
 // @param {Node} node1
 // @param {Node} node2
 // @returns {Boolean}
-function sameNodes( blockFiller, actualDomChild, expectedDomChild ) {
+function sameNodes( domConverter, actualDomChild, expectedDomChild ) {
 	// Elements.
 	if ( actualDomChild === expectedDomChild ) {
 		return true;
@@ -925,8 +941,8 @@ function sameNodes( blockFiller, actualDomChild, expectedDomChild ) {
 		return actualDomChild.data === expectedDomChild.data;
 	}
 	// Block fillers.
-	else if ( isBlockFiller( actualDomChild, blockFiller ) &&
-		isBlockFiller( expectedDomChild, blockFiller ) ) {
+	else if ( domConverter.isBlockFiller( actualDomChild ) &&
+		domConverter.isBlockFiller( expectedDomChild ) ) {
 		return true;
 	}
 
@@ -973,4 +989,26 @@ function filterOutFakeSelectionContainer( domChildList, fakeSelectionContainer )
 	}
 
 	return childList;
+}
+
+// Creates a fake selection container for a given document.
+//
+// @private
+// @param {Document} domDocument
+// @returns {HTMLElement}
+function createFakeSelectionContainer( domDocument ) {
+	const container = domDocument.createElement( 'div' );
+
+	Object.assign( container.style, {
+		position: 'fixed',
+		top: 0,
+		left: '-9999px',
+		// See https://github.com/ckeditor/ckeditor5/issues/752.
+		width: '42px'
+	} );
+
+	// Fill it with a text node so we can update it later.
+	container.textContent = '\u00A0';
+
+	return container;
 }

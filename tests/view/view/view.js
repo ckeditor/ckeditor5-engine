@@ -18,7 +18,6 @@ import ViewRange from '../../../src/view/range';
 import ViewElement from '../../../src/view/element';
 import ViewPosition from '../../../src/view/position';
 import ViewSelection from '../../../src/view/selection';
-import { isBlockFiller, BR_FILLER } from '../../../src/view/filler';
 
 import count from '@ckeditor/ckeditor5-utils/src/count';
 import global from '@ckeditor/ckeditor5-utils/src/dom/global';
@@ -26,6 +25,7 @@ import createViewRoot from '../_utils/createroot';
 import createElement from '@ckeditor/ckeditor5-utils/src/dom/createelement';
 import { expectToThrowCKEditorError } from '@ckeditor/ckeditor5-utils/tests/_utils/utils';
 import env from '@ckeditor/ckeditor5-utils/src/env';
+import CKEditorError from '@ckeditor/ckeditor5-utils/src/ckeditorerror';
 
 describe( 'view', () => {
 	const DEFAULT_OBSERVERS_COUNT = 6;
@@ -474,13 +474,14 @@ describe( 'view', () => {
 		} );
 
 		it( 'should not crash when there is no selection', () => {
-			expect( () => {
-				view.change( writer => {
-					writer.setSelection( null );
-				} );
+			// Catches the `There is no selection in any editable to focus.` warning in the CK_DEBUG mode.
+			sinon.stub( console, 'warn' );
 
-				view.focus();
-			} ).not.to.throw();
+			view.change( writer => {
+				writer.setSelection( null );
+			} );
+
+			view.focus();
 		} );
 	} );
 
@@ -565,7 +566,7 @@ describe( 'view', () => {
 			view.forceRender();
 
 			expect( domDiv.childNodes.length ).to.equal( 1 );
-			expect( isBlockFiller( domDiv.childNodes[ 0 ], BR_FILLER ) ).to.be.true;
+			expect( view.domConverter.isBlockFiller( domDiv.childNodes[ 0 ] ) ).to.be.true;
 
 			view.destroy();
 			domDiv.remove();
@@ -801,6 +802,31 @@ describe( 'view', () => {
 			expect( result1 ).to.equal( 42 );
 			expect( result2 ).to.equal( true );
 			expect( result3 ).to.undefined;
+		} );
+
+		it( 'should catch native errors and wrap them into the CKEditorError errors', () => {
+			const error = new TypeError( 'foo' );
+			error.stack = 'bar';
+
+			expectToThrowCKEditorError( () => {
+				view.change( () => {
+					throw error;
+				} );
+			}, /unexpected-error/, view, {
+				originalError: {
+					message: 'foo',
+					stack: 'bar',
+					name: 'TypeError'
+				}
+			} );
+		} );
+
+		it( 'should rethrow custom CKEditorError errors', () => {
+			expectToThrowCKEditorError( () => {
+				view.change( () => {
+					throw new CKEditorError( 'foo', view );
+				} );
+			}, /foo/, view );
 		} );
 	} );
 

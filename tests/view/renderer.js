@@ -20,8 +20,8 @@ import Renderer from '../../src/view/renderer';
 import DocumentFragment from '../../src/view/documentfragment';
 import DowncastWriter from '../../src/view/downcastwriter';
 
-import { parse, setData as setViewData, getData as getViewData } from '../../src/dev-utils/view';
-import { INLINE_FILLER, INLINE_FILLER_LENGTH, isBlockFiller, BR_FILLER } from '../../src/view/filler';
+import { parse, stringify, setData as setViewData, getData as getViewData } from '../../src/dev-utils/view';
+import { BR_FILLER, INLINE_FILLER, INLINE_FILLER_LENGTH } from '../../src/view/filler';
 import testUtils from '@ckeditor/ckeditor5-core/tests/_utils/utils';
 import createViewRoot from './_utils/createroot';
 import createElement from '@ckeditor/ckeditor5-utils/src/dom/createelement';
@@ -804,7 +804,7 @@ describe( 'Renderer', () => {
 			// Step 3: Check whether in the first paragraph there's a <br> filler and that
 			// in the second one there are two <b> tags.
 			expect( domP.childNodes.length ).to.equal( 1 );
-			expect( isBlockFiller( domP.childNodes[ 0 ], BR_FILLER ) ).to.be.true;
+			expect( domConverter.isBlockFiller( domP.childNodes[ 0 ] ) ).to.be.true;
 
 			expect( domP2.childNodes.length ).to.equal( 2 );
 			expect( domP2.childNodes[ 0 ].tagName.toLowerCase() ).to.equal( 'b' );
@@ -886,7 +886,7 @@ describe( 'Renderer', () => {
 			const domP = domRoot.childNodes[ 0 ];
 
 			expect( domP.childNodes.length ).to.equal( 1 );
-			expect( isBlockFiller( domP.childNodes[ 0 ], BR_FILLER ) ).to.be.true;
+			expect( domConverter.isBlockFiller( domP.childNodes[ 0 ] ) ).to.be.true;
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domP );
@@ -925,7 +925,7 @@ describe( 'Renderer', () => {
 			const domP = domRoot.childNodes[ 0 ];
 
 			expect( domP.childNodes.length ).to.equal( 1 );
-			expect( isBlockFiller( domP.childNodes[ 0 ], BR_FILLER ) ).to.be.true;
+			expect( domConverter.isBlockFiller( domP.childNodes[ 0 ] ) ).to.be.true;
 
 			expect( domSelection.rangeCount ).to.equal( 1 );
 			expect( domSelection.getRangeAt( 0 ).startContainer ).to.equal( domP );
@@ -1802,6 +1802,71 @@ describe( 'Renderer', () => {
 
 				const domSelection = domRoot.ownerDocument.getSelection();
 				assertDomSelectionContents( domSelection, container, /^fake selection label$/ );
+			} );
+
+			describe( 'subsequent call optimization', () => {
+				// https://github.com/ckeditor/ckeditor5-engine/issues/1791
+				it( 'doesn\'t render the same selection multiple times', () => {
+					const createRangeSpy = sinon.spy( document, 'createRange' );
+					const label = 'subsequent fake selection calls';
+
+					selection._setTo( selection.getRanges(), { fake: true, label } );
+					renderer.render();
+					selection._setTo( selection.getRanges(), { fake: true, label } );
+					renderer.render();
+
+					expect( createRangeSpy.callCount ).to.be.equal( 1 );
+				} );
+
+				it( 'different subsequent fake selections sets do change native selection', () => {
+					const createRangeSpy = sinon.spy( document, 'createRange' );
+
+					selection._setTo( selection.getRanges(), { fake: true, label: 'selection 1' } );
+					renderer.render();
+					selection._setTo( selection.getRanges(), { fake: true, label: 'selection 2' } );
+					renderer.render();
+
+					expect( createRangeSpy.callCount ).to.be.equal( 2 );
+				} );
+
+				it( 'rerenders selection if disturbed externally', () => {
+					const interruptingRange = document.createRange();
+					interruptingRange.setStartBefore( domRoot.children[ 0 ] );
+					interruptingRange.setEndAfter( domRoot.children[ 0 ] );
+
+					const createRangeSpy = sinon.spy( document, 'createRange' );
+					const label = 'selection 1';
+
+					selection._setTo( selection.getRanges(), { fake: true, label } );
+					renderer.render();
+
+					document.getSelection().removeAllRanges();
+					document.getSelection().addRange( interruptingRange );
+
+					selection._setTo( selection.getRanges(), { fake: true, label } );
+					renderer.render();
+
+					expect( createRangeSpy.callCount ).to.be.equal( 2 );
+				} );
+
+				it( 'correctly maps fake selection ', () => {
+					// See https://github.com/ckeditor/ckeditor5-engine/pull/1792#issuecomment-529814641
+					const label = 'subsequent fake selection calls';
+					const { view: newParagraph, selection: newSelection } = parse( '<container:p>[baz]</container:p>' );
+
+					viewRoot._appendChild( newParagraph );
+
+					selection._setTo( selection.getRanges(), { fake: true, label } );
+					renderer.render();
+
+					selection._setTo( newSelection.getRanges(), { fake: true, label } );
+					renderer.render();
+
+					const fakeSelectionContainer = domRoot.childNodes[ 1 ];
+					const mappedSelection = renderer.domConverter.fakeSelectionToView( fakeSelectionContainer );
+
+					expect( stringify( viewRoot, mappedSelection ) ).to.be.equal( '<div><p>foo bar</p><p>[baz]</p></div>' );
+				} );
 			} );
 
 			it( 'should render &nbsp; if no selection label is provided', () => {
