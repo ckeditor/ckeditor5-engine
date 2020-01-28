@@ -18,12 +18,18 @@ import DomEventObserver from './domeventobserver';
  * @extends module:engine/view/observer/domeventobserver~DomEventObserver
  */
 export default class MouseObserver extends DomEventObserver {
+	/**
+	 * @inheritDoc
+	 */
 	constructor( view ) {
 		super( view );
 
 		this.domEventType = [ 'mousedown', 'mousemove', 'mouseup', 'mouseleave' ];
 	}
 
+	/**
+	 * @inheritDoc
+	 */
 	onDomEvent( domEvent ) {
 		this.fire( domEvent.type, domEvent );
 	}
@@ -39,5 +45,44 @@ export default class MouseObserver extends DomEventObserver {
  *
  * @see module:engine/view/observer/mouseobserver~MouseObserver
  * @event module:engine/view/document~Document#event:mousedown
+ * @param {module:engine/view/observer/domeventdata~DomEventData} data Event data.
+ */
+
+/**
+ * Fired when mouse button is released over one of the editables.
+ *
+ * Introduced by {@link module:engine/view/observer/mouseobserver~MouseObserver}.
+ *
+ * Note that this event is not available by default. To make it available {@link module:engine/view/observer/mouseobserver~MouseObserver}
+ * needs to be added to {@link module:engine/view/view~View} by a {@link module:engine/view/view~View#addObserver} method.
+ *
+ * @see module:engine/view/observer/mouseobserver~MouseObserver
+ * @event module:engine/view/document~Document#event:mouseup
+ * @param {module:engine/view/observer/domeventdata~DomEventData} data Event data.
+ */
+
+/**
+ * Fired when mouse is moved over one of the editables.
+ *
+ * Introduced by {@link module:engine/view/observer/mouseobserver~MouseObserver}.
+ *
+ * Note that this event is not available by default. To make it available {@link module:engine/view/observer/mouseobserver~MouseObserver}
+ * needs to be added to {@link module:engine/view/view~View} by a {@link module:engine/view/view~View#addObserver} method.
+ *
+ * @see module:engine/view/observer/mouseobserver~MouseObserver
+ * @event module:engine/view/document~Document#event:mousemove
+ * @param {module:engine/view/observer/domeventdata~DomEventData} data Event data.
+ */
+
+/**
+ * Fired when mouse is moved away from one of the editables.
+ *
+ * Introduced by {@link module:engine/view/observer/mouseobserver~MouseObserver}.
+ *
+ * Note that this event is not available by default. To make it available {@link module:engine/view/observer/mouseobserver~MouseObserver}
+ * needs to be added to {@link module:engine/view/view~View} by a {@link module:engine/view/view~View#addObserver} method.
+ *
+ * @see module:engine/view/observer/mouseobserver~MouseObserver
+ * @event module:engine/view/document~Document#event:mouseleave
  * @param {module:engine/view/observer/domeventdata~DomEventData} data Event data.
  */
