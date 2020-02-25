@@ -278,24 +278,29 @@ ClassicEditor
 
 ## Adding extra attributes to elements contained in a figure
 
-The {@link features/image Image} and {@link features/table Table} features wrap view elements (`<img>` for Image nad `<table>` for Table) in `<figure>`. During the downcast conversion, the model element is mapped to `<figure>` and not the inner element. In such cases the default `conversion.attributeToAttribute()` conversion helpers could lose information about the element that the attribute should be set on.
+The {@link features/image Image} and {@link features/table Table} use a `<figure>` wrapper for the `<img>` and `<table>` elements. However, in the model, all that is always represented by a single element.
+
+For instance, for the image feature:
+
+```
+VIEW:                                     MODEL:
+<figure class="image">                    <image src="...">
+	<img src="...">
+</figure>
+```
+
+By default, if you would write a simple attribute to attribute converter, it would handle only the `<figure>` element's attributes because this is the element mapped to the model `<image>`/`<table>` element.
 
 To overcome this limitation it is sufficient to write a custom converter that adds custom attributes to elements already converted by base features. The key point is to add these converters with a lower priority than the base converters so they will be called after the base ones.
 
 {@snippet framework/extending-content-custom-figure-attributes}
-
-The sample below is extensible. To add your own attributes to preserve, just add another `setupCustomAttributeConversion()` call with desired names.
 
 ```js
 /**
  * Plugin that converts custom attributes for elements that are wrapped in <figure> in the view.
  */
 class CustomFigureAttributes {
-	/**
-	 * Plugin's constructor - receives editor instance on creation.
-	 */
 	constructor( editor ) {
-		// Save reference to the editor.
 		this.editor = editor;
 	}
 
@@ -311,7 +316,7 @@ class CustomFigureAttributes {
 		setupCustomClassConversion( 'img', 'image', editor );
 		setupCustomClassConversion( 'table', 'table', editor );
 
-		editor.conversion.for( 'upcast' ).add( upcastCustomClasses( 'figure' ), { priority: 'low' } );
+		editor.conversion.for( 'upcast' ).add( upcastCustomClasses( 'figure' ) );
 
 		// Define custom attributes that should be preserved.
 		setupCustomAttributeConversion( 'img', 'image', 'id', editor );
@@ -320,18 +325,25 @@ class CustomFigureAttributes {
 }
 
 /**
- * Sets up a conversion that preservers classes on <img> and <table> elements.
+ * Sets up a conversion that preservers all classes on given elements.
+ *
+ * Since the <f>
  */
 function setupCustomClassConversion( viewElementName, modelElementName, editor ) {
 	// The 'customClass' attribute will store custom classes from the data in the model so schema definitions allow this attribute.
-	editor.model.schema.extend( modelElementName, { allowAttributes: [ 'customClass' ] } );
+	editor.model.schema.extend( modelElementName, {
+		allowAttributes: [ 'customClass' ]
+	} );
 
-	// Define upcast converters for the <img> and <table> elements with a "low" priority so they are run after the default converters.
-	editor.conversion.for( 'upcast' ).add( upcastCustomClasses( viewElementName ), { priority: 'low' } );
+	// Define upcast converters for the <img> and <table> elements.
+	editor.conversion.for( 'upcast' ).add( upcastCustomClasses( viewElementName ) );
 
+	// Define downcast converters (make them low priority one)
 	// Define downcast converters for a model element with a "low" priority so they are run after the default converters.
 	// Use `downcastCustomClassesToFigure` if you'd like to keep your classes on <figure> element or `downcastCustomClassesToChild` if you'd like to keep your classes on a <figure> child element, i.e. <img>.
-	editor.conversion.for( 'downcast' ).add( downcastCustomClassesToFigure( modelElementName ), { priority: 'low' } );
+	editor.conversion.for( 'downcast' ).add(
+		downcastCustomClassesToFigure( modelElementName ), { priority: 'low' }
+	);
 	// editor.conversion.for( 'downcast' ).add( downcastCustomClassesToChild( viewElementName, modelElementName ), { priority: 'low' } );
 }
 
@@ -349,8 +361,12 @@ function setupCustomAttributeConversion( viewElementName, modelElementName, view
 
 	editor.model.schema.extend( modelElementName, { allowAttributes: [ modelAttribute ] } );
 
-	editor.conversion.for( 'upcast' ).add( upcastAttribute( viewElementName, viewAttribute, modelAttribute ) );
-	editor.conversion.for( 'downcast' ).add( downcastAttribute( modelElementName, viewElementName, viewAttribute, modelAttribute ) );
+	editor.conversion.for( 'upcast' ).add(
+		upcastAttribute( viewElementName, viewAttribute, modelAttribute )
+	);
+	editor.conversion.for( 'downcast' ).add(
+		downcastAttribute( modelElementName, viewElementName, viewAttribute, modelAttribute )
+	);
 }
 
 /**
@@ -397,11 +413,12 @@ function downcastCustomClassesToFigure( modelElementName ) {
 }
 
 /**
- * Creates a downcast converter that adds classes defined in the `customClass` attribute to a <figure> child element.
+ * Creates a downcast converter that adds classes defined in the `customClass` attribute to
+ * child of the `<figure>` element.
  *
- * This converter expects that the view element is nested in a <figure> element.
+ * The child is specified by its name – e.g. it can be the `<img>` element
  */
-function downcastCustomClassesToChild( viewElementName, modelElementName ) {
+function downcastCustomClassesToChild( viewChildName, modelElementName ) {
 	return dispatcher => dispatcher.on( `insert:${ modelElementName }`, ( evt, data, conversionApi ) => {
 		const modelElement = data.item;
 
@@ -412,7 +429,7 @@ function downcastCustomClassesToChild( viewElementName, modelElementName ) {
 		}
 
 		// The code below assumes that classes are set on the element inside the <figure>.
-		const viewElement = findViewChild( viewFigure, viewElementName, conversionApi );
+		const viewElement = findViewChild( viewFigure, viewChildName, conversionApi );
 
 		conversionApi.writer.addClass( modelElement.getAttribute( 'customClass' ), viewElement );
 	} );
