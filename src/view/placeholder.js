@@ -148,6 +148,12 @@ export function needsPlaceholder( element ) {
 		return false;
 	}
 
+	// If the element is a Widget, always consider it a non-empty and thus not needing a placeholder.
+	// https://github.com/ckeditor/ckeditor5/issues/1684
+	if ( element.getCustomProperty( 'widget' ) ) {
+		return false;
+	}
+
 	// The element is empty only as long as it contains nothing but uiElements.
 	const isEmptyish = !Array.from( element.getChildren() )
 		.some( element => !element.is( 'uiElement' ) );
